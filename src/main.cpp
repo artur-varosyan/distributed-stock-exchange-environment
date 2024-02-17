@@ -1,7 +1,12 @@
 #include <iostream>
-#include <boost/asio.hpp>
+
+#include "tcpserver.hpp"
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
+    std::cout << "Starting a tcp server" << "\n";
+
+    TCPServer server(8080);
+    server.start();
+
     return 0;
 }
