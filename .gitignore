@@ -33,3 +33,7 @@
 
 # Build
 build/
+
+# IDE
+.vscode/
+.idea/

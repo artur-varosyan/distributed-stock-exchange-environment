@@ -1,11 +1,11 @@
 #include <iostream>
 
-#include "tcpserver.hpp"
+#include "echoserver.hpp"
 
 int main() {
     std::cout << "Starting a tcp server" << "\n";
 
-    TCPServer server(8080);
+    EchoServer server(8080);
     server.start();
 
     return 0;

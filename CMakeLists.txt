@@ -16,7 +16,8 @@ if(Boost_FOUND)
 endif()
 
 add_executable(simulation src/main.cpp
-                          src/tcpserver.cpp)
+                          src/tcpserver.cpp
+                          src/tcpconnection.cpp)
 
 if(Boost_FOUND)
 

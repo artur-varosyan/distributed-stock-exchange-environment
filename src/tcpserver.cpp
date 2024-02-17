@@ -7,8 +7,6 @@ using asio::ip::tcp;
 void TCPServer::start()
 {
     {
-        std::cout << "Start called" << "\n";
-
         asio::signal_set signals(io_context_, SIGINT, SIGTERM);
         signals.async_wait([&](auto, auto){ io_context_.stop(); });
 
@@ -17,33 +15,43 @@ void TCPServer::start()
     }
 }
 
-asio::awaitable<void> TCPServer::handleAccept(tcp::socket socket)
+asio::awaitable<void> TCPServer::messageListener(TCPConnectionPtr connection)
 {
-    std::cout << "Accepted connection from " << socket.remote_endpoint() << "\n";
-
-    try
-    {
-        char data[1024];
+    try {
         while (true)
         {
-            /** TODO: Ensure that the server can send messages while also waiting for incoming messages */
+            std::string message = co_await connection->read();
 
-            std::size_t n = co_await socket.async_read_some(asio::buffer(data), asio::use_awaitable);
-            std::cout << "Message from " << socket.remote_endpoint() << ": " << std::string(data, n) << "\n";
-
-            co_await asio::async_write(socket, asio::buffer(data, n), asio::use_awaitable);
+            std::string response = handleMessage(message);
+            co_await connection->send(response);
         }
     }
     catch (std::exception& e)
     {
-        std::printf("handleAccept Exception: %s\n", e.what());
+        std::cout << "Exception in message listener: " << e.what() << "\n";
+
+        // Remove connection from list
+        std::remove(connections_.begin(), connections_.end(), connection);
     }
+}
+
+asio::awaitable<void> TCPServer::handleAccept(tcp::socket socket)
+{
+    std::cout << "Accepted connection from " << socket.remote_endpoint() << "\n";
+    
+    // Create a shared pointer to this connection and add to list
+    TCPConnectionPtr connection = std::make_shared<TCPConnection>(std::move(socket));
+    connections_.push_back(connection);
+
+
+    // Start listening for messages from this connection
+    asio::co_spawn(io_context_, messageListener(connection), asio::detached);
+
+    co_return;
 }
 
 asio::awaitable<void> TCPServer::listener()
 {
-    std::cout << "Listener called" << "\n";
-
     auto executor = co_await asio::this_coro::executor;
     tcp::acceptor acceptor(executor, {tcp::v4(), port_});
     std::cout << "Listening on port " << port_ << "\n";
