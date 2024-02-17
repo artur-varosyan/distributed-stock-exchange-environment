@@ -18,7 +18,7 @@ public:
 
     TCPServer(unsigned short port) 
     : io_context_{}, 
-      port_{port},
+      tcp_port_{port},
       connections_{}
     {
     }
@@ -28,6 +28,8 @@ public:
 
     /** Handles a message from a client. */
     virtual std::string handleMessage(std::string_view message) = 0;
+
+    /** TODO: Add public method to send messages to given connection. */
 
 private:
 
@@ -40,7 +42,7 @@ private:
     /** Listens for new incoming TCP connections */
     asio::awaitable<void> listener();
 
-    const unsigned short port_;
+    const unsigned short tcp_port_;
     asio::io_context io_context_;
 
     /** TODO: Consider changing into a map */
