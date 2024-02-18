@@ -1,34 +1,25 @@
 #include <iostream>
+#include <boost/asio.hpp>
 
-#include "echoserver.hpp"
-#include "logserver.hpp"
+#include "networkentity.hpp"
+
+namespace asio = boost::asio;
 
 int main(int argc, char** argv) {
 
-    if (argc < 3)
+    if (argc < 2)
     {
-        std::cerr << "Usage: " << argv[0] << " <server-type>" << " <port>" << "\n";
+        std::cerr << "Usage: " << argv[0] << " <port>" << "\n";
         return 1;
     }
 
-    std::string serverType = argv[1];
-    unsigned short port = std::stoi(argv[2]);
+    unsigned short port = std::stoi(argv[1]);
 
-    if (serverType == "tcp")
-    {
-        EchoServer server(port);
-        server.start();
-    }
-    else if (serverType == "udp")
-    {
-        LogServer server(port);
-        server.start();
-    }
-    else
-    {
-        std::cerr << "Invalid server type: " << serverType << "\n";
-        return 1;
-    }
+    asio::io_context io_context;
+    NetworkEntity entity{io_context, port, port};
+
+    asio::co_spawn(io_context, entity.start(), asio::detached);
+    io_context.run();
 
     return 0;
 }

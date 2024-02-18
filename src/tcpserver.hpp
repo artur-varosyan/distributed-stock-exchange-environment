@@ -16,15 +16,15 @@ public:
 
     TCPServer() = delete;
 
-    TCPServer(unsigned short port) 
-    : io_context_{}, 
+    TCPServer(asio::io_context& io_context, unsigned short port)
+    : io_context_(io_context), 
       tcp_port_{port},
       connections_{}
     {
     }
 
     /** Starts the server. */
-    void start();
+    asio::awaitable<void> start();
 
     /** Handles a message from a client. */
     virtual std::string handleMessage(std::string_view message) = 0;
@@ -43,7 +43,7 @@ private:
     asio::awaitable<void> listener();
 
     const unsigned short tcp_port_;
-    asio::io_context io_context_;
+    asio::io_context& io_context_;
 
     /** TODO: Consider changing into a map */
     std::vector<TCPConnectionPtr> connections_;

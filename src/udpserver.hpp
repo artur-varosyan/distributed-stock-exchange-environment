@@ -12,15 +12,15 @@ class UDPServer
 public:
     UDPServer() = delete;
 
-    UDPServer(unsigned short port)
-    : io_context_{}, 
+    UDPServer(asio::io_context& io_context, unsigned short port)
+    : io_context_(io_context), 
       udp_port_{port},
       socket_{io_context_, udp::endpoint(udp::v4(), port)}
     {
     }
 
     /** Starts the server. */
-    void start();
+    asio::awaitable<void> start();
 
     /** TODO: Add public method to send broadcasts to UDP endpoints. */
 
@@ -33,7 +33,7 @@ private:
     asio::awaitable<void> listener();
 
     const unsigned short udp_port_;
-    asio::io_context io_context_;
+    asio::io_context& io_context_;
     udp::socket socket_;
 };
 

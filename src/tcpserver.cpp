@@ -4,14 +4,13 @@
 namespace asio = boost::asio;
 using asio::ip::tcp;
 
-void TCPServer::start()
+asio::awaitable<void> TCPServer::start()
 {
     {
         asio::signal_set signals(io_context_, SIGINT, SIGTERM);
         signals.async_wait([&](auto, auto){ io_context_.stop(); });
 
-        asio::co_spawn(io_context_, listener(), asio::detached);
-        io_context_.run();
+        co_await listener();
     }
 }
 

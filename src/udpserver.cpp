@@ -6,12 +6,11 @@
 namespace asio = boost::asio;
 using asio::ip::udp;
 
-void UDPServer::start()
+asio::awaitable<void> UDPServer::start()
 {
     std::cout << "Starting a UDP server on port " << udp_port_ << "\n";
 
-    asio::co_spawn(io_context_, listener(), asio::detached);
-    io_context_.run();
+    co_await listener();
 }
 
 asio::awaitable<void> UDPServer::listener()
