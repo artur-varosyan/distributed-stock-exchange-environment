@@ -4,14 +4,14 @@
 namespace asio = boost::asio;
 using asio::ip::tcp;
 
+typedef std::shared_ptr<TCPConnection> TCPConnectionPtr;
+
 asio::awaitable<void> TCPServer::start()
 {
-    {
-        asio::signal_set signals(io_context_, SIGINT, SIGTERM);
-        signals.async_wait([&](auto, auto){ io_context_.stop(); });
+    asio::signal_set signals(io_context_, SIGINT, SIGTERM);
+    signals.async_wait([&](auto, auto){ io_context_.stop(); });
 
-        co_await listener();
-    }
+    co_await listener();
 }
 
 asio::awaitable<void> TCPServer::messageListener(TCPConnectionPtr connection)
@@ -42,7 +42,6 @@ asio::awaitable<void> TCPServer::handleAccept(tcp::socket socket)
     TCPConnectionPtr connection = std::make_shared<TCPConnection>(std::move(socket));
     connections_.push_back(connection);
 
-
     // Start listening for messages from this connection
     asio::co_spawn(io_context_, messageListener(connection), asio::detached);
 
@@ -60,4 +59,20 @@ asio::awaitable<void> TCPServer::listener()
         tcp::socket socket = co_await acceptor.async_accept(asio::use_awaitable);
         asio::co_spawn(executor, handleAccept(std::move(socket)), asio::detached);
     }
+}
+
+asio::awaitable<void> TCPServer::sendMessage(TCPConnectionPtr connection, const std::string& message)
+{
+    co_await connection->send(message);
+}
+
+asio::awaitable<void> TCPServer::connect(const std::string_view address, const unsigned int port) 
+{
+    tcp::endpoint endpoint(asio::ip::make_address(address), port);
+    tcp::socket socket(io_context_);
+
+    co_await socket.async_connect(endpoint, asio::use_awaitable);
+    asio::co_spawn(io_context_, handleAccept(std::move(socket)), asio::detached);
+
+    co_return;
 }

@@ -22,7 +22,8 @@ public:
     /** Starts the server. */
     asio::awaitable<void> start();
 
-    /** TODO: Add public method to send broadcasts to UDP endpoints. */
+    /** Sends a UDP broadcast message to the given address and port destination. */
+    asio::awaitable<void> sendBroadcast(const std::string_view address, const unsigned int port, const std::string& message);
 
     /** Handles an incoming UDP broadcast. */
     virtual void handleBroadcast(std::string_view message) = 0;

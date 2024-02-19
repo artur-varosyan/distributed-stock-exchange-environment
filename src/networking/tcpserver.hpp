@@ -2,6 +2,7 @@
 #define TCPSERVER_HPP
 
 #include <iostream>
+#include <unordered_map>
 #include <boost/asio.hpp>
 
 #include "tcpconnection.hpp"
@@ -26,20 +27,25 @@ public:
     /** Starts the server. */
     asio::awaitable<void> start();
 
-    /** Handles a message from a client. */
-    virtual std::string handleMessage(std::string_view message) = 0;
+    /** Connects to the given address and port and adds the connection to the connections list. */
+    asio::awaitable<void> connect(const std::string_view address, const unsigned int port);
 
-    /** TODO: Add public method to send messages to given connection. */
+    /** Sends a message to a given connection. */
+    asio::awaitable<void> sendMessage(TCPConnectionPtr connection, const std::string& message);
+
+    /** Handles a message from a client. 
+     * TODO: The handler must know the connection that sent the message. */
+    virtual std::string handleMessage(std::string_view message) = 0;
 
 private:
 
     /** Listens for incoming messages from existing TCP connections. */
     asio::awaitable<void> messageListener(TCPConnectionPtr connection);
 
-    /** Handles new incoming TCP connections */
+    /** Handles new incoming TCP connections. */
     asio::awaitable<void> handleAccept(tcp::socket socket);
 
-    /** Listens for new incoming TCP connections */
+    /** Listens for new incoming TCP connections. */
     asio::awaitable<void> listener();
 
     const unsigned short tcp_port_;

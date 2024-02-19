@@ -29,3 +29,9 @@ asio::awaitable<void> UDPServer::listener()
         handleBroadcast(message);
     }
 }
+
+asio::awaitable<void> UDPServer::sendBroadcast(const std::string_view address, const unsigned int port, const std::string& message)
+{
+    udp::endpoint endpoint(asio::ip::make_address(address), port);
+    co_await socket_.async_send_to(asio::buffer(message), endpoint, asio::use_awaitable);
+}

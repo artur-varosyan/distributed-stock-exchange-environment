@@ -16,9 +16,9 @@ if(Boost_FOUND)
 endif()
 
 add_executable(simulation src/main.cpp
-                          src/tcpserver.cpp
-                          src/tcpconnection.cpp
-                          src/udpserver.cpp)
+                          src/networking/tcpserver.cpp
+                          src/networking/tcpconnection.cpp
+                          src/networking/udpserver.cpp)
 
 if(Boost_FOUND)
 

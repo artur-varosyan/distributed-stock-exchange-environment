@@ -1,7 +1,7 @@
 #include <iostream>
 #include <boost/asio.hpp>
 
-#include "networkentity.hpp"
+#include "networking/networkentity.hpp"
 
 namespace asio = boost::asio;
 
