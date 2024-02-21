@@ -20,8 +20,9 @@ asio::awaitable<void> TCPServer::messageListener(TCPConnectionPtr connection)
         while (true)
         {
             std::string message = co_await connection->read();
+            std::string sender_address { connection->getSocket().remote_endpoint().address().to_string() };
 
-            std::string response = handleMessage(message);
+            std::string response = handleMessage(sender_address, message);
             co_await connection->send(response);
         }
     }
@@ -61,12 +62,12 @@ asio::awaitable<void> TCPServer::listener()
     }
 }
 
-asio::awaitable<void> TCPServer::sendMessage(TCPConnectionPtr connection, const std::string& message)
+asio::awaitable<void> TCPServer::sendMessage(TCPConnectionPtr connection, std::string_view message)
 {
     co_await connection->send(message);
 }
 
-asio::awaitable<void> TCPServer::connect(const std::string_view address, const unsigned int port) 
+asio::awaitable<void> TCPServer::connect(std::string_view address, const unsigned int port) 
 {
     tcp::endpoint endpoint(asio::ip::make_address(address), port);
     tcp::socket socket(io_context_);

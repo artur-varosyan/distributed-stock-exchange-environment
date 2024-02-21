@@ -28,14 +28,13 @@ public:
     asio::awaitable<void> start();
 
     /** Connects to the given address and port and adds the connection to the connections list. */
-    asio::awaitable<void> connect(const std::string_view address, const unsigned int port);
+    asio::awaitable<void> connect(std::string_view address, const unsigned int port);
 
     /** Sends a message to a given connection. */
-    asio::awaitable<void> sendMessage(TCPConnectionPtr connection, const std::string& message);
+    asio::awaitable<void> sendMessage(TCPConnectionPtr connection, std::string_view message);
 
-    /** Handles a message from a client. 
-     * TODO: The handler must know the connection that sent the message. */
-    virtual std::string handleMessage(std::string_view message) = 0;
+    /** Handles a message from a client. */
+    virtual std::string handleMessage(std::string_view sender_address, std::string_view message) = 0;
 
 private:
 

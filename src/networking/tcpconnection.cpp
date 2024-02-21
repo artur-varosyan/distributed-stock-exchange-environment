@@ -5,7 +5,7 @@
 
 namespace asio = boost::asio;
 
-asio::awaitable<void> TCPConnection::send(const std::string& message)
+asio::awaitable<void> TCPConnection::send(std::string_view message)
 {
     try {
         co_await asio::async_write(socket_, asio::buffer(message), asio::use_awaitable);

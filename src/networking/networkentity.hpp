@@ -11,7 +11,7 @@ namespace asio = boost::asio;
 using asio::ip::tcp;
 using asio::ip::udp;
 
-class NetworkEntity : public TCPServer, public UDPServer
+class NetworkEntity : private TCPServer, private UDPServer
 {
 public:
 
@@ -33,15 +33,15 @@ public:
         co_return;
     }
 
-    std::string handleMessage(std::string_view message) override
+    std::string handleMessage(std::string_view sender_adress, std::string_view message) override
     {
-        std::cout << "Received message: " << message << "\n";
+        std::cout << "Received from:" << sender_adress << " message: " << message << "\n";
         return std::string(message);
     }
 
-    void handleBroadcast(std::string_view message) override
+    void handleBroadcast(std::string_view sender_adress, std::string_view message) override
     {
-        std::cout << "Received broadcast: " << message << "\n";
+        std::cout << "Received from:" << sender_adress << " broadcast: " << message << "\n";
     }
 
 private:
