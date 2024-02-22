@@ -33,12 +33,14 @@ public:
         co_return;
     }
 
+    /** Handles an incoming TCP message from one of the existing connections. */
     std::string handleMessage(std::string_view sender_adress, std::string_view message) override
     {
         std::cout << "Received from:" << sender_adress << " message: " << message << "\n";
         return std::string(message);
     }
 
+    /** Handles an incoming UDP broadcast. */
     void handleBroadcast(std::string_view sender_adress, std::string_view message) override
     {
         std::cout << "Received from:" << sender_adress << " broadcast: " << message << "\n";
