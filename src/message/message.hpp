@@ -16,7 +16,9 @@ public:
 
     Message() = default;
 
-    Message(MessageType type) : type{type} {};
+    Message(MessageType type) 
+    : type{type},
+      receiver_ids{} {};
 
     virtual ~Message() = default;
 
