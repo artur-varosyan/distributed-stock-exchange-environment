@@ -7,23 +7,16 @@
 #include <boost/serialization/unordered_map.hpp>
 #include <boost/serialization/vector.hpp>
 
+#include "messagetype.hpp"
 
-/** A message that can be sent between network entities. 
- * TODO: Consider using the Builder or Factory pattern to create messages.
-*/
+/** A message that can be sent between network entities. */
 struct Message
 {
 public:
 
-    enum class Type {
-        INIT,
-        CONFIG,
-        MARKET_DATA
-    };
-
     Message() = default;
 
-    Message(Type type) : type{type} {}
+    Message(MessageType type) : type{type} {};
 
     virtual ~Message() = default;
 
@@ -38,7 +31,7 @@ public:
 
     int sender_id;
     std::vector<int> receiver_ids;
-    Type type;
+    MessageType type;
 
 private:
 

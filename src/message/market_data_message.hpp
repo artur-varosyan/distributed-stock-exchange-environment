@@ -2,10 +2,11 @@
 #define MARKET_DATA_MESSAGE_HPP
 
 #include "message.hpp"
+#include "messagetype.hpp"
 
 struct MarketDataMessage : public Message
 {
-    MarketDataMessage() : Message(Type::MARKET_DATA) {};
+    MarketDataMessage() : Message(MessageType::MARKET_DATA) {};
 
     std::string symbol;
     double price;
