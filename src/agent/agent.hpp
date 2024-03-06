@@ -28,17 +28,10 @@ public:
     }
 
     /** Handles an incoming message and returns the message to send. All derived classes must implement this. */
-    Message handleMessage(Message message) override
-    {
-        std::cout << "Received message from " << message.sender_id << "\n";
-        return message;
-    }
+    virtual std::optional<Message> handleMessage(Message message) override = 0;
 
     /** Handles an incoming broadcast. All derived classes must implement this. */
-    void handleBroadcast(Message message) override
-    {
-        return;
-    }
+    virtual void handleBroadcast(Message message) override = 0;
 
 private:
 

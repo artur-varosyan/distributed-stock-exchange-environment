@@ -35,7 +35,7 @@ public:
     }
 
     /** Handles an incoming message and returns the message to send. All derived classes must implement this. */
-    virtual Message handleMessage(Message message) = 0;
+    virtual std::optional<Message> handleMessage(Message message) = 0;
 
     /** Handles an incoming broadcast. All derived classes must implement this. */
     virtual void handleBroadcast(Message message) = 0;

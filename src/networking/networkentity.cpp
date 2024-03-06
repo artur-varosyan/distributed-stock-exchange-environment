@@ -28,16 +28,40 @@ std::string NetworkEntity::handleMessage(std::string_view sender_adress, std::st
 {
     std::cout << "Received message from " << sender_adress << ": " << message << "\n";
 
-    Message msg = deserialiseMessage(message);
-    Message response = handleMessage(msg);
+    try 
+    {
+        Message msg = deserialiseMessage(message);
+        std::optional<Message> response = handleMessage(msg);
+        if (response.has_value()) 
+        {
+            return serialiseMessage(response.value());
+        }
+        else 
+        {
+            return std::string{};
+        }
+    }
+    catch (std::exception& e)
+    {
+        std::cout << "Failed to deserialise message" << "\n";
+    }
 
-    return serialiseMessage(response);
+    return std::string{};
 }
 
 void NetworkEntity::handleBroadcast(std::string_view sender_adress, std::string_view message)
 {
-    Message msg = deserialiseMessage(message);
-    handleMessage(msg);
+    std::cout << "Received broadcast from " << sender_adress << ": " << message << "\n";
+
+    try 
+    {
+        Message msg = deserialiseMessage(message);
+        handleMessage(msg);
+    }
+    catch (std::exception& e)
+    {
+        std::cout << "Failed to deserialise message" << "\n";
+    }
     
     return;
 }

@@ -23,7 +23,10 @@ asio::awaitable<void> TCPServer::messageListener(TCPConnectionPtr connection)
             std::string sender_address { connection->getSocket().remote_endpoint().address().to_string() };
 
             std::string response = handleMessage(sender_address, message);
-            co_await connection->send(response);
+            if (!response.empty())
+            {
+                co_await connection->send(response);
+            }
         }
     }
     catch (std::exception& e)

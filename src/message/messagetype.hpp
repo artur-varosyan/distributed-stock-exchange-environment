@@ -5,11 +5,12 @@ enum struct MessageType
 {
     INIT,
     CONFIG,
+    LOGON,
     MARKET_DATA,
     LIMIT_ORDER,
     MARKET_ORDER,
     CANCEL_ORDER,
-    ORDER_ACK,
+    ACK,
 };
 
 #endif
