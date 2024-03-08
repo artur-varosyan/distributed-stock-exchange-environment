@@ -29,7 +29,7 @@ public:
     asio::awaitable<void> sendBroadcast(udp::endpoint endpoint, std::string_view message);
 
     /** Handles an incoming UDP broadcast. */
-    virtual void handleBroadcast(std::string_view sender_address, std::string_view message) = 0;
+    virtual void handleBroadcast(std::string_view sender_address, unsigned int sender_port, std::string_view message) = 0;
 
 private:
 

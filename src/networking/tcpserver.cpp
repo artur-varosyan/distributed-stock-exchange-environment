@@ -16,13 +16,15 @@ asio::awaitable<void> TCPServer::start()
 
 asio::awaitable<void> TCPServer::messageListener(TCPConnectionPtr connection)
 {
+    std::string address { connection->getSocket().remote_endpoint().address().to_string() };
+    unsigned int port { connection->getSocket().remote_endpoint().port() };
+
     try {
         while (true)
         {
             std::string message = co_await connection->read();
-            std::string sender_address { connection->getSocket().remote_endpoint().address().to_string() };
 
-            std::string response = handleMessage(sender_address, message);
+            std::string response = handleMessage(address, port, message);
             if (!response.empty())
             {
                 co_await connection->send(response);
@@ -34,17 +36,20 @@ asio::awaitable<void> TCPServer::messageListener(TCPConnectionPtr connection)
         std::cout << "Exception in message listener: " << e.what() << "\n";
 
         // Remove connection from list
-        std::remove(connections_.begin(), connections_.end(), connection);
+        removeConnection(address, port);
     }
 }
 
 asio::awaitable<void> TCPServer::handleAccept(tcp::socket socket)
 {
     std::cout << "Accepted connection from " << socket.remote_endpoint() << "\n";
+
+    std::string address { socket.remote_endpoint().address().to_string() };
+    unsigned int port { socket.remote_endpoint().port() };
     
     // Create a shared pointer to this connection and add to list
     TCPConnectionPtr connection = std::make_shared<TCPConnection>(std::move(socket));
-    connections_.push_back(connection);
+    addConnection(address, port, connection);
 
     // Start listening for messages from this connection
     asio::co_spawn(io_context_, messageListener(connection), asio::detached);
@@ -70,13 +75,29 @@ asio::awaitable<void> TCPServer::sendMessage(TCPConnectionPtr connection, std::s
     co_await connection->send(message);
 }
 
-asio::awaitable<void> TCPServer::connect(std::string_view address, const unsigned int port) 
+asio::awaitable<TCPConnectionPtr> TCPServer::connect(std::string_view address, const unsigned int port) 
 {
     tcp::endpoint endpoint(asio::ip::make_address(address), port);
     tcp::socket socket(io_context_);
 
-    co_await socket.async_connect(endpoint, asio::use_awaitable);
-    asio::co_spawn(io_context_, handleAccept(std::move(socket)), asio::detached);
+    try
+    {
+        co_await socket.async_connect(endpoint, asio::use_awaitable);
 
-    co_return;
+        // Create a shared pointer to this connection and add to list
+        TCPConnectionPtr connection = std::make_shared<TCPConnection>(std::move(socket));
+        addConnection(address, port, connection);
+        
+        // Start listening for messages from this connection
+        asio::co_spawn(io_context_, messageListener(connection), asio::detached);
+
+        co_return connection;
+    }
+    catch (std::exception& e)
+    {
+        std::cout << "Failed to connect to " << socket.remote_endpoint() << "\n";
+        std::cout << "Exception: " << e.what() << "\n";
+        throw e;
+    }
+    
 }

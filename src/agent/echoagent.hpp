@@ -16,15 +16,15 @@ public:
 
     virtual ~EchoAgent() = default;
 
-    std::optional<Message> handleMessage(Message message) override
+    std::optional<Message> handleMessageFrom(std::string_view sender, Message message) override
     {
-        std::cout << "Received message from " << message.sender_id << "\n";
+        std::cout << "Received message from sender " << sender << " with id: "<< message.sender_id << "\n";
         return message;
     }
 
-    void handleBroadcast(Message message) override
+    void handleBroadcastFrom(std::string_view sender, Message message) override
     {
-        std::cout << "Received broadcast from " << message.sender_id << "\n";
+        std::cout << "Received broadcast from sender " << sender << " with id: "<< message.sender_id << "\n";
         return;
     }
 
