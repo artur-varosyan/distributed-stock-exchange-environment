@@ -28,7 +28,7 @@ public:
     asio::awaitable<void> start();
 
     /** Connects to the given address and port and adds the connection to the connections list. */
-    asio::awaitable<TCPConnectionPtr> connect(std::string_view address, const unsigned int port);
+    asio::awaitable<TCPConnectionPtr> connect(std::string address, const unsigned int port);
 
     /** Sends a message to a given connection. */
     asio::awaitable<void> sendMessage(TCPConnectionPtr connection, std::string_view message);

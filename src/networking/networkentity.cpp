@@ -86,6 +86,7 @@ std::pair<std::string, unsigned int> NetworkEntity::splitAddress(std::string_vie
 
 void NetworkEntity::addConnection(std::string_view address, unsigned int port, TCPConnectionPtr connection)
 {
+    std::cout << "New connection from " << address << ":" << port << "\n";
     connections_.left.insert({concatAddress(address, port), connection});
 }
 

@@ -75,9 +75,10 @@ asio::awaitable<void> TCPServer::sendMessage(TCPConnectionPtr connection, std::s
     co_await connection->send(message);
 }
 
-asio::awaitable<TCPConnectionPtr> TCPServer::connect(std::string_view address, const unsigned int port) 
+asio::awaitable<TCPConnectionPtr> TCPServer::connect(std::string address, const unsigned int port) 
 {
-    tcp::endpoint endpoint(asio::ip::make_address(address), port);
+    asio::ip::address addr = asio::ip::make_address(address);
+    tcp::endpoint endpoint(addr, port);
     tcp::socket socket(io_context_);
 
     try
