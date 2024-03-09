@@ -8,11 +8,12 @@ void Agent::start()
     NetworkEntity::start();
 }
 
-bool Agent::connect(ipv4_view address, std::string_view agent_name)
+void Agent::connect(ipv4_view address, std::string_view agent_name, std::function<void()> const& callback)
 {
-    NetworkEntity::connect(address);
-    addToAddressBook(address, agent_name);
-    return true;
+    NetworkEntity::connect(address, [=, this]() {
+        addToAddressBook(address, agent_name);
+        callback();
+    });
 }
 
 void Agent::addToAddressBook(ipv4_view address, std::string_view agent_name)
@@ -58,6 +59,7 @@ void Agent::sendMessageTo(std::string_view agent_name, MessagePtr message)
 {
     if (known_agents.left.find(std::string{agent_name}) != known_agents.left.end())
     {
+        std::cout << "Agent name exists in address book" << "\n";
         NetworkEntity::sendMessage(known_agents.left.at(std::string{agent_name}), message);
     }
     else

@@ -75,7 +75,7 @@ asio::awaitable<void> TCPServer::sendMessage(TCPConnectionPtr connection, std::s
     co_await connection->send(message);
 }
 
-asio::awaitable<TCPConnectionPtr> TCPServer::connect(std::string address, const unsigned int port) 
+asio::awaitable<void> TCPServer::connect(std::string address, const unsigned int port, std::function<void()> callback)
 {
     asio::ip::address addr = asio::ip::make_address(address);
     tcp::endpoint endpoint(addr, port);
@@ -88,11 +88,12 @@ asio::awaitable<TCPConnectionPtr> TCPServer::connect(std::string address, const 
         // Create a shared pointer to this connection and add to list
         TCPConnectionPtr connection = std::make_shared<TCPConnection>(std::move(socket));
         addConnection(address, port, connection);
+
+        // Make a callback to the caller
+        callback();
         
         // Start listening for messages from this connection
         asio::co_spawn(io_context_, messageListener(connection), asio::detached);
-
-        co_return connection;
     }
     catch (std::exception& e)
     {

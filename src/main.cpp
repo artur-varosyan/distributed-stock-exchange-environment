@@ -5,7 +5,10 @@
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 
-#include "agent/traderagent.hpp"
+#include <chrono>
+#include <thread>
+
+#include "agent/exampletrader.hpp"
 #include "message/message.hpp"
 #include "message/messagetype.hpp"
 #include "message/market_data_message.hpp"
@@ -24,26 +27,25 @@ int main(int argc, char** argv) {
     unsigned int port { static_cast<unsigned int>(std::stoi(argv[2])) };
 
     asio::io_context io_context;
-    TraderAgent agent{io_context, agent_id, port};
+    ExampleTrader trader{io_context, agent_id, port};
 
-    std::shared_ptr<MarketDataMessage> msg = std::make_shared<MarketDataMessage>();
+    if (agent_id == 0) {
+        trader.start();
+        
+    } else {
+        std::shared_ptr<MarketDataMessage> msg = std::make_shared<MarketDataMessage>();
 
-    msg->sender_id = agent_id;
-    msg->ticker = "AAPL";
-    msg->price = 100.0;
-    msg->timestamp = 123456789;
+        msg->sender_id = agent_id;
+        msg->ticker = "AAPL";
+        msg->price = 100.0;
+        msg->timestamp = 123456789;
 
-    std::shared_ptr<Message> msgptr = std::dynamic_pointer_cast<Message>(msg);
-
-    // Serialise the message
-    std::stringstream ss;
-    boost::archive::text_oarchive oa{ss};
-    oa << msgptr;
-    std::cout << "Serialised message:" << std::endl;
-    std::cout << ss.str() << std::endl;
-
-    agent.start();
-    std::cout << "Agent started listening..." << "\n";
+        trader.connect("127.0.0.1:8080", "trader0", [&](){
+            trader.sendMessage("127.0.0.1:8080", std::dynamic_pointer_cast<Message>(msg));
+        });
+        
+        trader.start();
+    }
 
     return 0;
 }

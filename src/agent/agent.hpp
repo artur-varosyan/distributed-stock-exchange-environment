@@ -12,7 +12,7 @@
 
 namespace asio = boost::asio;
 
-class Agent : protected NetworkEntity
+class Agent : public NetworkEntity
 {
 public:
     typedef boost::bimap<std::string, ipv4_address> address_book;
@@ -40,7 +40,7 @@ public:
     void start();
 
     /** Establishes a lasting connection with the agent at the given address. */
-    bool connect(ipv4_view address, std::string_view agent_name);
+    void connect(ipv4_view address, std::string_view agent_name, std::function<void()> const& callback);
 
     /** Sends a message to the known agent with the given name */
     void sendMessageTo(std::string_view agent_name, MessagePtr message);

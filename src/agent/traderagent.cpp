@@ -19,6 +19,7 @@ std::optional<MessagePtr> TraderAgent::handleMessageFrom(std::string_view sender
                 throw std::runtime_error("Failed to cast message to MarketDataMessage");
             }
             onMarketData(sender, msg);
+            break;
         }
         case MessageType::ORDER_ACK:
         {
@@ -27,6 +28,7 @@ std::optional<MessagePtr> TraderAgent::handleMessageFrom(std::string_view sender
                 throw std::runtime_error("Failed to cast message to OrderAckMessage");
             }
             onOrderAck(sender, msg);
+            break;
         }
         default:
         {

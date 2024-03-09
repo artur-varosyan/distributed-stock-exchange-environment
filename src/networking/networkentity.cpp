@@ -53,10 +53,12 @@ MessagePtr NetworkEntity::deserialiseMessage(std::string_view message)
     return msg;
 }
 
-void NetworkEntity::connect(ipv4_view address)
+void NetworkEntity::connect(ipv4_view address, std::function<void()> const& callback)
 {
     std::pair<std::string, unsigned int> pair = splitAddress(address);
-    asio::co_spawn(io_context_, TCPServer::connect(pair.first, pair.second), asio::detached);
+
+    // Cospawn an asio coroutine to connect to address then call callback
+    asio::co_spawn(io_context_, TCPServer::connect(pair.first, pair.second, callback), asio::detached);
 }
 
 void NetworkEntity::sendBroadcast(ipv4_view address, MessagePtr message)

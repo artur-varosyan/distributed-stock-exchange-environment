@@ -2,6 +2,7 @@
 #define NETWORK_ENTITY_HPP
 
 #include <iostream>
+#include <functional>
 #include <boost/asio.hpp>
 #include <boost/bimap.hpp>
 
@@ -38,7 +39,7 @@ public:
     void start();
 
     /** Establishes a lasting TCP connection with the given IPv4 address. */
-    void connect(ipv4_view address);
+    void connect(ipv4_view address, std::function<void()> const& callback);
 
     /** Sends a broadcast to the given IPv4 address. */
     void sendBroadcast(ipv4_view address, MessagePtr message);
