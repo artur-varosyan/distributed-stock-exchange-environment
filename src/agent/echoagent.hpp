@@ -9,22 +9,22 @@ class EchoAgent : public Agent
 {
 public:
 
-    EchoAgent(asio::io_context& io_context)
-    : Agent(io_context)
+    EchoAgent(asio::io_context& io_context, int agent_id)
+    : Agent(io_context, agent_id)
     {
     }
 
     virtual ~EchoAgent() = default;
 
-    std::optional<Message> handleMessageFrom(std::string_view sender, Message message) override
+    std::optional<MessagePtr> handleMessageFrom(std::string_view sender, MessagePtr message) override
     {
-        std::cout << "Received message from sender " << sender << " with id: "<< message.sender_id << "\n";
+        std::cout << "Received message from sender " << sender << " with id: "<< message->sender_id << "\n";
         return message;
     }
 
-    void handleBroadcastFrom(std::string_view sender, Message message) override
+    void handleBroadcastFrom(std::string_view sender, MessagePtr message) override
     {
-        std::cout << "Received broadcast from sender " << sender << " with id: "<< message.sender_id << "\n";
+        std::cout << "Received broadcast from sender " << sender << " with id: "<< message->sender_id << "\n";
         return;
     }
 

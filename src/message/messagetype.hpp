@@ -1,16 +1,18 @@
 #ifndef MESSAGE_TYPE_HPP
 #define MESSAGE_TYPE_HPP
 
-enum struct MessageType
+enum class MessageType : int
 {
     INIT,
     CONFIG,
     LOGON,
     MARKET_DATA,
+    SUBSCRIBE,
     LIMIT_ORDER,
     MARKET_ORDER,
     CANCEL_ORDER,
-    ACK,
+    ORDER_ACK
+
 };
 
 #endif

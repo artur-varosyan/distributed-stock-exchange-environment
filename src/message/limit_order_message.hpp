@@ -1,15 +1,17 @@
-#ifndef MARKET_DATA_MESSAGE_HPP
-#define MARKET_DATA_MESSAGE_HPP
+#ifndef LIMIT_ORDER_MESSAGE_HPP
+#define LIMIT_ORDER_MESSAGE_HPP
 
 #include "message.hpp"
 #include "messagetype.hpp"
 
-struct MarketDataMessage : public Message
+struct LimitOrderMessage : public Message
 {
-    MarketDataMessage() : Message(MessageType::MARKET_DATA) {};
+    LimitOrderMessage() : Message(MessageType::LIMIT_ORDER) {};
 
     std::string ticker;
+    std::string side;
     double price;
+    int quantity;
 
 private:
 
@@ -19,7 +21,9 @@ private:
     {
         ar & boost::serialization::base_object<Message>(*this);
         ar & ticker;
+        ar & side;
         ar & price;
+        ar & quantity;
     }
 
 };

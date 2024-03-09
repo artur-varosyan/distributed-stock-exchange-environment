@@ -13,6 +13,8 @@ namespace asio = boost::asio;
 using asio::ip::tcp;
 using asio::ip::udp;
 
+typedef std::shared_ptr<Message> MessagePtr;
+
 class NetworkEntity : protected TCPServer, protected UDPServer
 {
 public:
@@ -39,10 +41,10 @@ public:
     void connect(ipv4_view address);
 
     /** Sends a broadcast to the given IPv4 address. */
-    void sendBroadcast(ipv4_view address, Message message);
+    void sendBroadcast(ipv4_view address, MessagePtr message);
 
     /** Sends a message to the given IPv4 address. */
-    void sendMessage(ipv4_view address, Message message);
+    void sendMessage(ipv4_view address, MessagePtr message);
 
     /** Combines IP address with port into a single string. */
     std::string concatAddress(std::string_view address, unsigned int port);
@@ -54,10 +56,10 @@ public:
     /** Derived classes must implement these methods: */
 
     /** Handles an incoming message and returns the message to send. All derived classes must implement this. */
-    virtual std::optional<Message> handleMessage(ipv4_view sender, Message message) = 0;
+    virtual std::optional<MessagePtr> handleMessage(ipv4_view sender, MessagePtr message) = 0;
 
     /** Handles an incoming broadcast. All derived classes must implement this. */
-    virtual void handleBroadcast(ipv4_view sender, Message message) = 0;
+    virtual void handleBroadcast(ipv4_view sender, MessagePtr message) = 0;
 
 private:
 
@@ -74,10 +76,10 @@ private:
     void handleBroadcast(std::string_view sender_adress, unsigned int sender_port, std::string_view message) override;
 
     /** Serialises a message into a string to be sent. */
-    std::string serialiseMessage(Message message);
+    std::string serialiseMessage(MessagePtr message);
 
     /** Deserialises incoming strings into messages. */
-    Message deserialiseMessage(std::string_view message);
+    MessagePtr deserialiseMessage(std::string_view message);
 
     /** The bidirectional map of currently open TCP connections. */
     bimap connections_;

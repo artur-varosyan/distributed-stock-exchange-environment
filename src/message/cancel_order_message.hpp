@@ -1,15 +1,14 @@
-#ifndef MARKET_DATA_MESSAGE_HPP
-#define MARKET_DATA_MESSAGE_HPP
+#ifndef CANCEL_ORDER_MESSAGE_HPP
+#define CANCEL_ORDER_MESSAGE_HPP
 
 #include "message.hpp"
 #include "messagetype.hpp"
 
-struct MarketDataMessage : public Message
+struct CancelOrderMessage : public Message
 {
-    MarketDataMessage() : Message(MessageType::MARKET_DATA) {};
+    CancelOrderMessage() : Message(MessageType::CANCEL_ORDER) {};
 
-    std::string ticker;
-    double price;
+    std::string order_id;
 
 private:
 
@@ -18,8 +17,7 @@ private:
     void serialize(Archive & ar, const unsigned int version)
     {
         ar & boost::serialization::base_object<Message>(*this);
-        ar & ticker;
-        ar & price;
+        ar & order_id;
     }
 
 };

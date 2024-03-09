@@ -1,25 +1,25 @@
-#ifndef MARKET_DATA_MESSAGE_HPP
-#define MARKET_DATA_MESSAGE_HPP
+#ifndef ORDER_ACK_MESSAGE_HPP
+#define ORDER_ACK_MESSAGE_HPP
 
 #include "message.hpp"
 #include "messagetype.hpp"
 
-struct MarketDataMessage : public Message
+struct OrderAckMessage : public Message
 {
-    MarketDataMessage() : Message(MessageType::MARKET_DATA) {};
+    OrderAckMessage() : Message(MessageType::ORDER_ACK) {};
 
-    std::string ticker;
-    double price;
+    std::string order_id;
+    bool success;
 
 private:
-
+    
     friend class boost::serialization::access;
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version)
     {
         ar & boost::serialization::base_object<Message>(*this);
-        ar & ticker;
-        ar & price;
+        ar & order_id;
+        ar & success;
     }
 
 };

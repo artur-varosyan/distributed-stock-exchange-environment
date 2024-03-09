@@ -1,9 +1,25 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/export.hpp>
+#include <boost/serialization/shared_ptr.hpp>
 
 #include "networkentity.hpp"
 #include "../message/message.hpp"
+#include "../message/messagetype.hpp"
+#include "../message/market_data_message.hpp"
+#include "../message/order_ack_message.hpp"
+#include "../message/subscribe_message.hpp"
+#include "../message/limit_order_message.hpp"
+#include "../message/market_order_message.hpp"
+#include "../message/cancel_order_message.hpp"
+
+BOOST_CLASS_EXPORT(Message);
+BOOST_CLASS_EXPORT(MarketDataMessage);
+BOOST_CLASS_EXPORT(OrderAckMessage);
+BOOST_CLASS_EXPORT(SubscribeMessage);
+BOOST_CLASS_EXPORT(LimitOrderMessage);
+BOOST_CLASS_EXPORT(MarketOrderMessage);
+BOOST_CLASS_EXPORT(CancelOrderMessage);
 
 namespace archive = boost::archive;
 
@@ -14,7 +30,7 @@ void NetworkEntity::start()
     io_context_.run();
 }
 
-std::string NetworkEntity::serialiseMessage(Message message)
+std::string NetworkEntity::serialiseMessage(MessagePtr message)
 {
     std::stringstream ss;
     archive::text_oarchive oa{ss};
@@ -22,12 +38,18 @@ std::string NetworkEntity::serialiseMessage(Message message)
     return ss.str();
 }
 
-Message NetworkEntity::deserialiseMessage(std::string_view message)
+MessagePtr NetworkEntity::deserialiseMessage(std::string_view message)
 {
     std::stringstream ss{std::string{message}};
     archive::text_iarchive ia{ss};
-    Message msg;
+    MessagePtr msg = std::make_shared<Message>();
     ia >> msg;
+
+    if (msg == nullptr)
+    {
+        throw std::runtime_error("Deserialisation returned nullptr");
+    }
+
     return msg;
 }
 
@@ -37,13 +59,13 @@ void NetworkEntity::connect(ipv4_view address)
     asio::co_spawn(io_context_, TCPServer::connect(pair.first, pair.second), asio::detached);
 }
 
-void NetworkEntity::sendBroadcast(ipv4_view address, Message message)
+void NetworkEntity::sendBroadcast(ipv4_view address, MessagePtr message)
 {
     std::pair<std::string, unsigned int> pair = splitAddress(address);
     asio::co_spawn(io_context_, UDPServer::sendBroadcast(pair.first, pair.second, serialiseMessage(message)), asio::detached);
 }
 
-void NetworkEntity::sendMessage(ipv4_view address, Message message)
+void NetworkEntity::sendMessage(ipv4_view address, MessagePtr message)
 {
     std::pair<std::string, unsigned int> pair = splitAddress(address);
     TCPConnectionPtr connection = connections_.left.at(concatAddress(pair.first, pair.second));
@@ -76,12 +98,12 @@ void NetworkEntity::removeConnection(std::string_view address, unsigned int port
 
 std::string NetworkEntity::handleMessage(std::string_view sender_adress, unsigned int sender_port, std::string_view message)
 {
-    std::cout << "Received broadcast from " << sender_adress << ":" << sender_port << ": " << message << "\n";
+    std::cout << "Received message from " << sender_adress << ":" << sender_port << ": " << message << "\n";
 
     try 
     {
-        Message msg = deserialiseMessage(message);
-        std::optional<Message> response = handleMessage(concatAddress(sender_adress, sender_port), msg);
+        MessagePtr msg = deserialiseMessage(message);
+        std::optional<MessagePtr> response = handleMessage(concatAddress(sender_adress, sender_port), msg);
         if (response.has_value()) 
         {
             return serialiseMessage(response.value());
@@ -90,6 +112,7 @@ std::string NetworkEntity::handleMessage(std::string_view sender_adress, unsigne
     catch (std::exception& e)
     {
         std::cout << "Failed to deserialise message" << "\n";
+        std::cout << e.what() << "\n";
     }
 
     return std::string{};
@@ -101,7 +124,7 @@ void NetworkEntity::handleBroadcast(std::string_view sender_adress, unsigned int
 
     try 
     {
-        Message msg = deserialiseMessage(message);
+        MessagePtr msg = deserialiseMessage(message);
         handleMessage(concatAddress(sender_adress, sender_port), msg);
     }
     catch (std::exception& e)

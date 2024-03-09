@@ -1,15 +1,14 @@
-#ifndef MARKET_DATA_MESSAGE_HPP
-#define MARKET_DATA_MESSAGE_HPP
+#ifndef SUBSCRIBE_MESSAGE_HPP
+#define SUBSCRIBE_MESSAGE_HPP
 
 #include "message.hpp"
 #include "messagetype.hpp"
 
-struct MarketDataMessage : public Message
+struct SubscribeMessage : public Message
 {
-    MarketDataMessage() : Message(MessageType::MARKET_DATA) {};
+    SubscribeMessage() : Message(MessageType::SUBSCRIBE) {};
 
     std::string ticker;
-    double price;
 
 private:
 
@@ -19,7 +18,6 @@ private:
     {
         ar & boost::serialization::base_object<Message>(*this);
         ar & ticker;
-        ar & price;
     }
 
 };
