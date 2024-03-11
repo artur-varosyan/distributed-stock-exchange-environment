@@ -21,7 +21,9 @@ add_executable(simulation src/main.cpp
                           src/networking/udpserver.cpp
                           src/networking/networkentity.cpp
                           src/agent/agent.cpp
-                          src/agent/traderagent.cpp)
+                          src/agent/traderagent.cpp
+                          src/order/orderqueue.cpp
+                          src/order/orderbook.cpp)
 
 if(Boost_FOUND)
 
