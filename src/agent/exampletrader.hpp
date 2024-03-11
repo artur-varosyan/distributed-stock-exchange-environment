@@ -22,12 +22,12 @@ public:
 
     void onMarketData(std::string_view exchange, MarketDataMessagePtr msg) override
     {
-        std::cout << "Received market data from " << exchange << ": " << msg->ticker << " " << msg->price << std::endl;
+        std::cout << "Received market data from " << exchange << ":\n" << msg->summary << "\n";
     }
 
     void onOrderAck(std::string_view exchange, OrderAckMessagePtr msg) override
     {
-        std::cout << "Received order ack from " << exchange << ": " << msg->order_id << " " << msg->success << std::endl;
+        std::cout << "Received order ack from " << exchange << ": " << msg->order_id << " " << msg->success << "\n";
     }
 
 };

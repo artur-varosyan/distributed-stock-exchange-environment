@@ -22,6 +22,7 @@ add_executable(simulation src/main.cpp
                           src/networking/networkentity.cpp
                           src/agent/agent.cpp
                           src/agent/traderagent.cpp
+                          src/agent/exchangeagent.cpp
                           src/order/orderqueue.cpp
                           src/order/orderbook.cpp)
 

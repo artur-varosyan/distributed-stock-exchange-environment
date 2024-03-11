@@ -9,6 +9,7 @@ struct SubscribeMessage : public Message
     SubscribeMessage() : Message(MessageType::SUBSCRIBE) {};
 
     std::string ticker;
+    std::string address;
 
 private:
 
@@ -18,8 +19,11 @@ private:
     {
         ar & boost::serialization::base_object<Message>(*this);
         ar & ticker;
+        ar & address;
     }
 
 };
+
+typedef std::shared_ptr<SubscribeMessage> SubscribeMessagePtr;
 
 #endif

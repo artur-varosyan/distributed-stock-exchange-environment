@@ -5,6 +5,7 @@
 
 void Agent::start()
 {
+    std::cout << "Starting listening on port " << port << "...\n";
     NetworkEntity::start();
 }
 
@@ -59,7 +60,6 @@ void Agent::sendMessageTo(std::string_view agent_name, MessagePtr message)
 {
     if (known_agents.left.find(std::string{agent_name}) != known_agents.left.end())
     {
-        std::cout << "Agent name exists in address book" << "\n";
         NetworkEntity::sendMessage(known_agents.left.at(std::string{agent_name}), message);
     }
     else

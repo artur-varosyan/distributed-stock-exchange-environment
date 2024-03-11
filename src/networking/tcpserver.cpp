@@ -61,7 +61,7 @@ asio::awaitable<void> TCPServer::listener()
 {
     auto executor = co_await asio::this_coro::executor;
     tcp::acceptor acceptor(executor, {tcp::v4(), tcp_port_});
-    std::cout << "Listening for TCP on port " << tcp_port_ << "\n";
+    // std::cout << "Listening for TCP on port " << tcp_port_ << "\n";
 
     while (true)
     {

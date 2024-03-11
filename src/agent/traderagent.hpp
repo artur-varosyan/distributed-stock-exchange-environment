@@ -4,19 +4,13 @@
 #include <iostream>
 
 #include "agent.hpp"
+#include "../order/order.hpp"
 #include "../message/market_data_message.hpp"
 #include "../message/order_ack_message.hpp"
 #include "../message/subscribe_message.hpp"
 #include "../message/limit_order_message.hpp"
 #include "../message/market_order_message.hpp"
 #include "../message/cancel_order_message.hpp"
-
-typedef std::shared_ptr<MarketDataMessage> MarketDataMessagePtr;
-typedef std::shared_ptr<OrderAckMessage> OrderAckMessagePtr;
-typedef std::shared_ptr<SubscribeMessage> SubscribeMessagePtr;
-typedef std::shared_ptr<LimitOrderMessage> LimitOrderMessagePtr;
-typedef std::shared_ptr<MarketOrderMessage> MarketOrderMessagePtr;
-typedef std::shared_ptr<CancelOrderMessage> CancelOrderMessagePtr;
 
 class TraderAgent : public Agent
 {
@@ -39,10 +33,10 @@ public:
     void subscribeToMarket(std::string_view exchange, std::string_view ticker);
 
     /** Places a limit order for the given ticker at the given exchange. */
-    void placeLimitOrder(std::string_view exchange, std::string_view ticker, int quantity, double price);
+    void placeLimitOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int quantity, double price);
 
     // /** Places a market order for the given ticker at the given exchange. */
-    void placeMarketOrder(std::string_view exchange, std::string_view ticker, int quantity);
+    void placeMarketOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int quantity);
 
     // /** Cancels the order with the given id at the given exchange. */
     void cancelOrder(std::string_view exchange, int order_id);

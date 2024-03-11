@@ -24,4 +24,6 @@ private:
 
 };
 
+typedef std::shared_ptr<OrderAckMessage> OrderAckMessagePtr;
+
 #endif

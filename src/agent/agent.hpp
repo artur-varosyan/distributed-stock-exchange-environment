@@ -22,7 +22,8 @@ public:
 
     Agent(asio::io_context& io_context, int agent_id, unsigned int port)
     : io_context_(io_context),
-      agent_id(agent_id),
+      agent_id{agent_id},
+      port{port},
       NetworkEntity(io_context, port, port),
       known_agents{}
     {
@@ -30,7 +31,8 @@ public:
 
     Agent(asio::io_context& io_context, int agent_id)
     : io_context_(io_context),
-      agent_id(agent_id),
+      agent_id{agent_id},
+      port{kUdpPort},
       NetworkEntity(io_context, kTcpPort, kUdpPort),
       known_agents{}
     {
@@ -70,6 +72,9 @@ protected:
 
     /** A bidirectional map of known agent names and addresses. */
     address_book known_agents;
+
+    /** The port the agent is listening on. */
+    unsigned int port;
 
 private:
 

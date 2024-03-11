@@ -8,7 +8,7 @@ using asio::ip::udp;
 
 asio::awaitable<void> UDPServer::start()
 {
-    std::cout << "Starting a UDP server on port " << udp_port_ << "\n";
+    // std::cout << "Starting a UDP server on port " << udp_port_ << "\n";
 
     co_await listener();
 }
@@ -16,7 +16,7 @@ asio::awaitable<void> UDPServer::start()
 asio::awaitable<void> UDPServer::listener()
 {
     auto executor = co_await asio::this_coro::executor;
-    std::cout << "Listening for UDP on port " << udp_port_ << "\n";
+    // std::cout << "Listening for UDP on port " << udp_port_ << "\n";
 
     char data[1024];
 

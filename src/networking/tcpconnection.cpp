@@ -21,7 +21,7 @@ asio::awaitable<std::string> TCPConnection::read()
     char data[1024];
 
     std::size_t n = co_await socket_.async_read_some(asio::buffer(data), asio::use_awaitable);
-    std::cout << "Message from " << socket_.remote_endpoint() << ": " << std::string(data, n) << " of size " << n << "\n";
+    // std::cout << "Message from " << socket_.remote_endpoint() << ": " << std::string(data, n) << " of size " << n << "\n";
 
     co_return std::string(data, n);
 }

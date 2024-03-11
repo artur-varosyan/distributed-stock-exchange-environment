@@ -9,7 +9,7 @@ struct MarketOrderMessage : public Message
     MarketOrderMessage() : Message(MessageType::MARKET_ORDER) {};
 
     std::string ticker;
-    std::string side;
+    Order::Side side;
     int quantity;
 
 private:
@@ -25,5 +25,7 @@ private:
     }
 
 };
+
+typedef std::shared_ptr<MarketOrderMessage> MarketOrderMessagePtr;
 
 #endif

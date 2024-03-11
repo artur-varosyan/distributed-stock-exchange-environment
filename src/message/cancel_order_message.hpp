@@ -22,4 +22,6 @@ private:
 
 };
 
+typedef std::shared_ptr<CancelOrderMessage> CancelOrderMessagePtr;
+
 #endif

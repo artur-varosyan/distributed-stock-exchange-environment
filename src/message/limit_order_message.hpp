@@ -3,13 +3,14 @@
 
 #include "message.hpp"
 #include "messagetype.hpp"
+#include "../order/order.hpp"
 
 struct LimitOrderMessage : public Message
 {
     LimitOrderMessage() : Message(MessageType::LIMIT_ORDER) {};
 
     std::string ticker;
-    std::string side;
+    Order::Side side;
     double price;
     int quantity;
 
@@ -27,5 +28,7 @@ private:
     }
 
 };
+
+typedef std::shared_ptr<LimitOrderMessage> LimitOrderMessagePtr;
 
 #endif

@@ -7,7 +7,7 @@
 class Order: std::enable_shared_from_this<Order> {
 public:
 
-    enum class Side {
+    enum class Side: int {
         BID,
         ASK
     };
@@ -15,7 +15,8 @@ public:
     Order(int order_id)
     : id{order_id}
     {
-        timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        std::chrono::system_clock::duration now = std::chrono::system_clock::now().time_since_epoch();
+        timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
     }
 
     Order(int order_id, int sender_id, std::string_view ticker, Order::Side side, double price, int quantity)
@@ -26,7 +27,8 @@ public:
       price{price}, 
       quantity{quantity}
     {
-        timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        std::chrono::system_clock::duration now = std::chrono::system_clock::now().time_since_epoch();
+        timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
     }
 
     int id;
@@ -41,7 +43,7 @@ private:
 
     friend std::ostream& operator<<(std::ostream& os, const Order& order)
     {
-        os << "Order: " << order.sender_id << " " << order.ticker << " " << (order.side == Order::Side::BID ? "BID" : "ASK") << " " << order.price << " " << order.quantity;
+        os << "Order: From: " << order.sender_id << " " << order.ticker << " " << (order.side == Order::Side::BID ? "BID" : "ASK") << " " << order.quantity << " @ " << order.price;
         return os;
     }
 

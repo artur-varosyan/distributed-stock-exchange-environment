@@ -88,20 +88,20 @@ std::pair<std::string, unsigned int> NetworkEntity::splitAddress(std::string_vie
 
 void NetworkEntity::addConnection(std::string_view address, unsigned int port, TCPConnectionPtr connection)
 {
-    std::cout << "New connection from " << address << ":" << port << "\n";
+    // std::cout << "New connection from " << address << ":" << port << "\n";
     connections_.left.insert({concatAddress(address, port), connection});
 }
 
 void NetworkEntity::removeConnection(std::string_view address, unsigned int port)
 {
     connections_.left.erase(concatAddress(address, port));
-    std::cout << "Removed connection from " << address << ":" << port << "\n";
+    // std::cout << "Removed connection from " << address << ":" << port << "\n";
 }
 
 
 std::string NetworkEntity::handleMessage(std::string_view sender_adress, unsigned int sender_port, std::string_view message)
 {
-    std::cout << "Received message from " << sender_adress << ":" << sender_port << ": " << message << "\n";
+    // std::cout << "Received message from " << sender_adress << ":" << sender_port << ": " << message << "\n";
 
     try 
     {
@@ -123,7 +123,7 @@ std::string NetworkEntity::handleMessage(std::string_view sender_adress, unsigne
 
 void NetworkEntity::handleBroadcast(std::string_view sender_adress, unsigned int sender_port, std::string_view message)
 {
-    std::cout << "Received broadcast from " << sender_adress << ":" << sender_port << ": " << message << "\n";
+    // std::cout << "Received broadcast from " << sender_adress << ":" << sender_port << ": " << message << "\n";
 
     try 
     {

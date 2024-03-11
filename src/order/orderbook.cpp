@@ -29,6 +29,7 @@ bool OrderBook::removeOrder(int order_id, Order::Side side)
         if (order.has_value())
         {
             bid_size_ -= order.value()->quantity;
+            return true;
         }
     }
     else
@@ -37,8 +38,10 @@ bool OrderBook::removeOrder(int order_id, Order::Side side)
         if (order.has_value())
         {
             ask_size_ -= order.value()->quantity;
+            return true;
         }
     }
+    return false;
 }
 
 std::optional<OrderPtr> OrderBook::bestBid()

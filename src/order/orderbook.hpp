@@ -57,7 +57,9 @@ public:
     OrderBook(std::string_view ticker)
     : ticker_{std::string(ticker)},
       bids_{Order::Side::BID},
-      asks_{Order::Side::ASK}
+      asks_{Order::Side::ASK},
+      bid_size_{0},
+      ask_size_{0}
     {
     }
     

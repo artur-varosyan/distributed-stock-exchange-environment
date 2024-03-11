@@ -3,13 +3,13 @@
 
 #include "message.hpp"
 #include "messagetype.hpp"
+#include "../order/orderbook.hpp"
 
 struct MarketDataMessage : public Message
 {
     MarketDataMessage() : Message(MessageType::MARKET_DATA) {};
 
-    std::string ticker;
-    double price;
+    OrderBook::Summary summary;
 
 private:
 
@@ -18,10 +18,11 @@ private:
     void serialize(Archive & ar, const unsigned int version)
     {
         ar & boost::serialization::base_object<Message>(*this);
-        ar & ticker;
-        ar & price;
+        ar & summary;
     }
 
 };
+
+typedef std::shared_ptr<MarketDataMessage> MarketDataMessagePtr;
 
 #endif

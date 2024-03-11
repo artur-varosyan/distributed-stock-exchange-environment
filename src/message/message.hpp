@@ -1,6 +1,7 @@
 #ifndef MESSAGE_HPP
 #define MESSAGE_HPP
 
+#include <chrono>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/string.hpp>
@@ -20,6 +21,8 @@ public:
     Message(MessageType type) 
     : type{type}
     {
+        std::chrono::system_clock::duration now = std::chrono::system_clock::now().time_since_epoch();
+        timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
     };
 
     virtual ~Message() = default;
@@ -36,6 +39,8 @@ public:
     int sender_id;
     // std::vector<int> receiver_ids;
     MessageType type;
+
+    /** TODO: Split timestamp into sent and received to measure latency */
     unsigned long long timestamp;
 
 private:
