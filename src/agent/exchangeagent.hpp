@@ -8,7 +8,6 @@
 
 #include "agent.hpp"
 #include "../order/order.hpp"
-#include "../order/orderbook.hpp"
 #include "../message/market_order_message.hpp"
 #include "../message/limit_order_message.hpp"
 #include "../message/cancel_order_message.hpp"

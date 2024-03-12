@@ -1,4 +1,64 @@
 #include "stockexchange.hpp"
+#include "../utilities/syncqueue.hpp"
+
+void StockExchange::start()
+{
+    // 1. Create a Matching Engine Thread
+    std::thread matching_engine_thread(&StockExchange::runMatchingEngine, this);
+    // 2. Create a Market Data Publisher Thread
+    std::thread data_publisher_thread(&StockExchange::runMarketDataPublisher, this);
+    
+    // 3. Main thread continues to listen for incoming messages
+    Agent::start();
+};
+
+void StockExchange::runMatchingEngine()
+{
+    std::cout << "Started running matching engine" << "\n";
+
+    /** TODO: Add stopping condition */
+    while (true)
+    {
+        // Wait until new order is present
+        OrderPtr order = order_queue_.pop();
+        
+        /** TODO: Match orders */
+        // matchOrders(order);
+
+        /** TODO: Add market update to queue */
+    }
+    std::cout << "Stopped running matching engine" << "\n";
+};
+
+bool StockExchange::crossesSpread(OrderPtr order)
+{
+    throw new std::runtime_error("Implement me!");
+};
+
+void StockExchange::matchOrders(OrderPtr order)
+{
+    throw new std::runtime_error("Implement me!");
+};
+
+void StockExchange::queueMarketUpdate(std::string_view ticker)
+{
+    throw new std::runtime_error("Implement me!");
+};
+
+void StockExchange::runMarketDataPublisher()
+{
+    std::cout << "Started running market data publisher" << "\n";
+
+    /** TODO: Add stopping condition */
+    while (true)
+    {
+        // Wait until 
+        OrderBook::Summary summary = market_update_queue_.pop();
+        
+        /** TODO: Broadcast the update */
+    }
+    std::cout << "Stopped running market data publisher" << "\n";
+};
 
 void StockExchange::onSubscribe(SubscribeMessagePtr msg)
 {

@@ -39,7 +39,7 @@ public:
     }
 
     /** Starts listening for incoming messages and broadcasts. */
-    void start();
+    virtual void start() override;
 
     /** Establishes a lasting connection with the agent at the given address. */
     void connect(ipv4_view address, std::string_view agent_name, std::function<void()> const& callback);

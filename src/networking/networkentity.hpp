@@ -36,7 +36,7 @@ public:
     }
 
     /** Starts both servers sharing the same context */
-    void start();
+    virtual void start();
 
     /** Establishes a lasting TCP connection with the given IPv4 address. */
     void connect(ipv4_view address, std::function<void()> const& callback);

@@ -12,21 +12,39 @@ class SyncQueue : std::enable_shared_from_this<SyncQueue<T>>
 {
 public:
 
-    SyncMessageQueue()
+    SyncQueue()
     : queue_{},
       lock_{},
-      cv{}
+      cv_{}
     {
     };
 
     /** Pushes the value to the end of the queue. */
-    void push(T value);
+    void push(T value)
+    {
+      std::unique_lock<std::mutex> lock(lock_); 
+      queue_.push(value);
+      cv_.notify_all();
+    };
 
     /** Wait until present and pops the value from the start of the queue. */
-    T pop();
+    T pop()
+    {
+      // Wait until new message added to the queue
+      std::unique_lock<std::mutex> lock(lock_); 
+      cv_.wait(lock, [this]{ return !queue_.empty(); });
+
+      // Return the value at the front of the queue
+      T value = queue_.front();
+      queue_.pop();
+      return value;
+    };
 
     /** Returns the size of the queue. */
-    unsigned int size();
+    unsigned int size()
+    {
+      return queue_.size();
+    };
 
 private:
 
