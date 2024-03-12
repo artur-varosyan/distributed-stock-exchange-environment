@@ -6,6 +6,7 @@
 
 #include "order.hpp"
 
+/** A FIFO queue with price-time priority for currently active orders. */
 class OrderQueue: public std::priority_queue<OrderPtr, std::vector<OrderPtr>, std::function<bool(OrderPtr, OrderPtr)>> {
 public:
 
@@ -15,10 +16,26 @@ public:
         if (side == Order::Side::BID) 
         {
             // Sort bids in descending order
-            this->comp = [](OrderPtr a, OrderPtr b) { return a->price >= b->price; };
+            this->comp = [](OrderPtr a, OrderPtr b) { 
+                if (a->price != b->price) {
+                    return a->price >= b->price; 
+                }
+                else {
+                    // Compare timestamps if prices are equal
+                    return a->timestamp <= b->timestamp;
+                }
+            };
         } else {
             // Sort asks in ascending order
-            this->comp = [](OrderPtr a, OrderPtr b) { return a->price <= b->price; };
+            this->comp = [](OrderPtr a, OrderPtr b) { 
+                if (a->price != b->price) {
+                    return a->price >= b->price; 
+                }
+                else {
+                    // Compare timestamps if prices are equal
+                    return a->timestamp <= b->timestamp;
+                }
+             };
         }
     }
 
