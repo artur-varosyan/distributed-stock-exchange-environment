@@ -9,7 +9,7 @@
 #include <thread>
 
 #include "agent/exampletrader.hpp"
-#include "agent/exchangeagent.hpp"
+#include "agent/stockexchange.hpp"
 #include "message/message.hpp"
 #include "message/messagetype.hpp"
 #include "message/market_data_message.hpp"
@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     asio::io_context io_context;
     if (agent_type == "exchange")
     {
-        ExchangeAgent exchange{io_context, agent_id, "LSE", 9999};
+        StockExchange exchange{io_context, agent_id, "LSE", 9999};
         exchange.addTradeableAsset("AAPL");
         exchange.start();
     }

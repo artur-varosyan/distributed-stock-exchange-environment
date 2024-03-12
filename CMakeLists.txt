@@ -23,6 +23,7 @@ add_executable(simulation src/main.cpp
                           src/agent/agent.cpp
                           src/agent/traderagent.cpp
                           src/agent/exchangeagent.cpp
+                          src/agent/stockexchange.cpp
                           src/order/orderqueue.cpp
                           src/order/orderbook.cpp)
 

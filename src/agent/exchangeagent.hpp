@@ -27,47 +27,31 @@ public:
 
     ExchangeAgent(asio::io_context& io_context, int agent_id, std::string_view exchange_name, unsigned int port)
     : Agent(io_context, agent_id, port),
-      exchange_name_{exchange_name},
-      order_books_{},
-      subscribers_{}
+      exchange_name_{exchange_name}
     {
     }
 
     ExchangeAgent(asio::io_context& io_context, int agent_id, std::string_view exchange_name)
     : Agent(io_context, agent_id),
-      exchange_name_{exchange_name},
-      order_books_{},
-      subscribers_{}
+      exchange_name_{exchange_name}
     {
     }
 
-    /** Adds the given asset a tradeable and initialises an empty order book. */
-    void addTradeableAsset(std::string_view ticker);
+    virtual void onLimitOrder(LimitOrderMessagePtr msg) = 0;
+    virtual void onMarketOrder(MarketOrderMessagePtr msg) = 0;
+    virtual void onCancelOrder(CancelOrderMessagePtr msg) = 0;
+    virtual void onSubscribe(SubscribeMessagePtr msg) = 0;
 
-    /** Publishes market data to all subscribers. */
-    void publishMarketData(std::string_view ticker);
+protected:
 
-    void onLimitOrder(LimitOrderMessagePtr msg);
-    void onMarketOrder(MarketOrderMessagePtr msg);
-    void onCancelOrder(CancelOrderMessagePtr msg);
-    void onSubscribe(SubscribeMessagePtr msg);
-
-private:
+    /** The unique name of the exchange*/
+    std::string exchange_name_;
 
     /** Checks the type of the incoming message and makes a callback. */
     std::optional<MessagePtr> handleMessageFrom(std::string_view sender, MessagePtr message) override;
 
     /** Checks the type of the incoming broadcast and makes a callback. */
     void handleBroadcastFrom(std::string_view sender, MessagePtr message) override;
-
-    /** The unique name of the exchange*/
-    std::string exchange_name_;
-
-    /** Order books for each ticker traded. */
-    std::unordered_map<std::string, OrderBook> order_books_;
-
-    /** Subscribers for each ticker traded. */
-    std::unordered_map<std::string, std::vector<std::string>> subscribers_;
 };
 
 #endif
