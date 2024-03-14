@@ -37,8 +37,10 @@ std::optional<MessagePtr> Agent::handleMessage(ipv4_view sender, MessagePtr mess
     }
     else
     {
-        // Unknown sender
-        return handleMessageFrom("unknown", message);
+        // Unknown sender, add to address book
+        std::string agent_id = std::to_string(message->sender_id);
+        addToAddressBook(sender, agent_id);
+        return handleMessageFrom(agent_id, message);
     }
 }
 
@@ -58,8 +60,10 @@ void Agent::handleBroadcast(ipv4_view sender, MessagePtr message)
 
 void Agent::sendMessageTo(std::string_view agent_name, MessagePtr message)
 {
+    // std::cout << "Sending message to " << agent_name << "\n";
     if (known_agents.left.find(std::string{agent_name}) != known_agents.left.end())
     {
+        // std::cout << "Agent found in address book\n";
         NetworkEntity::sendMessage(known_agents.left.at(std::string{agent_name}), message);
     }
     else

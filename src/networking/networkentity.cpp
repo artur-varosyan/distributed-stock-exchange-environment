@@ -64,14 +64,23 @@ void NetworkEntity::connect(ipv4_view address, std::function<void()> const& call
 void NetworkEntity::sendBroadcast(ipv4_view address, MessagePtr message)
 {
     std::pair<std::string, unsigned int> pair = splitAddress(address);
-    asio::co_spawn(io_context_, UDPServer::sendBroadcast(pair.first, pair.second, serialiseMessage(message)), asio::detached);
+    // std::cout << "Cospawning an asio coroutine\n";
+    asio::post(io_context_, [=, this](){
+        asio::co_spawn(this->io_context_, UDPServer::sendBroadcast(pair.first, pair.second, serialiseMessage(message)), asio::detached);
+    });
 }
 
 void NetworkEntity::sendMessage(ipv4_view address, MessagePtr message)
 {
     std::pair<std::string, unsigned int> pair = splitAddress(address);
     TCPConnectionPtr connection = connections_.left.at(concatAddress(pair.first, pair.second));
-    asio::co_spawn(io_context_, TCPServer::sendMessage(connection, serialiseMessage(message)), asio::detached);
+
+    asio::post(io_context_, [=, this](){
+        // std::cout << "Posted task is running\n" << "\n";
+        asio::co_spawn(io_context_, TCPServer::sendMessage(connection, serialiseMessage(message)), asio::detached);
+        // std::cout << "Coroutine spawned\n" << "\n";
+    });
+    // std::cout << "Task posted\n" << "\n";
 }
 
 std::string NetworkEntity::concatAddress(std::string_view address, unsigned int port)
@@ -133,6 +142,7 @@ void NetworkEntity::handleBroadcast(std::string_view sender_adress, unsigned int
     catch (std::exception& e)
     {
         std::cout << "Failed to deserialise message" << "\n";
+        std::cout << e.what() << "\n";
     }
     
     return;

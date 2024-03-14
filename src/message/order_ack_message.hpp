@@ -8,7 +8,7 @@ struct OrderAckMessage : public Message
 {
     OrderAckMessage() : Message(MessageType::ORDER_ACK) {};
 
-    std::string order_id;
+    int order_id;
     bool success;
 
 private:

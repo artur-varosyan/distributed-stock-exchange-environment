@@ -33,7 +33,8 @@ asio::awaitable<void> TCPServer::messageListener(TCPConnectionPtr connection)
     }
     catch (std::exception& e)
     {
-        std::cout << "Exception in message listener: " << e.what() << "\n";
+        std::cout << "Connection dropped from " << address << ":" << port << "\n";
+        // std::cout << "Exception in message listener: " << e.what() << "\n";
 
         // Remove connection from list
         removeConnection(address, port);
@@ -70,7 +71,7 @@ asio::awaitable<void> TCPServer::listener()
     }
 }
 
-asio::awaitable<void> TCPServer::sendMessage(TCPConnectionPtr connection, std::string_view message)
+asio::awaitable<void> TCPServer::sendMessage(TCPConnectionPtr connection, std::string message)
 {
     co_await connection->send(message);
 }
@@ -81,8 +82,14 @@ asio::awaitable<void> TCPServer::connect(std::string address, const unsigned int
     tcp::endpoint endpoint(addr, port);
     tcp::socket socket(io_context_);
 
+    // tcp::endpoint local_endpoint(asio::ip::make_address("127.0.0.1"), tcp_port_);
+
     try
     {
+        /** TODO: Decide if outgoing client port should be specified. */
+        // socket.open(local_endpoint.protocol());
+        // socket.bind(local_endpoint);
+
         co_await socket.async_connect(endpoint, asio::use_awaitable);
 
         // Create a shared pointer to this connection and add to list
@@ -97,8 +104,8 @@ asio::awaitable<void> TCPServer::connect(std::string address, const unsigned int
     }
     catch (std::exception& e)
     {
-        std::cout << "Failed to connect to " << socket.remote_endpoint() << "\n";
         std::cout << "Exception: " << e.what() << "\n";
+        std::cout << "Failed to connect to " << socket.remote_endpoint() << "\n";
         throw e;
     }
     

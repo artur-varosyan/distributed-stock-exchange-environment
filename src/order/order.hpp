@@ -43,7 +43,7 @@ private:
 
     friend std::ostream& operator<<(std::ostream& os, const Order& order)
     {
-        os << "Order: From: " << order.sender_id << " " << order.ticker << " " << (order.side == Order::Side::BID ? "BID" : "ASK") << " " << order.quantity << " @ " << order.price;
+        os << order.timestamp << " [Order] " << "Trader: " << order.sender_id << " " << order.ticker << " " << (order.side == Order::Side::BID ? "BID" : "ASK") << " " << order.quantity << " @ $" << order.price;
         return os;
     }
 

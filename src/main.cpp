@@ -38,11 +38,29 @@ int main(int argc, char** argv) {
     }
     else {
         ExampleTrader trader{io_context, agent_id, port};
+        
+        std::mutex m;
+        std::condition_variable cv;
+        std::thread t([&](){
+            std::unique_lock<std::mutex> lk(m);
+            // Wait until connection with exchange established
+            cv.wait(lk);
+
+            for (int i=0; i < 1500; i++) {
+                if (agent_id == 2) {
+                    trader.placeLimitOrder("LSE", Order::Side::BID, "AAPL", 100, 100.0);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+                }
+                else if (agent_id == 3) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                    trader.placeLimitOrder("LSE", Order::Side::ASK, "AAPL", 100, 100.0);
+                }
+            }
+        });
+
         trader.connect("127.0.0.1:9999", "LSE", [&](){
             trader.subscribeToMarket("LSE", "AAPL");
-            if (agent_id == 3) {
-                trader.placeLimitOrder("LSE", Order::Side::BID, "AAPL", 100, 100.0);
-            }
+            cv.notify_one();
         });
         trader.start();
     }

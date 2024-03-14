@@ -1,29 +1,38 @@
 #ifndef STOCK_EXCHANGE_HPP
 #define STOCK_EXCHANGE_HPP
 
-#include "exchangeagent.hpp"
+#include "../agent/agent.hpp"
 #include "../order/order.hpp"
 #include "../order/orderbook.hpp"
 #include "../utilities/syncqueue.hpp"
+#include "../message/message.hpp"
+#include "../message/market_data_message.hpp"
+#include "../message/limit_order_message.hpp"
+#include "../message/market_order_message.hpp"
+#include "../message/cancel_order_message.hpp"
+#include "../message/subscribe_message.hpp"
+#include "../message/order_ack_message.hpp"
 
-class StockExchange : public ExchangeAgent
+class StockExchange : public Agent
 {
 public:
 
     StockExchange(asio::io_context& io_context, int agent_id, std::string_view exchange_name, unsigned int port)
-    : ExchangeAgent(io_context, agent_id, exchange_name, port),
+    : Agent(io_context, agent_id, port),
+      exchange_name_{exchange_name},
       order_books_{},
       subscribers_{},
-      order_queue_{},
+      msg_queue_{},
       market_update_queue_{}
     {
     }
 
     StockExchange(asio::io_context& io_context, int agent_id, std::string_view exchange_name)
-    : ExchangeAgent(io_context, agent_id, exchange_name),
+    : Agent(io_context, agent_id),
+      exchange_name_{exchange_name},
       order_books_{},
       subscribers_{},
-      order_queue_{},
+      msg_queue_{},
       market_update_queue_{}
     {
     }
@@ -31,16 +40,11 @@ public:
     /** Starts the exchange. */
     void start() override;
 
-    /** Adds the given asset a tradeable and initialises an empty order book. */
+    /** Adds the given asset as tradeable and initialises an empty order book. */
     void addTradeableAsset(std::string_view ticker);
 
     /** Publishes market data to all subscribers. */
     void publishMarketData(std::string_view ticker);
-
-    void onLimitOrder(LimitOrderMessagePtr msg) override;
-    void onMarketOrder(MarketOrderMessagePtr msg) override;
-    void onCancelOrder(CancelOrderMessagePtr msg) override;
-    void onSubscribe(SubscribeMessagePtr msg) override;
 
 private:
 
@@ -56,20 +60,40 @@ private:
     /** Matches the given order with the orders currently present in the OrderBook */
     void matchOrders(OrderPtr order);
 
-    /** Queues a market update for the given ticker. */
-    void queueMarketUpdate(std::string_view ticker);
+    /** Handles a market order message. */
+    void onMarketOrder(MarketOrderMessagePtr msg);
+
+    /** Handles a limit order message. */
+    void onLimitOrder(LimitOrderMessagePtr msg);
+
+    /** Handles a cancel order message. */
+    void onCancelOrder(CancelOrderMessagePtr msg);
+
+    /** Handles a subscription to market data request message. */
+    void onSubscribe(SubscribeMessagePtr msg);
+
+    /** Checks the type of the incoming message and makes a callback. */
+    std::optional<MessagePtr> handleMessageFrom(std::string_view sender, MessagePtr message) override;
+
+    /** Checks the type of the incoming broadcast and makes a callback. */
+    void handleBroadcastFrom(std::string_view sender, MessagePtr message) override;
+
+    /** The unique name of the exchange*/
+    std::string exchange_name_;
 
     /** Order books for each ticker traded. */
     std::unordered_map<std::string, OrderBook> order_books_;
 
     /** Subscribers for each ticker traded. */
-    std::unordered_map<std::string, std::vector<std::string>> subscribers_;
+    std::unordered_map<std::string, std::unordered_map<int, std::string>> subscribers_;
 
-    /** Thread-safe FIFO queue for incoming orders. */
-    SyncQueue<OrderPtr> order_queue_;
+    /** Thread-safe FIFO queue for incoming messages to be processed by the matching engine. */
+    SyncQueue<MessagePtr> msg_queue_;
 
     /** Thread-safe market update queue. */
     SyncQueue<OrderBook::Summary> market_update_queue_;
+
+    int order_count_ = 0;
 };
 
 #endif
