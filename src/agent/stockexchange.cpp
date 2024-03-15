@@ -12,9 +12,15 @@ void StockExchange::start()
 
 void StockExchange::runMatchingEngine()
 {
-    /** TODO: Add stopping condition */
-    while (true)
+    // Wait until trading window opens
+    std::unique_lock<std::mutex> trading_window_lock(trading_window_mutex_);
+    trading_window_cv_.wait(trading_window_lock, [this]{ return trading_window_open_;});
+
+    // Atomically check if trading window is open, and if not break loop
+    while (trading_window_open_)
     {
+        trading_window_lock.unlock();
+        
         // Wait until new message is present
         MessagePtr msg = msg_queue_.pop();
 
@@ -40,7 +46,9 @@ void StockExchange::runMatchingEngine()
                 std::cout << "Exchange received unknown message type" << "\n";
             }
         }
+        trading_window_lock.lock();
     }
+    trading_window_lock.unlock();
     std::cout << "Stopped running matching engine" << "\n";
 };
 
@@ -248,6 +256,12 @@ void StockExchange::publishMarketData(std::string_view ticker)
 
 void StockExchange::startTradingSession()
 {
+    // Signal start of trading window to the matching engine
+    std::unique_lock<std::mutex> trading_window_lock(trading_window_mutex_);
+    trading_window_open_ = true;
+    trading_window_lock.unlock();
+    trading_window_cv_.notify_all();
+
     EventMessagePtr msg = std::make_shared<EventMessage>(EventMessage::EventType::TRADING_SESSION_START); 
 
     // Send a message to subscribers of all tickers
@@ -262,6 +276,12 @@ void StockExchange::startTradingSession()
 
 void StockExchange::endTradingSession()
 {
+    // Signal end of trading window to the matching engine
+    std::unique_lock<std::mutex> trading_window_lock(trading_window_mutex_);
+    trading_window_open_ = false;
+    trading_window_lock.unlock();
+    trading_window_cv_.notify_all();
+
     EventMessagePtr msg = std::make_shared<EventMessage>(EventMessage::EventType::TRADING_SESSION_END);
 
     // Send a message to subscribers of all tickers

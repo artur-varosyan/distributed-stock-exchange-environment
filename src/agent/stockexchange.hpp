@@ -106,7 +106,13 @@ private:
     /** Thread-safe market update queue. */
     SyncQueue<OrderBook::Summary> market_update_queue_;
 
+    /** The cumulative total number of orders. */
     int order_count_ = 0;
+
+    /** Conditional variable signalling whether trading window is open */
+    bool trading_window_open_ = false;
+    std::mutex trading_window_mutex_;
+    std::condition_variable trading_window_cv_;
 };
 
 #endif
