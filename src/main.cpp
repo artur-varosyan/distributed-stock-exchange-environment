@@ -11,19 +11,25 @@
 #include "agent/exampletrader.hpp"
 #include "agent/stockexchange.hpp"
 #include "agent/marketdatawatcher.hpp"
+#include "agent/traderzic.hpp"
 #include "message/message.hpp"
 #include "message/messagetype.hpp"
 #include "message/market_data_message.hpp"
 
 namespace asio = boost::asio;
 
+void showHelp() {
+    std::cerr << "Usage: " << "./simulation" << " exchange <agent_id> <port>" << "\n";
+    std::cerr << "       " << "./simulation" << " trader <agent_id> <port>" << "\n";
+    std::cerr << "       " << "./simulation" << " watcher <agent_id> <port>" << "\n";
+    std::cerr << "       " << "./simulation" << " zic <agent_id> <port> <buyer or seller> <limit>" << "\n";
+}
+
 int main(int argc, char** argv) {
 
     if (argc < 4)
     {
-        std::cerr << "Usage: " << argv[0] << " exchange <agent_id> <port>" << "\n";
-        std::cerr << "       " << argv[0] << " trader <agent_id> <port>" << "\n";
-        std::cerr << "       " << argv[0] << " watcher <agent_id> <port>" << "\n";
+        
         return 1;
     }
 
@@ -64,7 +70,26 @@ int main(int argc, char** argv) {
         });
 
         watcher.start();
-    } else {
+    } 
+    else if (agent_type == "zic") 
+    {
+        if (argc < 6) {
+            std::cerr << "Invalid number of arguments for ZIC trader.\n";
+            showHelp();
+            return 1;
+        }
+
+        Order::Side side = (std::string(argv[4]) == "buyer") ? Order::Side::BID : Order::Side::ASK;
+        double limit = std::stod(argv[5]);
+        TraderZIC trader{io_context, agent_id, port, "LSE", "AAPL", side, limit};
+
+        trader.connect("127.0.0.1:9999", "LSE", [&](){
+            trader.subscribeToMarket("LSE", "AAPL");
+        });
+
+        trader.start();
+    } 
+    else {
         std::cerr << "Invalid agent type: " << agent_type << "\n";
         return 1;
     }
