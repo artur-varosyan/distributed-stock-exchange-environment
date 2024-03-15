@@ -84,8 +84,8 @@ OrderBook::Summary OrderBook::getSummary()
 {
     Summary summary;
     summary.ticker = ticker_;
-    summary.best_bid = bestBid().has_value() ? bestBid().value()->price : 0;
-    summary.best_ask = bestAsk().has_value() ? bestAsk().value()->price : 0;
+    summary.best_bid = bestBid().has_value() ? bestBid().value()->price : -1;
+    summary.best_ask = bestAsk().has_value() ? bestAsk().value()->price : -1;
     summary.bid_size = bid_size_;
     summary.ask_size = ask_size_;
     summary.timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();

@@ -28,7 +28,9 @@ public:
     {
         std::cout << "Trading window started.\n";
         is_trading_ = true;
-        placeLimitOrder(exchange_, trader_side_, ticker_, 100, getRandomPrice());
+        double price = getRandomPrice();
+        if (is_trading_) placeLimitOrder(exchange_, trader_side_, ticker_, 100, price);
+        std::cout << ">> " << (trader_side_ == Order::Side::BID ? "BID" : "ASK") << " " << 100 << " @ " << price << "\n";
     }
 
     void onTradingEnd() override
@@ -39,7 +41,9 @@ public:
 
     void onMarketData(std::string_view exchange, MarketDataMessagePtr msg) override
     {
-        if (is_trading_) placeLimitOrder(exchange_, trader_side_, ticker_, 100, getRandomPrice());
+        double price = getRandomPrice();
+        if (is_trading_) placeLimitOrder(exchange_, trader_side_, ticker_, 100, price);
+        std::cout << ">> " << (trader_side_ == Order::Side::BID ? "BID" : "ASK") << " " << 100 << " @ " << price << "\n";
     }
 
     void onOrderAck(std::string_view exchange, OrderAckMessagePtr msg) override
@@ -68,7 +72,7 @@ private:
 
     bool is_trading_ = false;
 
-    constexpr static double MIN_PRICE = 0.0;
+    constexpr static double MIN_PRICE = 1.0;
     constexpr static double MAX_PRICE = 200.0;
 };
 

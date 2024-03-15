@@ -18,7 +18,7 @@ public:
             // Sort bids in descending order
             this->comp = [](OrderPtr a, OrderPtr b) { 
                 if (a->price != b->price) {
-                    return a->price >= b->price; 
+                    return a->price <= b->price; 
                 }
                 else {
                     // Compare timestamps if prices are equal
