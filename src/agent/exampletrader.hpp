@@ -20,9 +20,23 @@ public:
     {
     }
 
+    void onTradingStart() override
+    {
+        std::cout << "Trading session started.\n";
+        is_trading_ = true;
+        placeRandomOrder();
+    }
+
+    void onTradingEnd() override
+    {
+        is_trading_ = false;
+        std::cout << "Trading session ended.\n";
+    }
+
     void onMarketData(std::string_view exchange, MarketDataMessagePtr msg) override
     {
-        std::cout << "Received market data from " << exchange << ":\n" << msg->summary << "\n";
+        // std::cout << "Received market data from " << exchange << ":\n" << msg->summary << "\n";
+        if (is_trading_) placeRandomOrder();
     }
 
     void onOrderAck(std::string_view exchange, OrderAckMessagePtr msg) override
@@ -30,6 +44,22 @@ public:
         std::cout << "Received order ack from " << exchange << ": " << msg->order_id << " " << msg->success << "\n";
     }
 
+    void placeRandomOrder()
+    {
+        // Place a bid or ask at random
+        Order::Side side = (rand() % 2 == 0) ? Order::Side::BID : Order::Side::ASK;
+        // Choose a random price between 90 and 110
+        double price = 90 + (rand() % 21);
+        // Choose random quantity between 1 and 100
+        int quantity = 1 + (rand() % 100);
+
+        std::cout << ">> " << (side == Order::Side::BID ? "BID" : "ASK") << " " << quantity << " @ " << price << "\n";
+        placeLimitOrder("LSE", side, "AAPL", quantity, price);
+    }
+
+private:
+
+    bool is_trading_ = false;
 };
 
 #endif

@@ -11,6 +11,7 @@
 #include "../message/limit_order_message.hpp"
 #include "../message/market_order_message.hpp"
 #include "../message/cancel_order_message.hpp"
+#include "../message/event_message.hpp"
 
 class TraderAgent : public Agent
 {
@@ -43,6 +44,12 @@ public:
     
 
     /** Derived classes must implement these: */
+
+    /** The callback function called when trading window starts. */
+    virtual void onTradingStart() = 0;
+
+    /** The callback function called when trading window ends. */
+    virtual void onTradingEnd() = 0;
 
     /** The callback function called when new market data update is received. */
     virtual void onMarketData(std::string_view exchange, MarketDataMessagePtr msg) = 0;

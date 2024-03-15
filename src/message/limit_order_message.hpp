@@ -11,8 +11,9 @@ struct LimitOrderMessage : public Message
 
     std::string ticker;
     Order::Side side;
-    double price;
     int quantity;
+    double price;
+    int separator;
 
 private:
 
@@ -23,8 +24,9 @@ private:
         ar & boost::serialization::base_object<Message>(*this);
         ar & ticker;
         ar & side;
-        ar & price;
         ar & quantity;
+        ar & price;
+        ar & separator;
     }
 
 };

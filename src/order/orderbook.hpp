@@ -25,6 +25,8 @@ public:
             std::string ticker;
             double best_bid;
             double best_ask;
+            double last_price;
+            int last_quantity_traded;
             int bid_size;
             int ask_size;
             unsigned long long timestamp;
@@ -33,6 +35,7 @@ public:
             friend std::ostream& operator<<(std::ostream& os, const Summary& summary)
             {
                 os << "Summary " << summary.ticker << ":\n" 
+                // << "LAST TRADE: " << summary.last_quantity_traded << " @ $" << summary.last_price << "\n"
                 << "BEST BID: " << summary.best_bid << "\n" 
                 << "BEST ASK: " << summary.best_ask << "\n" 
                 << "BID SIZE: " << summary.bid_size << "\n" 

@@ -12,6 +12,7 @@
 #include "../message/cancel_order_message.hpp"
 #include "../message/subscribe_message.hpp"
 #include "../message/order_ack_message.hpp"
+#include "../message/event_message.hpp"
 
 class StockExchange : public Agent
 {
@@ -45,6 +46,12 @@ public:
 
     /** Publishes market data to all subscribers. */
     void publishMarketData(std::string_view ticker);
+
+    /** Starts trading session and informs all market data subscribers. */
+    void startTradingSession();
+
+    /** Ends trading session and informs all market data subscribers. */
+    void endTradingSession();
 
 private:
 

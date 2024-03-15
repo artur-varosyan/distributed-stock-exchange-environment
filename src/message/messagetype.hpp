@@ -5,14 +5,13 @@ enum class MessageType : int
 {
     INIT,
     CONFIG,
-    LOGON,
+    EVENT,
     MARKET_DATA,
     SUBSCRIBE,
     LIMIT_ORDER,
     MARKET_ORDER,
     CANCEL_ORDER,
     ORDER_ACK
-
 };
 
 #endif

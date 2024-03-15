@@ -25,6 +25,23 @@ std::optional<MessagePtr> TraderAgent::handleMessageFrom(std::string_view sender
             onOrderAck(sender, msg);
             break;
         }
+        case MessageType::EVENT:
+        {
+            EventMessagePtr msg = std::dynamic_pointer_cast<EventMessage>(message);
+            if (msg == nullptr) {
+                throw std::runtime_error("Failed to cast message to EventMessage");
+            }
+
+            if (msg->event_type == EventMessage::EventType::TRADING_SESSION_START)
+            {
+                onTradingStart();
+            }
+            else if (msg->event_type == EventMessage::EventType::TRADING_SESSION_END)
+            {
+                onTradingEnd();
+            }
+            break;
+        }
         default:
         {
             std::cout << "Unknown message type" << "\n";
@@ -45,6 +62,7 @@ void TraderAgent::handleBroadcastFrom(std::string_view sender, MessagePtr messag
             if (msg == nullptr) {
                 throw std::runtime_error("Failed to cast message to MarketDataMessage");
             }
+            onMarketData(sender, msg);
             break;
         }
         case MessageType::ORDER_ACK:
@@ -53,6 +71,25 @@ void TraderAgent::handleBroadcastFrom(std::string_view sender, MessagePtr messag
             if (msg == nullptr) {
                 throw std::runtime_error("Failed to cast message to OrderAckMessage");
             }
+            onOrderAck(sender, msg);
+            break;
+        }
+        case MessageType::EVENT:
+        {
+            EventMessagePtr msg = std::dynamic_pointer_cast<EventMessage>(message);
+            if (msg == nullptr) {
+                throw std::runtime_error("Failed to cast message to EventMessage");
+            }
+
+            if (msg->event_type == EventMessage::EventType::TRADING_SESSION_START)
+            {
+                onTradingStart();
+            }
+            else if (msg->event_type == EventMessage::EventType::TRADING_SESSION_END)
+            {
+                onTradingEnd();
+            }
+            break;
         }
         default:
         {

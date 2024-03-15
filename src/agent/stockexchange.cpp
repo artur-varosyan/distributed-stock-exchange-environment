@@ -100,14 +100,16 @@ bool StockExchange::crossesSpread(OrderPtr order)
 
 void StockExchange::matchOrders(OrderPtr order)
 {
+    /** TODO: Ensure that the same trader cannot trade with themselves. */
     if (order->side == Order::Side::BID) {
-        std::optional<OrderPtr> best_ask = order_books_.at(order->ticker).bestAsk().value();
-        order_books_.at(order->ticker).popBestAsk();
+        std::optional<OrderPtr> best_ask = order_books_.at(order->ticker).bestAsk();
 
         while (best_ask.has_value() && order->quantity > 0 && order->price >= best_ask.value()->price)
         {
+            order_books_.at(order->ticker).popBestAsk();
             double trade_price = best_ask.value()->price;
-            std::cout << "Order executed against: " << *best_ask.value() << " @ " << trade_price << "\n";
+            // std::cout << "Order executed against: " << *best_ask.value() << "\n";
+            std::cout << "Trade price: $" << trade_price << "\n";
 
             // If the incoming order can be executed in full
             if (order->quantity <= best_ask.value()->quantity) {
@@ -120,23 +122,26 @@ void StockExchange::matchOrders(OrderPtr order)
                 best_ask.value()->quantity = 0;
             }
 
-            // Remove the best ask if it has been fully executed
-            if (best_ask.value()->quantity == 0) {
-                order_books_.at(order->ticker).removeOrder(best_ask.value()->id, Order::Side::ASK);
+            // Re-insert the best ask if it has not been fully executed
+            if (best_ask.value()->quantity > 0) {
+                order_books_.at(order->ticker).addOrder(best_ask.value());
             }
 
             /** TODO: Create a trade, add to log and inform traders */
+
+            best_ask = order_books_.at(order->ticker).bestAsk();
         }
     }
     else
     {
-        std::optional<OrderPtr> best_bid = order_books_.at(order->ticker).bestBid().value();
-        order_books_.at(order->ticker).popBestBid();
+        std::optional<OrderPtr> best_bid = order_books_.at(order->ticker).bestBid();
 
         while (best_bid.has_value() && order->quantity > 0 && order->price <= best_bid.value()->price)
         {
+            order_books_.at(order->ticker).popBestBid();
             double trade_price = best_bid.value()->price;
-            std::cout << "Order executed against: " << *best_bid.value() << " @ " << trade_price << "\n";
+            // std::cout << "Order executed against: " << *best_bid.value() << "\n";
+            std::cout << "Trade price: $" << trade_price << "\n";
 
             // If the incoming order can be executed in full
             if (order->quantity <= best_bid.value()->quantity) {
@@ -149,12 +154,13 @@ void StockExchange::matchOrders(OrderPtr order)
                 best_bid.value()->quantity = 0;
             }
 
-            // Remove the best bid if it has been fully executed
-            if (best_bid.value()->quantity == 0) {
-                order_books_.at(order->ticker).removeOrder(best_bid.value()->id, Order::Side::BID);
+            // Re-insert the best bid if it has not been fully executed
+            if (best_bid.value()->quantity > 0) {
+                order_books_.at(order->ticker).addOrder(best_bid.value());
             }
 
             /** TODO: Create a trade, add to log and inform traders */
+            best_bid = order_books_.at(order->ticker).bestBid();
         }
     }
 
@@ -215,7 +221,7 @@ void StockExchange::addTradeableAsset(std::string_view ticker)
 {
     order_books_.insert({std::string{ticker}, OrderBook(ticker)});
     subscribers_.insert({std::string{ticker}, {}});
-}
+};
 
 void StockExchange::publishMarketData(std::string_view ticker)
 {
@@ -232,5 +238,33 @@ void StockExchange::publishMarketData(std::string_view ticker)
     {
         // std::cout << "Sending market data to " << subscriber_id << " @ " << address << "\n";
         sendBroadcast(address, std::dynamic_pointer_cast<Message>(msg));
+    }
+};
+
+void StockExchange::startTradingSession()
+{
+    EventMessagePtr msg = std::make_shared<EventMessage>(EventMessage::EventType::TRADING_SESSION_START); 
+
+    // Send a message to subscribers of all tickers
+    for (auto const& [ticker, ticker_subscribers] : subscribers_)
+    {
+        for (auto const& [subscriber_id, address] : ticker_subscribers)
+        {
+            sendBroadcast(address, std::dynamic_pointer_cast<Message>(msg));
+        }
+    }
+};
+
+void StockExchange::endTradingSession()
+{
+    EventMessagePtr msg = std::make_shared<EventMessage>(EventMessage::EventType::TRADING_SESSION_END);
+
+    // Send a message to subscribers of all tickers
+    for (auto const& [ticker, ticker_subscribers] : subscribers_)
+    {
+        for (auto const& [subscriber_id, address] : ticker_subscribers)
+        {
+            sendBroadcast(address, std::dynamic_pointer_cast<Message>(msg));
+        }
     }
 };
