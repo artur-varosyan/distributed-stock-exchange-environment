@@ -53,6 +53,12 @@ public:
     /** Ends trading session and informs all market data subscribers. */
     void endTradingSession();
 
+    /** Returns the pointer to the order book for the given ticker. */
+    OrderBookPtr getOrderBookFor(std::string_view ticker);
+
+    /** Adds the given subscriber to the market data subscribers list. */
+    void addSubscriber(std::string_view ticker, int subscriber_id, std::string_view address);
+
 private:
 
     /** Runs the matching engine. */
@@ -89,7 +95,7 @@ private:
     std::string exchange_name_;
 
     /** Order books for each ticker traded. */
-    std::unordered_map<std::string, OrderBook> order_books_;
+    std::unordered_map<std::string, OrderBookPtr> order_books_;
 
     /** Subscribers for each ticker traded. */
     std::unordered_map<std::string, std::unordered_map<int, std::string>> subscribers_;

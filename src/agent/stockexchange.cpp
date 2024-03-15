@@ -61,7 +61,7 @@ void StockExchange::onLimitOrder(LimitOrderMessagePtr msg)
     }
     else
     {
-        order_books_.at(order->ticker).addOrder(order);
+        getOrderBookFor(order->ticker)->addOrder(order);
     }
 
     publishMarketData(msg->ticker);
@@ -81,7 +81,7 @@ bool StockExchange::crossesSpread(OrderPtr order)
 {
     if (order->side == Order::Side::BID)
     {
-        std::optional<OrderPtr> best_ask = order_books_.at(order->ticker).bestAsk();
+        std::optional<OrderPtr> best_ask = getOrderBookFor(order->ticker)->bestAsk();
         if (best_ask.has_value() && order->price >= best_ask.value()->price)
         {
             return true;
@@ -89,7 +89,7 @@ bool StockExchange::crossesSpread(OrderPtr order)
     }
     else
     {
-        std::optional<OrderPtr> best_bid = order_books_.at(order->ticker).bestBid();
+        std::optional<OrderPtr> best_bid = getOrderBookFor(order->ticker)->bestBid();
         if (best_bid.has_value() && order->price <= best_bid.value()->price)
         {
             return true;
@@ -102,12 +102,13 @@ void StockExchange::matchOrders(OrderPtr order)
 {
     /** TODO: Ensure that the same trader cannot trade with themselves. */
     if (order->side == Order::Side::BID) {
-        std::optional<OrderPtr> best_ask = order_books_.at(order->ticker).bestAsk();
+        std::optional<OrderPtr> best_ask = getOrderBookFor(order->ticker)->bestAsk();
 
         while (best_ask.has_value() && order->quantity > 0 && order->price >= best_ask.value()->price)
         {
-            order_books_.at(order->ticker).popBestAsk();
+            getOrderBookFor(order->ticker)->popBestAsk();
             double trade_price = best_ask.value()->price;
+
             // std::cout << "Order executed against: " << *best_ask.value() << "\n";
             std::cout << "Trade price: $" << trade_price << "\n";
 
@@ -124,21 +125,21 @@ void StockExchange::matchOrders(OrderPtr order)
 
             // Re-insert the best ask if it has not been fully executed
             if (best_ask.value()->quantity > 0) {
-                order_books_.at(order->ticker).addOrder(best_ask.value());
+                getOrderBookFor(order->ticker)->addOrder(best_ask.value());
             }
 
             /** TODO: Create a trade, add to log and inform traders */
 
-            best_ask = order_books_.at(order->ticker).bestAsk();
+            best_ask = getOrderBookFor(order->ticker)->bestAsk();
         }
     }
     else
     {
-        std::optional<OrderPtr> best_bid = order_books_.at(order->ticker).bestBid();
+        std::optional<OrderPtr> best_bid = getOrderBookFor(order->ticker)->bestBid();
 
         while (best_bid.has_value() && order->quantity > 0 && order->price <= best_bid.value()->price)
         {
-            order_books_.at(order->ticker).popBestBid();
+            getOrderBookFor(order->ticker)->popBestBid();
             double trade_price = best_bid.value()->price;
             // std::cout << "Order executed against: " << *best_bid.value() << "\n";
             std::cout << "Trade price: $" << trade_price << "\n";
@@ -156,11 +157,11 @@ void StockExchange::matchOrders(OrderPtr order)
 
             // Re-insert the best bid if it has not been fully executed
             if (best_bid.value()->quantity > 0) {
-                order_books_.at(order->ticker).addOrder(best_bid.value());
+                getOrderBookFor(order->ticker)->addOrder(best_bid.value());
             }
 
             /** TODO: Create a trade, add to log and inform traders */
-            best_bid = order_books_.at(order->ticker).bestBid();
+            best_bid = getOrderBookFor(order->ticker)->bestBid();
         }
     }
 
@@ -168,7 +169,7 @@ void StockExchange::matchOrders(OrderPtr order)
     if (order->quantity > 0) {
         // std::cout << "Adding remaining order to book" << "\n";
         // std::cout << *order << "\n";
-        order_books_.at(order->ticker).addOrder(order);
+        getOrderBookFor(order->ticker)->addOrder(order);
     } else {
         // std::cout << "Order fully executed" << "\n";
     }
@@ -205,11 +206,10 @@ void StockExchange::handleBroadcastFrom(std::string_view sender, MessagePtr mess
 
 void StockExchange::onSubscribe(SubscribeMessagePtr msg)
 {
-    if (order_books_.find(msg->ticker) != order_books_.end())
+    if (order_books_.contains(std::string{msg->ticker}))
     {
-        std::string subscriber_id = std::to_string(msg->sender_id);
         std::cout << "Subscription address: " << msg->address << "\n";
-        subscribers_.at(msg->ticker).insert({msg->sender_id, msg->address});
+        addSubscriber(msg->ticker, msg->sender_id, msg->address);
     }
     else
     {
@@ -217,15 +217,20 @@ void StockExchange::onSubscribe(SubscribeMessagePtr msg)
     }
 };
 
+void StockExchange::addSubscriber(std::string_view ticker, int subscriber_id, std::string_view address)
+{
+    subscribers_.at(std::string{ticker}).insert({subscriber_id, std::string{address}});
+};
+
 void StockExchange::addTradeableAsset(std::string_view ticker)
 {
-    order_books_.insert({std::string{ticker}, OrderBook(ticker)});
+    order_books_.insert({std::string{ticker}, OrderBook::create(ticker)});
     subscribers_.insert({std::string{ticker}, {}});
 };
 
 void StockExchange::publishMarketData(std::string_view ticker)
 {
-    OrderBook::Summary summary = order_books_.at(std::string{ticker}).getSummary();
+    OrderBook::Summary summary = getOrderBookFor(ticker)->getSummary();
     // std::cout << summary << "\n";
     
     MarketDataMessagePtr msg = std::make_shared<MarketDataMessage>();
@@ -267,4 +272,9 @@ void StockExchange::endTradingSession()
             sendBroadcast(address, std::dynamic_pointer_cast<Message>(msg));
         }
     }
+};
+
+OrderBookPtr StockExchange::getOrderBookFor(std::string_view ticker)
+{
+    return order_books_.at(std::string{ticker});
 };

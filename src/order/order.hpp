@@ -4,7 +4,7 @@
 #include <iostream>
 #include <chrono>
 
-class Order: std::enable_shared_from_this<Order> {
+struct Order: std::enable_shared_from_this<Order> {
 public:
 
     enum class Side: int {

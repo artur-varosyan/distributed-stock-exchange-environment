@@ -13,8 +13,11 @@
 #include "order.hpp"
 #include "orderqueue.hpp"
 
+class OrderBook;
+typedef std::shared_ptr<OrderBook> OrderBookPtr;
+
 /** The order book storing all orders for a single ticker. */
-class OrderBook {
+class OrderBook : std::enable_shared_from_this<OrderBook> {
 public:
 
     /** The summary of the current state of the order book. */
@@ -84,8 +87,17 @@ public:
     /** Removes the best ask from the order queue. */
     void popBestAsk();
 
+    /** Checks if the given order exists in the order book. */
+    bool contains(int order_id, Order::Side side);
+
     /** Returns the summary of the current state of the order book. */
     Summary getSummary();
+
+    /** Creates a new order book for the given ticker. */
+    static OrderBookPtr create(std::string_view ticker)
+    {
+        return std::make_shared<OrderBook>(ticker);
+    }
 
 private:
 

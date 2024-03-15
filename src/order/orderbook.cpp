@@ -80,6 +80,18 @@ void OrderBook::popBestAsk()
     }
 }
 
+bool OrderBook::contains(int order_id, Order::Side side)
+{
+    if (side == Order::Side::BID)
+    {
+        return bids_.find(order_id).has_value();
+    }
+    else
+    {
+        return asks_.find(order_id).has_value();
+    }
+}
+
 OrderBook::Summary OrderBook::getSummary()
 {
     Summary summary;
