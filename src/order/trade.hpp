@@ -1,10 +1,12 @@
 #ifndef TRADE_HPP
 #define TRADE_HPP
 
-#include <boost/serialization/serialization.hpp>
-
 #include <string>
 #include <chrono>
+
+#include <boost/serialization/serialization.hpp>
+
+class TradeFactory;
 
 class Trade : std::enable_shared_from_this<Trade>
 {

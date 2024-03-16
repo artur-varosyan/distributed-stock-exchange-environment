@@ -6,6 +6,8 @@
 
 #include "trade.hpp"
 
+class OrderFactory;
+
 class Order: std::enable_shared_from_this<Order> {
 public:
 
@@ -21,25 +23,20 @@ public:
         CANCELLED
     };
 
-    Order(int order_id)
-    : id{order_id}
+    enum class Type: int {
+        MARKET,
+        LIMIT
+    };
+
+    Order(int order_id, Type type)
+    : id{order_id},
+      type{type}
     {
         std::chrono::system_clock::duration now = std::chrono::system_clock::now().time_since_epoch();
         timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
     }
 
-    Order(int order_id, int sender_id, std::string_view ticker, Order::Side side, double price, int quantity)
-    : id(order_id),
-      sender_id{sender_id}, 
-      ticker{std::string(ticker)}, 
-      side{side}, 
-      price{price}, 
-      remaining_quantity{quantity},
-      cumulative_quantity{0}
-    {
-        std::chrono::system_clock::duration now = std::chrono::system_clock::now().time_since_epoch();
-        timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
-    }
+    virtual ~Order() = default;
 
     /** Updates the order quantity and price based on the executed trade. */
     void updateOrderWithTrade(TradePtr trade)
@@ -52,26 +49,20 @@ public:
     /** Returns true if the order is fully filled. */
     bool isFilled() const
     {
-        return remaining_quantity == 0;
+        return remaining_quantity <= 0;
     }
 
     int id;
     int sender_id;
+    Type type;
     std::string ticker;
     Order::Side side;
-    double price;
     double avg_price;
     int remaining_quantity;
     int cumulative_quantity;
     unsigned long long timestamp;
 
-private:
-
-    friend std::ostream& operator<<(std::ostream& os, const Order& order)
-    {
-        os << order.timestamp << " [Order] Id: " << order.id << " Trader: " << order.sender_id << " " << order.ticker << " " << order.side << " " << order.remaining_quantity << " @ $" << order.price;
-        return os;
-    }
+protected:
 
     friend std::ostream& operator<<(std::ostream& os, const Order::Status& status)
     {

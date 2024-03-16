@@ -50,6 +50,7 @@ int main(int argc, char** argv) {
             // Start trading session for 30 seconds
             std::this_thread::sleep_for(std::chrono::seconds(30));
             exchange.endTradingSession();
+            // exchange.stop();
         });
 
         exchange.start();

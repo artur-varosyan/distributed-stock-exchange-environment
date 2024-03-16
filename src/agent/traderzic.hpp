@@ -41,14 +41,16 @@ public:
 
     void onMarketData(std::string_view exchange, MarketDataMessagePtr msg) override
     {
+        int quantity = 100;
         double price = getRandomPrice();
-        if (is_trading_) placeLimitOrder(exchange_, trader_side_, ticker_, 100, price);
-        std::cout << ">> " << (trader_side_ == Order::Side::BID ? "BID" : "ASK") << " " << 100 << " @ " << price << "\n";
+        if (is_trading_) placeLimitOrder(exchange_, trader_side_, ticker_, quantity, price);
+        std::cout << ">> " << (trader_side_ == Order::Side::BID ? "BID" : "ASK") << " " << quantity << " @ " << price << "\n";
     }
 
     void onExecutionReport(std::string_view exchange, ExecutionReportMessagePtr msg) override
     {
-        std::cout << "Received execution report from " << exchange << ": Order: " << msg->order_id << " Status: " << msg->status << "\n";
+        std::cout << "Received execution report from " << exchange << ": Order: " << msg->order_id << " Status: " << msg->status << 
+        " Qty remaining = " << msg->remaining_quantity << "\n";
     }
 
 private:

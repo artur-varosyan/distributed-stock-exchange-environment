@@ -54,7 +54,7 @@ void StockExchange::runMatchingEngine()
 
 void StockExchange::onLimitOrder(LimitOrderMessagePtr msg)
 {
-    OrderPtr order = order_factory_.createLimitOrder(msg);
+    LimitOrderPtr order = order_factory_.createLimitOrder(msg);
 
     if (crossesSpread(order))
     {
@@ -64,14 +64,54 @@ void StockExchange::onLimitOrder(LimitOrderMessagePtr msg)
     else
     {
         getOrderBookFor(order->ticker)->addOrder(order);
+        ExecutionReportMessagePtr report = ExecutionReportMessage::createFromOrder(order, Order::Status::NEW);
+        sendExecutionReport(std::to_string(order->sender_id), report);
+        publishMarketData(msg->ticker);
     }
-
-    publishMarketData(msg->ticker);
 };
 
 void StockExchange::onMarketOrder(MarketOrderMessagePtr msg)
 {
-    throw std::runtime_error("Market orders not yet implemented");
+    MarketOrderPtr order = order_factory_.createMarketOrder(msg);
+
+    if (msg->side == Order::Side::BID)
+    {
+        std::optional<LimitOrderPtr> best_ask = getOrderBookFor(msg->ticker)->bestAsk();
+
+        while (best_ask.has_value() && !order->isFilled())
+        {
+            getOrderBookFor(msg->ticker)->popBestAsk();
+
+            TradePtr trade = trade_factory_.createFromLimitAndMarketOrders(best_ask.value(), order);
+            addTradeToTape(trade);
+            executeTrade(best_ask.value(), order, trade);
+
+            best_ask = getOrderBookFor(order->ticker)->bestAsk();
+        }
+    }
+    else
+    {
+        std::optional<LimitOrderPtr> best_bid = getOrderBookFor(msg->ticker)->bestBid();
+
+        while (best_bid.has_value() && !order->isFilled())
+        {
+            getOrderBookFor(msg->ticker)->popBestBid();
+
+            TradePtr trade = trade_factory_.createFromLimitAndMarketOrders(best_bid.value(), order);
+            addTradeToTape(trade);
+            executeTrade(best_bid.value(), order, trade);
+
+            best_bid = getOrderBookFor(order->ticker)->bestAsk();
+        }
+    }
+
+    // Immediate or Cancel (IOC)
+    // If the market order is not fully executed, cancel the remaining quantity
+    if (!order->isFilled())
+    {
+        ExecutionReportMessagePtr report = ExecutionReportMessage::createFromOrder(order, Order::Status::CANCELLED);
+        sendExecutionReport(std::to_string(order->sender_id), report);
+    }
 };
 
 void StockExchange::onCancelOrder(CancelOrderMessagePtr msg)
@@ -79,11 +119,11 @@ void StockExchange::onCancelOrder(CancelOrderMessagePtr msg)
     throw std::runtime_error("Cancel orders not yet implemented");
 };
 
-bool StockExchange::crossesSpread(OrderPtr order)
+bool StockExchange::crossesSpread(LimitOrderPtr order)
 {
     if (order->side == Order::Side::BID)
     {
-        std::optional<OrderPtr> best_ask = getOrderBookFor(order->ticker)->bestAsk();
+        std::optional<LimitOrderPtr> best_ask = getOrderBookFor(order->ticker)->bestAsk();
         if (best_ask.has_value() && order->price >= best_ask.value()->price)
         {
             return true;
@@ -91,7 +131,7 @@ bool StockExchange::crossesSpread(OrderPtr order)
     }
     else
     {
-        std::optional<OrderPtr> best_bid = getOrderBookFor(order->ticker)->bestBid();
+        std::optional<LimitOrderPtr> best_bid = getOrderBookFor(order->ticker)->bestBid();
         if (best_bid.has_value() && order->price <= best_bid.value()->price)
         {
             return true;
@@ -100,59 +140,33 @@ bool StockExchange::crossesSpread(OrderPtr order)
     return false;
 };
 
-void StockExchange::matchOrders(OrderPtr order)
+void StockExchange::matchOrders(LimitOrderPtr order)
 {
     if (order->side == Order::Side::BID) {
-        std::optional<OrderPtr> best_ask = getOrderBookFor(order->ticker)->bestAsk();
-
+        std::optional<LimitOrderPtr> best_ask = getOrderBookFor(order->ticker)->bestAsk();
+        
         while (best_ask.has_value() && !order->isFilled() && order->price >= best_ask.value()->price)
         {
             getOrderBookFor(order->ticker)->popBestAsk();
-            TradePtr trade = trade_factory_.createFromOrders(best_ask.value(), order);
+
+            TradePtr trade = trade_factory_.createFromLimitOrders(best_ask.value(), order);
             addTradeToTape(trade);
-            
-            // Update the two orders
-            best_ask.value()->updateOrderWithTrade(trade);
-            order->updateOrderWithTrade(trade);
-
-            // Re-insert the best ask if it has not been fully filled
-            if (!best_ask.value()->isFilled()) {
-                getOrderBookFor(order->ticker)->addOrder(best_ask.value());
-            }
-
-            // Send execution reports to the traders
-            ExecutionReportMessagePtr resting_report = ExecutionReportMessage::createFromTrade(best_ask.value(), trade);
-            ExecutionReportMessagePtr aggressing_report = ExecutionReportMessage::createFromTrade(order, trade);
-            sendExecutionReport(std::to_string(best_ask.value()->sender_id), resting_report);
-            sendExecutionReport(std::to_string(order->sender_id), aggressing_report);
+            executeTrade(best_ask.value(), order, trade);
 
             best_ask = getOrderBookFor(order->ticker)->bestAsk();
         }
     }
     else
     {
-        std::optional<OrderPtr> best_bid = getOrderBookFor(order->ticker)->bestBid();
+        std::optional<LimitOrderPtr> best_bid = getOrderBookFor(order->ticker)->bestBid();
 
         while (best_bid.has_value() && !order->isFilled() && order->price <= best_bid.value()->price)
         {
             getOrderBookFor(order->ticker)->popBestBid();
-            TradePtr trade = trade_factory_.createFromOrders(best_bid.value(), order);
+
+            TradePtr trade = trade_factory_.createFromLimitOrders(best_bid.value(), order);
             addTradeToTape(trade);
-            
-            // Decrement the quantity of the orders by quantity traded
-            best_bid.value()->updateOrderWithTrade(trade);
-            order->updateOrderWithTrade(trade);
-
-            // Re-insert the best bid if it has not been fully filled
-            if (best_bid.value()->remaining_quantity > 0) {
-                getOrderBookFor(order->ticker)->addOrder(best_bid.value());
-            }
-
-            // Send execution reports to the traders
-            ExecutionReportMessagePtr resting_report = ExecutionReportMessage::createFromTrade(best_bid.value(), trade);
-            ExecutionReportMessagePtr aggressing_report = ExecutionReportMessage::createFromTrade(order, trade);
-            sendExecutionReport(std::to_string(best_bid.value()->sender_id), resting_report);
-            sendExecutionReport(std::to_string(order->sender_id), aggressing_report);
+            executeTrade(best_bid.value(), order, trade);
 
             best_bid = getOrderBookFor(order->ticker)->bestBid();
         }
@@ -163,6 +177,27 @@ void StockExchange::matchOrders(OrderPtr order)
         getOrderBookFor(order->ticker)->addOrder(order);
     }
 };
+
+void StockExchange::executeTrade(LimitOrderPtr resting_order, OrderPtr aggressing_order, TradePtr trade)
+{
+    // Decrement the quantity of the orders by quantity traded
+    resting_order->updateOrderWithTrade(trade);
+    aggressing_order->updateOrderWithTrade(trade);
+
+    // Re-insert the resting order if it has not been fully filled
+    if (resting_order->remaining_quantity > 0) {
+        getOrderBookFor(resting_order->ticker)->addOrder(resting_order);
+    }
+
+    // Send execution reports to the traders
+    ExecutionReportMessagePtr resting_report = ExecutionReportMessage::createFromTrade(resting_order, trade);
+    ExecutionReportMessagePtr aggressing_report = ExecutionReportMessage::createFromTrade(aggressing_order, trade);
+    sendExecutionReport(std::to_string(resting_order->sender_id), resting_report);
+    sendExecutionReport(std::to_string(aggressing_order->sender_id), aggressing_report);
+
+    // Broadcast the market data to all subscribers
+    publishMarketData(resting_order->ticker);
+}
 
 void StockExchange::sendExecutionReport(std::string_view trader, ExecutionReportMessagePtr msg)
 {
@@ -225,10 +260,10 @@ void StockExchange::addTradeableAsset(std::string_view ticker)
 void StockExchange::publishMarketData(std::string_view ticker)
 {
     OrderBook::Summary summary = getOrderBookFor(ticker)->getSummary();
-    if (!trade_tape_.empty())
+    if (last_trade_.has_value())
     {
-        summary.last_price = trade_tape_.back()->price;
-        summary.last_quantity_traded = trade_tape_.back()->quantity;
+        summary.last_price = last_trade_.value()->price;
+        summary.last_quantity_traded = last_trade_.value()->quantity;
     }
     else 
     {
@@ -295,6 +330,8 @@ OrderBookPtr StockExchange::getOrderBookFor(std::string_view ticker)
 
 void StockExchange::addTradeToTape(TradePtr trade)
 {
-    std::cout << *trade << "\n";
+    /** TODO: Log trades to a CSV file */
+    // std::cout << *trade << "\n";
+    last_trade_ = trade;
     trade_tape_.push_back(trade);
 };

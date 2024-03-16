@@ -1,8 +1,10 @@
 #ifndef ORDER_FACTORY_HPP
 #define ORDER_FACTORY_HPP
 
-#include "order.hpp"
+#include "limitorder.hpp"
+#include "marketorder.hpp"
 #include "../message/limit_order_message.hpp"
+#include "../message/market_order_message.hpp"
 
 class OrderFactory
 {
@@ -10,14 +12,28 @@ public:
 
     OrderFactory() = default;
 
-    OrderPtr createLimitOrder(LimitOrderMessagePtr msg)
+    LimitOrderPtr createLimitOrder(LimitOrderMessagePtr msg)
     {
-        std::shared_ptr<Order> order = std::make_shared<Order>(++order_id_);
+        LimitOrderPtr order = std::make_shared<LimitOrder>(++order_id_);
         order->sender_id = msg->sender_id;
         order->ticker = msg->ticker;
         order->side = msg->side;
         order->price = msg->price;
         order->remaining_quantity = msg->quantity;
+        order->cumulative_quantity = 0;
+        order->avg_price = 0.0;
+        return order;
+    }
+
+    MarketOrderPtr createMarketOrder(MarketOrderMessagePtr msg)
+    {
+        MarketOrderPtr order = std::make_shared<MarketOrder>(++order_id_);
+        order->sender_id = msg->sender_id;
+        order->ticker = msg->ticker;
+        order->side = msg->side;
+        order->remaining_quantity = msg->quantity;
+        order->cumulative_quantity = 0;
+        order->avg_price = 0.0;
         return order;
     }
 

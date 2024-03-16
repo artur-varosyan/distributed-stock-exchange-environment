@@ -76,15 +76,19 @@ private:
     void runMarketDataPublisher();
 
     /** Checks if the given order crosses the spread. */
-    bool crossesSpread(OrderPtr order);
+    bool crossesSpread(LimitOrderPtr order);
 
     /** Matches the given order with the orders currently present in the OrderBook */
-    void matchOrders(OrderPtr order);
+    void matchOrders(LimitOrderPtr order);
+
+    /** Executes the trade between the resting and aggressing orders. */
+    void executeTrade(LimitOrderPtr resting_order, OrderPtr aggressing_order, TradePtr trade);
 
     /** Adds the given trade to the trade tape. */
     void addTradeToTape(TradePtr trade);
 
-    /** Handles a market order message. */
+    /** Handles a market order message. 
+     * The exchange only accepts Immediate or Cancel (IOC) orders. */
     void onMarketOrder(MarketOrderMessagePtr msg);
 
     /** Handles a limit order message. */
@@ -120,6 +124,7 @@ private:
     OrderFactory order_factory_;
     TradeFactory trade_factory_;
 
+    std::optional<TradePtr> last_trade_;
     std::vector<TradePtr> trade_tape_;
 
     /** Conditional variable signalling whether trading window is open */

@@ -2,7 +2,8 @@
 #define TRADE_FACTORY_HPP
 
 #include "trade.hpp"
-#include "order.hpp"
+#include "limitorder.hpp"
+#include "marketorder.hpp"
 
 class TradeFactory
 {
@@ -10,7 +11,7 @@ public:
 
     TradeFactory() = default;
 
-    TradePtr createFromOrders(OrderPtr resting_order, OrderPtr aggressing_order)
+    TradePtr createFromLimitOrders(LimitOrderPtr resting_order, LimitOrderPtr aggressing_order)
     {
         std::shared_ptr<Trade> trade = std::make_shared<Trade>();
         trade->id = ++trade_id_;
@@ -29,6 +30,34 @@ public:
         }
         trade->aggressing_order_id = aggressing_order->id;
         trade->resting_order_id = resting_order->id;
+
+        volume_traded_ += trade->quantity;
+
+        return trade;
+    }
+
+    TradePtr createFromLimitAndMarketOrders(LimitOrderPtr resting_order, MarketOrderPtr aggressing_order)
+    {
+        std::shared_ptr<Trade> trade = std::make_shared<Trade>();
+        trade->id = ++trade_id_;
+        trade->ticker = resting_order->ticker;
+        trade->quantity = std::min(resting_order->remaining_quantity, aggressing_order->remaining_quantity);
+        trade->price = resting_order->price;
+        if (aggressing_order->side == Order::Side::BID)
+        {
+            trade->buyer_id = aggressing_order->sender_id;
+            trade->seller_id = resting_order->sender_id;
+        }
+        else
+        {
+            trade->buyer_id = resting_order->sender_id;
+            trade->seller_id = aggressing_order->sender_id;
+        }
+        trade->aggressing_order_id = aggressing_order->id;
+        trade->resting_order_id = resting_order->id;
+
+        volume_traded_ += trade->quantity;
+
         return trade;
     }
 
@@ -40,6 +69,7 @@ public:
 private:
 
     int trade_id_ = 0;
+    int volume_traded_ = 0;
 };
 
 #endif

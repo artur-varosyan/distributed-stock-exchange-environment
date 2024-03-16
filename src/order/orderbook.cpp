@@ -7,7 +7,7 @@
 
 BOOST_CLASS_EXPORT(OrderBook::Summary);
 
-void OrderBook::addOrder(OrderPtr order)
+void OrderBook::addOrder(LimitOrderPtr order)
 {
     if (order->side == Order::Side::BID)
     {
@@ -25,7 +25,7 @@ bool OrderBook::removeOrder(int order_id, Order::Side side)
 {
     if (side == Order::Side::BID)
     {
-        std::optional<OrderPtr> order = bids_.remove(order_id);
+        std::optional<LimitOrderPtr> order = bids_.remove(order_id);
         if (order.has_value())
         {
             bid_size_ -= order.value()->remaining_quantity;
@@ -34,7 +34,7 @@ bool OrderBook::removeOrder(int order_id, Order::Side side)
     }
     else
     {
-        std::optional<OrderPtr> order = asks_.remove(order_id);
+        std::optional<LimitOrderPtr> order = asks_.remove(order_id);
         if (order.has_value())
         {
             ask_size_ -= order.value()->remaining_quantity;
@@ -44,7 +44,7 @@ bool OrderBook::removeOrder(int order_id, Order::Side side)
     return false;
 }
 
-std::optional<OrderPtr> OrderBook::bestBid()
+std::optional<LimitOrderPtr> OrderBook::bestBid()
 {
     if (bids_.empty())
     {
@@ -53,7 +53,7 @@ std::optional<OrderPtr> OrderBook::bestBid()
     return bids_.top();
 }
 
-std::optional<OrderPtr> OrderBook::bestAsk()
+std::optional<LimitOrderPtr> OrderBook::bestAsk()
 {
     if (asks_.empty())
     {

@@ -49,12 +49,12 @@ public:
         // Place a bid or ask at random
         Order::Side side = (rand() % 2 == 0) ? Order::Side::BID : Order::Side::ASK;
         // Choose a random price between 90 and 110
-        double price = 90 + (rand() % 21);
+        // double price = 90 + (rand() % 21);
         // Choose random quantity between 1 and 100
         int quantity = 1 + (rand() % 100);
 
-        std::cout << ">> " << (side == Order::Side::BID ? "BID" : "ASK") << " " << quantity << " @ " << price << "\n";
-        placeLimitOrder("LSE", side, "AAPL", quantity, price);
+        std::cout << ">> " << (side == Order::Side::BID ? "BID" : "ASK") << " " << quantity << "\n";
+        placeMarketOrder("LSE", side, "AAPL", quantity);
     }
 
 private:

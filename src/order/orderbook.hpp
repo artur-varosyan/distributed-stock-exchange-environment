@@ -11,6 +11,7 @@
 #include <boost/serialization/string.hpp>
 
 #include "order.hpp"
+#include "limitorder.hpp"
 #include "orderqueue.hpp"
 
 class OrderBook;
@@ -72,16 +73,16 @@ public:
     }
     
     /** Adds the given order to the order book. */
-    void addOrder(OrderPtr order);
+    void addOrder(LimitOrderPtr order);
 
     /** Removes the given order from the order book if exists. Returns false if order not present. */
     bool removeOrder(int order_id, Order::Side side);
 
     /** Returns the best bid in the order book. */
-    std::optional<OrderPtr> bestBid();
+    std::optional<LimitOrderPtr> bestBid();
 
     /** Returns the best ask in the order book. */
-    std::optional<OrderPtr> bestAsk();
+    std::optional<LimitOrderPtr> bestAsk();
 
     /** Removes the best bid from the order queue. */
     void popBestBid();
