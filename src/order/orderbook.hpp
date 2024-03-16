@@ -21,7 +21,7 @@ class OrderBook : std::enable_shared_from_this<OrderBook> {
 public:
 
     /** The level 1 summary of the current state of the order book. */
-    struct Summary {
+    class Summary {
         public:
             Summary() = default;
 

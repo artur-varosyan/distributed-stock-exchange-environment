@@ -6,7 +6,7 @@
 #include "agent.hpp"
 #include "../order/order.hpp"
 #include "../message/market_data_message.hpp"
-#include "../message/order_ack_message.hpp"
+#include "../message/exec_report_message.hpp"
 #include "../message/subscribe_message.hpp"
 #include "../message/limit_order_message.hpp"
 #include "../message/market_order_message.hpp"
@@ -54,8 +54,8 @@ public:
     /** The callback function called when new market data update is received. */
     virtual void onMarketData(std::string_view exchange, MarketDataMessagePtr msg) = 0;
 
-    /** The callback function called when the order acknowledgement message is received. */
-    virtual void onOrderAck(std::string_view exchange, OrderAckMessagePtr msg) = 0;
+    /** The callback function called when the execution report message is received. */
+    virtual void onExecutionReport(std::string_view exchange, ExecutionReportMessagePtr msg) = 0;
 
 private:
 

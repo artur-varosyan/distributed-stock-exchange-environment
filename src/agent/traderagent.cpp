@@ -16,13 +16,13 @@ std::optional<MessagePtr> TraderAgent::handleMessageFrom(std::string_view sender
             onMarketData(sender, msg);
             break;
         }
-        case MessageType::ORDER_ACK:
+        case MessageType::EXECUTION_REPORT:
         {
-            OrderAckMessagePtr msg = std::dynamic_pointer_cast<OrderAckMessage>(message);
+            ExecutionReportMessagePtr msg = std::dynamic_pointer_cast<ExecutionReportMessage>(message);
             if (msg == nullptr) {
-                throw std::runtime_error("Failed to cast message to OrderAckMessage");
+                throw std::runtime_error("Failed to cast message to ExecutionReportMessage");
             }
-            onOrderAck(sender, msg);
+            onExecutionReport(sender, msg);
             break;
         }
         case MessageType::EVENT:
@@ -65,13 +65,13 @@ void TraderAgent::handleBroadcastFrom(std::string_view sender, MessagePtr messag
             onMarketData(sender, msg);
             break;
         }
-        case MessageType::ORDER_ACK:
+        case MessageType::EXECUTION_REPORT:
         {
-            OrderAckMessagePtr msg = std::dynamic_pointer_cast<OrderAckMessage>(message);
+            ExecutionReportMessagePtr msg = std::dynamic_pointer_cast<ExecutionReportMessage>(message);
             if (msg == nullptr) {
-                throw std::runtime_error("Failed to cast message to OrderAckMessage");
+                throw std::runtime_error("Failed to cast message to ExecutionReportMessage");
             }
-            onOrderAck(sender, msg);
+            onExecutionReport(sender, msg);
             break;
         }
         case MessageType::EVENT:

@@ -11,7 +11,7 @@ enum class MessageType : int
     LIMIT_ORDER,
     MARKET_ORDER,
     CANCEL_ORDER,
-    ORDER_ACK
+    EXECUTION_REPORT
 };
 
 #endif

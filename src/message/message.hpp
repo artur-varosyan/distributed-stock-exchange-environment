@@ -12,7 +12,7 @@
 #include "messagetype.hpp"
 
 /** A message that can be sent between network entities. */
-struct Message : std::enable_shared_from_this<Message>
+class Message : std::enable_shared_from_this<Message>
 {
 public:
 

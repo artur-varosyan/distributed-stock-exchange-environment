@@ -35,7 +35,7 @@ public:
         std::cout << exchange << ":\n" << msg->summary << "\n";
     }
 
-    void onOrderAck(std::string_view exchange, OrderAckMessagePtr msg) override
+    void onExecutionReport(std::string_view exchange, ExecutionReportMessagePtr msg) override
     {
         throw std::runtime_error("MarketDataWatcher does not place order and cannot receive order ack.");
     }

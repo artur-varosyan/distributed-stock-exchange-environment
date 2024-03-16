@@ -8,7 +8,7 @@
 
 #include "order.hpp"
 
-struct Trade : std::enable_shared_from_this<Trade>
+class Trade : std::enable_shared_from_this<Trade>
 {
 public: 
 
@@ -23,7 +23,7 @@ public:
         std::shared_ptr<Trade> trade = std::make_shared<Trade>();
         trade->id = id;
         trade->ticker = resting_order->ticker;
-        trade->quantity = std::min(resting_order->quantity, aggressing_order->quantity);
+        trade->quantity = std::min(resting_order->remaining_quantity, aggressing_order->remaining_quantity);
         trade->price = resting_order->price;
         if (aggressing_order->side == Order::Side::BID)
         {

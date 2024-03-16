@@ -4,8 +4,10 @@
 #include "message.hpp"
 #include "messagetype.hpp"
 
-struct CancelOrderMessage : public Message
+class CancelOrderMessage : public Message
 {
+public:
+
     CancelOrderMessage() : Message(MessageType::CANCEL_ORDER) {};
 
     std::string order_id;

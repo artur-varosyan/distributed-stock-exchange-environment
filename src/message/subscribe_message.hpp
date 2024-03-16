@@ -4,8 +4,10 @@
 #include "message.hpp"
 #include "messagetype.hpp"
 
-struct SubscribeMessage : public Message
+class SubscribeMessage : public Message
 {
+public:
+
     SubscribeMessage() : Message(MessageType::SUBSCRIBE) {};
 
     std::string ticker;

@@ -39,9 +39,9 @@ public:
         if (is_trading_) placeRandomOrder();
     }
 
-    void onOrderAck(std::string_view exchange, OrderAckMessagePtr msg) override
+    void onExecutionReport(std::string_view exchange, ExecutionReportMessagePtr msg) override
     {
-        std::cout << "Received order ack from " << exchange << ": " << msg->order_id << " " << msg->success << "\n";
+        std::cout << "Received execution report from " << exchange << ": Order: " << msg->order_id << " Status: " << msg->status << "\n";
     }
 
     void placeRandomOrder()

@@ -5,8 +5,10 @@
 #include "messagetype.hpp"
 #include "../order/order.hpp"
 
-struct LimitOrderMessage : public Message
+class LimitOrderMessage : public Message
 {
+public:
+
     LimitOrderMessage() : Message(MessageType::LIMIT_ORDER) {};
 
     std::string ticker;

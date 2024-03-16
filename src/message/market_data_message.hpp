@@ -5,8 +5,10 @@
 #include "messagetype.hpp"
 #include "../order/orderbook.hpp"
 
-struct MarketDataMessage : public Message
+class MarketDataMessage : public Message
 {
+public:
+
     MarketDataMessage() : Message(MessageType::MARKET_DATA) {};
 
     OrderBook::Summary summary;

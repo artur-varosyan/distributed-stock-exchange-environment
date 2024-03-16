@@ -3,7 +3,7 @@
 
 #include "message.hpp"
 
-struct EventMessage : public Message
+class EventMessage : public Message
 {
 public:
 

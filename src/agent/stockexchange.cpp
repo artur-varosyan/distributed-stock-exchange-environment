@@ -59,7 +59,7 @@ void StockExchange::onLimitOrder(LimitOrderMessagePtr msg)
     order->sender_id = msg->sender_id;
     order->side = msg->side;
     order->price = msg->price;
-    order->quantity = msg->quantity;
+    order->remaining_quantity = msg->quantity;
     // std::cout << *order << "\n";
 
     if (crossesSpread(order))
@@ -113,18 +113,18 @@ void StockExchange::matchOrders(OrderPtr order)
     if (order->side == Order::Side::BID) {
         std::optional<OrderPtr> best_ask = getOrderBookFor(order->ticker)->bestAsk();
 
-        while (best_ask.has_value() && order->quantity > 0 && order->price >= best_ask.value()->price)
+        while (best_ask.has_value() && order->remaining_quantity > 0 && order->price >= best_ask.value()->price)
         {
             getOrderBookFor(order->ticker)->popBestAsk();
             TradePtr trade = Trade::createFromOrders(best_ask.value(), order, ++trade_count_);
             addTradeToTape(trade);
             
             // Decrement the quantity of the quote by quantity traded
-            best_ask.value()->quantity -= trade->quantity;
-            order->quantity -= trade->quantity;
+            best_ask.value()->remaining_quantity -= trade->quantity;
+            order->remaining_quantity -= trade->quantity;
 
             // Re-insert the best ask if it has not been fully executed
-            if (best_ask.value()->quantity > 0) {
+            if (best_ask.value()->remaining_quantity > 0) {
                 getOrderBookFor(order->ticker)->addOrder(best_ask.value());
             }
 
@@ -135,18 +135,18 @@ void StockExchange::matchOrders(OrderPtr order)
     {
         std::optional<OrderPtr> best_bid = getOrderBookFor(order->ticker)->bestBid();
 
-        while (best_bid.has_value() && order->quantity > 0 && order->price <= best_bid.value()->price)
+        while (best_bid.has_value() && order->remaining_quantity > 0 && order->price <= best_bid.value()->price)
         {
             getOrderBookFor(order->ticker)->popBestBid();
             TradePtr trade = Trade::createFromOrders(best_bid.value(), order, ++trade_count_);
             addTradeToTape(trade);
             
             // Decrement the quantity of the orders by quantity traded
-            best_bid.value()->quantity -= trade->quantity;
-            order->quantity -= trade->quantity;
+            best_bid.value()->remaining_quantity -= trade->quantity;
+            order->remaining_quantity -= trade->quantity;
 
             // Re-insert the best bid if it has not been fully executed
-            if (best_bid.value()->quantity > 0) {
+            if (best_bid.value()->remaining_quantity > 0) {
                 getOrderBookFor(order->ticker)->addOrder(best_bid.value());
             }
 
@@ -155,7 +155,7 @@ void StockExchange::matchOrders(OrderPtr order)
     }
 
     // If the incoming order is not fully executed, add it to the order book
-    if (order->quantity > 0) {
+    if (order->remaining_quantity > 0) {
         getOrderBookFor(order->ticker)->addOrder(order);
     }
 };

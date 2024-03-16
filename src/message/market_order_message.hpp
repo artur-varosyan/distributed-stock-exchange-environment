@@ -4,8 +4,10 @@
 #include "message.hpp"
 #include "messagetype.hpp"
 
-struct MarketOrderMessage : public Message
+class MarketOrderMessage : public Message
 {
+public:
+
     MarketOrderMessage() : Message(MessageType::MARKET_ORDER) {};
 
     std::string ticker;

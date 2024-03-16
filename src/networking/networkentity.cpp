@@ -7,7 +7,7 @@
 #include "../message/message.hpp"
 #include "../message/messagetype.hpp"
 #include "../message/market_data_message.hpp"
-#include "../message/order_ack_message.hpp"
+#include "../message/exec_report_message.hpp"
 #include "../message/subscribe_message.hpp"
 #include "../message/limit_order_message.hpp"
 #include "../message/market_order_message.hpp"
@@ -16,7 +16,7 @@
 
 BOOST_CLASS_EXPORT(Message);
 BOOST_CLASS_EXPORT(MarketDataMessage);
-BOOST_CLASS_EXPORT(OrderAckMessage);
+BOOST_CLASS_EXPORT(ExecutionReportMessage);
 BOOST_CLASS_EXPORT(SubscribeMessage);
 BOOST_CLASS_EXPORT(LimitOrderMessage);
 BOOST_CLASS_EXPORT(MarketOrderMessage);

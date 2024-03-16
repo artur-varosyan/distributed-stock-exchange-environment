@@ -12,12 +12,12 @@ void OrderBook::addOrder(OrderPtr order)
     if (order->side == Order::Side::BID)
     {
         bids_.push(order);
-        bid_size_ += order->quantity;
+        bid_size_ += order->remaining_quantity;
     }
     else
     {
         asks_.push(order);
-        ask_size_ += order->quantity;
+        ask_size_ += order->remaining_quantity;
     }
 }
 
@@ -28,7 +28,7 @@ bool OrderBook::removeOrder(int order_id, Order::Side side)
         std::optional<OrderPtr> order = bids_.remove(order_id);
         if (order.has_value())
         {
-            bid_size_ -= order.value()->quantity;
+            bid_size_ -= order.value()->remaining_quantity;
             return true;
         }
     }
@@ -37,7 +37,7 @@ bool OrderBook::removeOrder(int order_id, Order::Side side)
         std::optional<OrderPtr> order = asks_.remove(order_id);
         if (order.has_value())
         {
-            ask_size_ -= order.value()->quantity;
+            ask_size_ -= order.value()->remaining_quantity;
             return true;
         }
     }
@@ -66,7 +66,7 @@ void OrderBook::popBestBid()
 {
     if (!bids_.empty())
     {
-        bid_size_ -= bids_.top()->quantity;
+        bid_size_ -= bids_.top()->remaining_quantity;
         bids_.pop();
     }
 }
@@ -75,7 +75,7 @@ void OrderBook::popBestAsk()
 {
     if (!asks_.empty())
     {
-        ask_size_ -= asks_.top()->quantity;
+        ask_size_ -= asks_.top()->remaining_quantity;
         asks_.pop();
     }
 }
