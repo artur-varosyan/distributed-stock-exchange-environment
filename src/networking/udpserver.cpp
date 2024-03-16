@@ -18,7 +18,7 @@ asio::awaitable<void> UDPServer::listener()
     auto executor = co_await asio::this_coro::executor;
     // std::cout << "Listening for UDP on port " << udp_port_ << "\n";
 
-    char data[1024];
+    char data[65536];
 
     while (true)
     {

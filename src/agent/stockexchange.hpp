@@ -4,6 +4,7 @@
 #include "../agent/agent.hpp"
 #include "../order/order.hpp"
 #include "../order/orderbook.hpp"
+#include "../order/trade.hpp"
 #include "../utilities/syncqueue.hpp"
 #include "../message/message.hpp"
 #include "../message/market_data_message.hpp"
@@ -24,7 +25,8 @@ public:
       order_books_{},
       subscribers_{},
       msg_queue_{},
-      market_update_queue_{}
+      market_update_queue_{},
+      trade_tape_{}
     {
     }
 
@@ -34,7 +36,8 @@ public:
       order_books_{},
       subscribers_{},
       msg_queue_{},
-      market_update_queue_{}
+      market_update_queue_{},
+      trade_tape_{}
     {
     }
 
@@ -73,6 +76,9 @@ private:
     /** Matches the given order with the orders currently present in the OrderBook */
     void matchOrders(OrderPtr order);
 
+    /** Adds the given trade to the trade tape. */
+    void addTradeToTape(TradePtr trade);
+
     /** Handles a market order message. */
     void onMarketOrder(MarketOrderMessagePtr msg);
 
@@ -108,6 +114,10 @@ private:
 
     /** The cumulative total number of orders. */
     int order_count_ = 0;
+    /** The cumulative total number of executed trades. */
+    int trade_count_ = 0;
+
+    std::vector<TradePtr> trade_tape_;
 
     /** Conditional variable signalling whether trading window is open */
     bool trading_window_open_ = false;

@@ -6,6 +6,8 @@
 #include <string>
 #include <chrono>
 
+#include "order.hpp"
+
 struct Trade : std::enable_shared_from_this<Trade>
 {
 public: 
@@ -16,6 +18,29 @@ public:
         timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
     }
 
+    static std::shared_ptr<Trade> createFromOrders(OrderPtr resting_order, OrderPtr aggressing_order, int id)
+    {
+        std::shared_ptr<Trade> trade = std::make_shared<Trade>();
+        trade->id = id;
+        trade->ticker = resting_order->ticker;
+        trade->quantity = std::min(resting_order->quantity, aggressing_order->quantity);
+        trade->price = resting_order->price;
+        if (aggressing_order->side == Order::Side::BID)
+        {
+            trade->buyer_id = aggressing_order->sender_id;
+            trade->seller_id = resting_order->sender_id;
+        }
+        else
+        {
+            trade->buyer_id = resting_order->sender_id;
+            trade->seller_id = aggressing_order->sender_id;
+        }
+        trade->aggressing_order_id = aggressing_order->id;
+        trade->resting_order_id = resting_order->id;
+        return trade;
+    }
+
+    int id;
     std::string ticker;
     int quantity;
     double price;
@@ -31,6 +56,7 @@ private:
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version)
     {
+        ar & id;
         ar & ticker;
         ar & quantity;
         ar & price;
@@ -43,7 +69,7 @@ private:
 
     friend std::ostream& operator<<(std::ostream& os, const Trade& trade)
     {
-        os << "[Trade] " << trade.ticker << " " << trade.quantity << " @ $" << trade.price << " Buyer: " << trade.buyer_id << " Seller: " << trade.seller_id;
+        os << trade.timestamp << " [Trade] Id: " << trade.id << " " << trade.ticker << " " << trade.quantity << " @ $" << trade.price << " Buyer: " << trade.buyer_id << " Seller: " << trade.seller_id;
         return os;
     }
 };

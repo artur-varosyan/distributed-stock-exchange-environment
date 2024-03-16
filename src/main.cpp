@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
         exchange.addTradeableAsset("AAPL");
 
         std::thread t([&](){
-            // Allow 30 seconds for connections
+            // Allow time for connections
             std::this_thread::sleep_for(std::chrono::seconds(10));
             exchange.startTradingSession();
             // Start trading session for 30 seconds

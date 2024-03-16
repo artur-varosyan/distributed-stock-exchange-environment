@@ -20,7 +20,7 @@ typedef std::shared_ptr<OrderBook> OrderBookPtr;
 class OrderBook : std::enable_shared_from_this<OrderBook> {
 public:
 
-    /** The summary of the current state of the order book. */
+    /** The level 1 summary of the current state of the order book. */
     struct Summary {
         public:
             Summary() = default;
@@ -29,16 +29,16 @@ public:
             double best_bid;
             double best_ask;
             double last_price;
-            int last_quantity_traded;
             int bid_size;
             int ask_size;
+            int last_quantity_traded;
             unsigned long long timestamp;
 
         private:
             friend std::ostream& operator<<(std::ostream& os, const Summary& summary)
             {
                 os << "Summary " << summary.ticker << ":\n" 
-                // << "LAST TRADE: " << summary.last_quantity_traded << " @ $" << summary.last_price << "\n"
+                << "LAST TRADE: " << summary.last_quantity_traded << " @ $" << summary.last_price << "\n"
                 << "BEST BID: " << summary.best_bid << "\n" 
                 << "BEST ASK: " << summary.best_ask << "\n" 
                 << "BID SIZE: " << summary.bid_size << "\n" 
@@ -55,6 +55,8 @@ public:
                 ar & best_ask;
                 ar & bid_size;
                 ar & ask_size;
+                ar & last_price;
+                ar & last_quantity_traded;
                 ar & timestamp;
             }
     };
