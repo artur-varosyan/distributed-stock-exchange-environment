@@ -4,6 +4,8 @@
 #include <iostream>
 #include <chrono>
 
+#include "trade.hpp"
+
 class Order: std::enable_shared_from_this<Order> {
 public:
 
@@ -37,6 +39,20 @@ public:
     {
         std::chrono::system_clock::duration now = std::chrono::system_clock::now().time_since_epoch();
         timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
+    }
+
+    /** Updates the order quantity and price based on the executed trade. */
+    void updateOrderWithTrade(TradePtr trade)
+    {
+        avg_price = ((cumulative_quantity * avg_price) + (trade->quantity * trade->price)) / (cumulative_quantity + trade->quantity);
+        cumulative_quantity += trade->quantity;
+        remaining_quantity -= trade->quantity;
+    }
+
+    /** Returns true if the order is fully filled. */
+    bool isFilled() const
+    {
+        return remaining_quantity == 0;
     }
 
     int id;

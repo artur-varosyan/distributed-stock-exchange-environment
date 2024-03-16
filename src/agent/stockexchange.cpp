@@ -54,13 +54,7 @@ void StockExchange::runMatchingEngine()
 
 void StockExchange::onLimitOrder(LimitOrderMessagePtr msg)
 {
-    OrderPtr order = std::make_shared<Order>(++order_count_);
-    order->ticker = msg->ticker;
-    order->sender_id = msg->sender_id;
-    order->side = msg->side;
-    order->price = msg->price;
-    order->remaining_quantity = msg->quantity;
-    // std::cout << *order << "\n";
+    OrderPtr order = order_factory_.createLimitOrder(msg);
 
     if (crossesSpread(order))
     {
@@ -108,25 +102,29 @@ bool StockExchange::crossesSpread(OrderPtr order)
 
 void StockExchange::matchOrders(OrderPtr order)
 {
-    /** TODO: Ensure that the same trader cannot trade with themselves. */
-
     if (order->side == Order::Side::BID) {
         std::optional<OrderPtr> best_ask = getOrderBookFor(order->ticker)->bestAsk();
 
-        while (best_ask.has_value() && order->remaining_quantity > 0 && order->price >= best_ask.value()->price)
+        while (best_ask.has_value() && !order->isFilled() && order->price >= best_ask.value()->price)
         {
             getOrderBookFor(order->ticker)->popBestAsk();
-            TradePtr trade = Trade::createFromOrders(best_ask.value(), order, ++trade_count_);
+            TradePtr trade = trade_factory_.createFromOrders(best_ask.value(), order);
             addTradeToTape(trade);
             
-            // Decrement the quantity of the quote by quantity traded
-            best_ask.value()->remaining_quantity -= trade->quantity;
-            order->remaining_quantity -= trade->quantity;
+            // Update the two orders
+            best_ask.value()->updateOrderWithTrade(trade);
+            order->updateOrderWithTrade(trade);
 
-            // Re-insert the best ask if it has not been fully executed
-            if (best_ask.value()->remaining_quantity > 0) {
+            // Re-insert the best ask if it has not been fully filled
+            if (!best_ask.value()->isFilled()) {
                 getOrderBookFor(order->ticker)->addOrder(best_ask.value());
             }
+
+            // Send execution reports to the traders
+            ExecutionReportMessagePtr resting_report = ExecutionReportMessage::createFromTrade(best_ask.value(), trade);
+            ExecutionReportMessagePtr aggressing_report = ExecutionReportMessage::createFromTrade(order, trade);
+            sendExecutionReport(std::to_string(best_ask.value()->sender_id), resting_report);
+            sendExecutionReport(std::to_string(order->sender_id), aggressing_report);
 
             best_ask = getOrderBookFor(order->ticker)->bestAsk();
         }
@@ -135,29 +133,40 @@ void StockExchange::matchOrders(OrderPtr order)
     {
         std::optional<OrderPtr> best_bid = getOrderBookFor(order->ticker)->bestBid();
 
-        while (best_bid.has_value() && order->remaining_quantity > 0 && order->price <= best_bid.value()->price)
+        while (best_bid.has_value() && !order->isFilled() && order->price <= best_bid.value()->price)
         {
             getOrderBookFor(order->ticker)->popBestBid();
-            TradePtr trade = Trade::createFromOrders(best_bid.value(), order, ++trade_count_);
+            TradePtr trade = trade_factory_.createFromOrders(best_bid.value(), order);
             addTradeToTape(trade);
             
             // Decrement the quantity of the orders by quantity traded
-            best_bid.value()->remaining_quantity -= trade->quantity;
-            order->remaining_quantity -= trade->quantity;
+            best_bid.value()->updateOrderWithTrade(trade);
+            order->updateOrderWithTrade(trade);
 
-            // Re-insert the best bid if it has not been fully executed
+            // Re-insert the best bid if it has not been fully filled
             if (best_bid.value()->remaining_quantity > 0) {
                 getOrderBookFor(order->ticker)->addOrder(best_bid.value());
             }
+
+            // Send execution reports to the traders
+            ExecutionReportMessagePtr resting_report = ExecutionReportMessage::createFromTrade(best_bid.value(), trade);
+            ExecutionReportMessagePtr aggressing_report = ExecutionReportMessage::createFromTrade(order, trade);
+            sendExecutionReport(std::to_string(best_bid.value()->sender_id), resting_report);
+            sendExecutionReport(std::to_string(order->sender_id), aggressing_report);
 
             best_bid = getOrderBookFor(order->ticker)->bestBid();
         }
     }
 
     // If the incoming order is not fully executed, add it to the order book
-    if (order->remaining_quantity > 0) {
+    if (!order->isFilled()){
         getOrderBookFor(order->ticker)->addOrder(order);
     }
+};
+
+void StockExchange::sendExecutionReport(std::string_view trader, ExecutionReportMessagePtr msg)
+{
+    sendMessageTo(trader, std::dynamic_pointer_cast<Message>(msg));
 };
 
 std::optional<MessagePtr> StockExchange::handleMessageFrom(std::string_view sender, MessagePtr message)

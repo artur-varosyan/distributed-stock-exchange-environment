@@ -5,6 +5,8 @@
 #include "../order/order.hpp"
 #include "../order/orderbook.hpp"
 #include "../order/trade.hpp"
+#include "../order/orderfactory.hpp"
+#include "../order/tradefactory.hpp"
 #include "../utilities/syncqueue.hpp"
 #include "../message/message.hpp"
 #include "../message/market_data_message.hpp"
@@ -46,6 +48,9 @@ public:
 
     /** Adds the given asset as tradeable and initialises an empty order book. */
     void addTradeableAsset(std::string_view ticker);
+
+    /** Sends execution report to the trader. */
+    void sendExecutionReport(std::string_view trader, ExecutionReportMessagePtr msg);
 
     /** Publishes market data to all subscribers. */
     void publishMarketData(std::string_view ticker);
@@ -112,10 +117,8 @@ private:
     /** Thread-safe market update queue. */
     SyncQueue<OrderBook::Summary> market_update_queue_;
 
-    /** The cumulative total number of orders. */
-    int order_count_ = 0;
-    /** The cumulative total number of executed trades. */
-    int trade_count_ = 0;
+    OrderFactory order_factory_;
+    TradeFactory trade_factory_;
 
     std::vector<TradePtr> trade_tape_;
 
