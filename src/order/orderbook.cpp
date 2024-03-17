@@ -22,7 +22,7 @@ void OrderBook::addOrder(LimitOrderPtr order)
     ++order_count_;
 }
 
-bool OrderBook::removeOrder(int order_id, Order::Side side)
+std::optional<LimitOrderPtr> OrderBook::removeOrder(int order_id, Order::Side side)
 {
     if (side == Order::Side::BID)
     {
@@ -30,8 +30,9 @@ bool OrderBook::removeOrder(int order_id, Order::Side side)
         if (order.has_value())
         {
             bids_volume_ -= order.value()->remaining_quantity;
-            return true;
+            --order_count_;
         }
+        return order;
     }
     else
     {
@@ -39,11 +40,10 @@ bool OrderBook::removeOrder(int order_id, Order::Side side)
         if (order.has_value())
         {
             asks_volume_ -= order.value()->remaining_quantity;
-            return true;
+            --order_count_;
         }
+        return order;
     }
-    --order_count_;
-    return false;
 }
 
 std::optional<LimitOrderPtr> OrderBook::bestBid()

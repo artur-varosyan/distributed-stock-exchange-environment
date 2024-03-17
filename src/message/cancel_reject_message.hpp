@@ -23,4 +23,6 @@ private:
 
 };
 
+typedef std::shared_ptr<CancelRejectMessage> CancelRejectMessagePtr;
+
 #endif

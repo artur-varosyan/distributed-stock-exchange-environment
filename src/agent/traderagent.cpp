@@ -42,6 +42,15 @@ std::optional<MessagePtr> TraderAgent::handleMessageFrom(std::string_view sender
             }
             break;
         }
+        case MessageType::CANCEL_REJECT:
+        {
+            CancelRejectMessagePtr msg = std::dynamic_pointer_cast<CancelRejectMessage>(message);
+            if (msg == nullptr) {
+                throw std::runtime_error("Failed to cast message to CancelRejectMessage");
+            }
+            onCancelReject(sender, msg);
+            break;
+        }
         default:
         {
             std::cout << "Unknown message type" << "\n";
@@ -127,6 +136,17 @@ void TraderAgent::placeMarketOrder(std::string_view exchange, Order::Side side, 
     msg->sender_id = this->agent_id;
     msg->ticker = std::string{ticker};
     msg->quantity = quantity;
+    msg->side = side;
+
+    Agent::sendMessageTo(exchange, std::dynamic_pointer_cast<Message>(msg));
+}
+
+void TraderAgent::cancelOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int order_id)
+{
+    CancelOrderMessagePtr msg = std::make_shared<CancelOrderMessage>();
+    msg->sender_id = this->agent_id;
+    msg->order_id = order_id;
+    msg->ticker = std::string{ticker};
     msg->side = side;
 
     Agent::sendMessageTo(exchange, std::dynamic_pointer_cast<Message>(msg));

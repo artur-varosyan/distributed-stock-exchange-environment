@@ -12,6 +12,7 @@
 #include "../message/market_order_message.hpp"
 #include "../message/cancel_order_message.hpp"
 #include "../message/event_message.hpp"
+#include "../message/cancel_reject_message.hpp"
 
 class TraderAgent : public Agent
 {
@@ -40,7 +41,7 @@ public:
     void placeMarketOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int quantity);
 
     // /** Cancels the order with the given id at the given exchange. */
-    void cancelOrder(std::string_view exchange, int order_id);
+    void cancelOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int order_id);
     
 
     /** Derived classes must implement these: */
@@ -56,6 +57,9 @@ public:
 
     /** The callback function called when the execution report message is received. */
     virtual void onExecutionReport(std::string_view exchange, ExecutionReportMessagePtr msg) = 0;
+
+    /** The callback function called when the cancel order message is rejected. */
+    virtual void onCancelReject(std::string_view exchange, CancelRejectMessagePtr msg) = 0;
 
 private:
 

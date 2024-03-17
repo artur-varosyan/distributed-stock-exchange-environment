@@ -40,6 +40,11 @@ public:
         throw std::runtime_error("MarketDataWatcher does not place order and cannot receive order ack.");
     }
 
+    void onCancelReject(std::string_view exchange, CancelRejectMessagePtr msg) override
+    {
+        throw std::runtime_error("MarketDataWatcher does not place order and cannot receive order reject.");
+    }
+
 };
 
 #endif

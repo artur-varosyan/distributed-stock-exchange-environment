@@ -53,6 +53,11 @@ public:
         " Qty remaining = " << msg->remaining_quantity << "\n";
     }
 
+    void onCancelReject(std::string_view exchange, CancelRejectMessagePtr msg) override
+    {
+        std::cout << "Received cancel reject from " << exchange << ": Order: " << msg->order_id;
+    }
+
 private:
 
     double getRandomPrice()

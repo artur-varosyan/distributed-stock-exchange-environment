@@ -2,6 +2,7 @@
 #define EXAMPLE_TRADER_HPP
 
 #include <iostream>
+#include <unordered_set>
 #include <boost/asio.hpp>
 
 #include "traderagent.hpp"
@@ -11,12 +12,14 @@ class ExampleTrader : public TraderAgent
 public:
 
     ExampleTrader(asio::io_context& io_context, int agent_id, unsigned int port)
-    : TraderAgent(io_context, agent_id, port)
+    : TraderAgent(io_context, agent_id, port),
+      order_ids_{}
     {
     }
 
     ExampleTrader(asio::io_context& io_context, int agent_id)
-    : TraderAgent(io_context, agent_id)
+    : TraderAgent(io_context, agent_id),
+      order_ids_{}
     {
     }
 
@@ -36,30 +39,66 @@ public:
     void onMarketData(std::string_view exchange, MarketDataMessagePtr msg) override
     {
         // std::cout << "Received market data from " << exchange << ":\n" << msg->summary << "\n";
-        if (is_trading_) placeRandomOrder();
+        if (is_trading_) 
+        {
+            // Randomly choose to place an order or cancel an order
+            if (rand() % 2 == 0)
+            {
+                placeRandomOrder();
+            }
+            else
+            {
+                cancelOldestOrder();
+            }
+        }
     }
 
     void onExecutionReport(std::string_view exchange, ExecutionReportMessagePtr msg) override
     {
         std::cout << "Received execution report from " << exchange << ": Order: " << msg->order_id << " Status: " << msg->status << "\n";
+        if (msg->status == Order::Status::FILLED || msg->status == Order::Status::CANCELLED)
+        {
+            order_ids_.erase(msg->order_id);
+        }
+        else 
+        {
+            if (!order_ids_.contains(msg->order_id))
+            {
+                order_ids_.insert(msg->order_id);
+            }
+        }
+    }
+
+    void onCancelReject(std::string_view exchange, CancelRejectMessagePtr msg) override
+    {
+        std::cout << "CANCEL REJECTED " << exchange << ": Order: " << msg->order_id;
     }
 
     void placeRandomOrder()
     {
-        // Place a bid or ask at random
-        Order::Side side = (rand() % 2 == 0) ? Order::Side::BID : Order::Side::ASK;
         // Choose a random price between 90 and 110
-        // double price = 90 + (rand() % 21);
+        double price = 90 + (rand() % 21);
         // Choose random quantity between 1 and 100
         int quantity = 1 + (rand() % 100);
 
-        std::cout << ">> " << (side == Order::Side::BID ? "BID" : "ASK") << " " << quantity << "\n";
-        placeMarketOrder("LSE", side, "AAPL", quantity);
+        std::cout << ">> " << Order::Side::BID << " " << quantity << "\n";
+        placeLimitOrder("LSE", Order::Side::BID, "AAPL", quantity, price);
+    }
+
+    void cancelOldestOrder()
+    {
+        if (order_ids_.empty()) return;
+        
+        int order_id = *order_ids_.begin();
+        std::cout << ">> " << "CANCEL " << "Id: " << order_id << "\n";
+        cancelOrder("LSE", Order::Side::BID, "AAPL", order_id);
     }
 
 private:
 
     bool is_trading_ = false;
+
+    std::unordered_set<int> order_ids_;
 };
 
 #endif

@@ -65,6 +65,7 @@ void StockExchange::onLimitOrder(LimitOrderMessagePtr msg)
     {
         getOrderBookFor(order->ticker)->addOrder(order);
         ExecutionReportMessagePtr report = ExecutionReportMessage::createFromOrder(order, Order::Status::NEW);
+        report->sender_id = this->agent_id;
         sendExecutionReport(std::to_string(order->sender_id), report);
         publishMarketData(msg->ticker);
     }
@@ -116,7 +117,25 @@ void StockExchange::onMarketOrder(MarketOrderMessagePtr msg)
 
 void StockExchange::onCancelOrder(CancelOrderMessagePtr msg)
 {
-    throw std::runtime_error("Cancel orders not yet implemented");
+    std::optional<LimitOrderPtr> order = getOrderBookFor(msg->ticker)->removeOrder(msg->order_id, msg->side);
+    
+    if (order.has_value()) 
+    {
+        // Send an execution report message
+        ExecutionReportMessagePtr report = ExecutionReportMessage::createFromOrder(order.value(), Order::Status::CANCELLED);
+        report->sender_id = this->agent_id;
+        sendExecutionReport(std::to_string(msg->sender_id), report);
+    }
+    else
+    {
+        // Send a cancel reject message if order does not exist in the order book
+        CancelRejectMessagePtr reject = std::make_shared<CancelRejectMessage>();
+        reject->sender_id = this->agent_id;
+        reject->order_id = msg->order_id;
+
+        sendMessageTo(std::to_string(msg->sender_id), std::dynamic_pointer_cast<Message>(reject));
+
+    }
 };
 
 bool StockExchange::crossesSpread(LimitOrderPtr order)
@@ -194,7 +213,9 @@ void StockExchange::executeTrade(LimitOrderPtr resting_order, OrderPtr aggressin
 
     // Send execution reports to the traders
     ExecutionReportMessagePtr resting_report = ExecutionReportMessage::createFromTrade(resting_order, trade);
+    resting_report->sender_id = this->agent_id;
     ExecutionReportMessagePtr aggressing_report = ExecutionReportMessage::createFromTrade(aggressing_order, trade);
+    aggressing_report->sender_id = this->agent_id;
     sendExecutionReport(std::to_string(resting_order->sender_id), resting_report);
     sendExecutionReport(std::to_string(aggressing_order->sender_id), aggressing_report);
 
@@ -265,6 +286,7 @@ void StockExchange::publishMarketData(std::string_view ticker)
     OrderBook::Summary summary = getOrderBookFor(ticker)->getSummary();
     
     MarketDataMessagePtr msg = std::make_shared<MarketDataMessage>();
+    msg->sender_id = this->agent_id;
     msg->summary = summary;
 
     /** Send message to all subscribers of the given ticker */
@@ -285,6 +307,7 @@ void StockExchange::startTradingSession()
     trading_window_cv_.notify_all();
 
     EventMessagePtr msg = std::make_shared<EventMessage>(EventMessage::EventType::TRADING_SESSION_START); 
+    msg->sender_id = this->agent_id;
 
     // Send a message to subscribers of all tickers
     for (auto const& [ticker, ticker_subscribers] : subscribers_)
@@ -305,6 +328,7 @@ void StockExchange::endTradingSession()
     trading_window_cv_.notify_all();
 
     EventMessagePtr msg = std::make_shared<EventMessage>(EventMessage::EventType::TRADING_SESSION_END);
+    msg->sender_id = this->agent_id;
 
     // Send a message to subscribers of all tickers
     for (auto const& [ticker, ticker_subscribers] : subscribers_)

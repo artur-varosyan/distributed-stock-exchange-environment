@@ -16,6 +16,7 @@
 #include "../message/subscribe_message.hpp"
 #include "../message/exec_report_message.hpp"
 #include "../message/event_message.hpp"
+#include "../message/cancel_reject_message.hpp"
 
 class StockExchange : public Agent
 {

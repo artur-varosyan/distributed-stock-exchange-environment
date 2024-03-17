@@ -13,6 +13,7 @@
 #include "../message/market_order_message.hpp"
 #include "../message/cancel_order_message.hpp"
 #include "../message/event_message.hpp"
+#include "../message/cancel_reject_message.hpp"
 
 BOOST_CLASS_EXPORT(Message);
 BOOST_CLASS_EXPORT(MarketDataMessage);
@@ -22,6 +23,7 @@ BOOST_CLASS_EXPORT(LimitOrderMessage);
 BOOST_CLASS_EXPORT(MarketOrderMessage);
 BOOST_CLASS_EXPORT(CancelOrderMessage);
 BOOST_CLASS_EXPORT(EventMessage);
+BOOST_CLASS_EXPORT(CancelRejectMessage);
 
 namespace archive = boost::archive;
 

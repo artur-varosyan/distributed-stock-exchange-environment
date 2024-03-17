@@ -11,6 +11,7 @@ public:
     CancelOrderMessage() : Message(MessageType::CANCEL_ORDER) {};
 
     int order_id;
+    std::string ticker;
     Order::Side side;
 
 private:
@@ -21,6 +22,7 @@ private:
     {
         ar & boost::serialization::base_object<Message>(*this);
         ar & order_id;
+        ar & ticker;
         ar & side;
     }
 

@@ -110,8 +110,8 @@ public:
     /** Adds the given order to the order book. */
     void addOrder(LimitOrderPtr order);
 
-    /** Removes the given order from the order book if exists. Returns false if order not present. */
-    bool removeOrder(int order_id, Order::Side side);
+    /** Removes the given order from the order book if exists. Returns nullopt if order does not exist. */
+    std::optional<LimitOrderPtr> removeOrder(int order_id, Order::Side side);
 
     /** Returns the best bid in the order book. */
     std::optional<LimitOrderPtr> bestBid();
