@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
             // Allow time for connections
             std::this_thread::sleep_for(std::chrono::seconds(10));
             exchange.startTradingSession();
-            // Start trading session for 30 seconds
+            // Start trading session 
             std::this_thread::sleep_for(std::chrono::seconds(30));
             exchange.endTradingSession();
             // exchange.stop();

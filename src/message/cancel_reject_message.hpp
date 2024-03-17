@@ -1,17 +1,15 @@
-#ifndef CANCEL_ORDER_MESSAGE_HPP
-#define CANCEL_ORDER_MESSAGE_HPP
+#ifndef REJECT_CANCEL_MESSAGE_HPP
+#define REJECT_CANCEL_MESSAGE_HPP
 
 #include "message.hpp"
-#include "messagetype.hpp"
 
-class CancelOrderMessage : public Message
+class CancelRejectMessage : public Message
 {
 public:
 
-    CancelOrderMessage() : Message(MessageType::CANCEL_ORDER) {};
+    CancelRejectMessage() : Message(MessageType::CANCEL_REJECT) {};
 
     int order_id;
-    Order::Side side;
 
 private:
 
@@ -21,11 +19,8 @@ private:
     {
         ar & boost::serialization::base_object<Message>(*this);
         ar & order_id;
-        ar & side;
     }
 
 };
-
-typedef std::shared_ptr<CancelOrderMessage> CancelOrderMessagePtr;
 
 #endif

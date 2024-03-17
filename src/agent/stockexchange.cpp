@@ -101,7 +101,7 @@ void StockExchange::onMarketOrder(MarketOrderMessagePtr msg)
             addTradeToTape(trade);
             executeTrade(best_bid.value(), order, trade);
 
-            best_bid = getOrderBookFor(order->ticker)->bestAsk();
+            best_bid = getOrderBookFor(order->ticker)->bestBid();
         }
     }
 
@@ -189,6 +189,9 @@ void StockExchange::executeTrade(LimitOrderPtr resting_order, OrderPtr aggressin
         getOrderBookFor(resting_order->ticker)->addOrder(resting_order);
     }
 
+    // Log the trade in the order book
+    getOrderBookFor(resting_order->ticker)->logTrade(trade);
+
     // Send execution reports to the traders
     ExecutionReportMessagePtr resting_report = ExecutionReportMessage::createFromTrade(resting_order, trade);
     ExecutionReportMessagePtr aggressing_report = ExecutionReportMessage::createFromTrade(aggressing_order, trade);
@@ -260,16 +263,6 @@ void StockExchange::addTradeableAsset(std::string_view ticker)
 void StockExchange::publishMarketData(std::string_view ticker)
 {
     OrderBook::Summary summary = getOrderBookFor(ticker)->getSummary();
-    if (last_trade_.has_value())
-    {
-        summary.last_price = last_trade_.value()->price;
-        summary.last_quantity_traded = last_trade_.value()->quantity;
-    }
-    else 
-    {
-        summary.last_price = -1;
-        summary.last_quantity_traded = -1;
-    }
     
     MarketDataMessagePtr msg = std::make_shared<MarketDataMessage>();
     msg->summary = summary;
@@ -332,6 +325,5 @@ void StockExchange::addTradeToTape(TradePtr trade)
 {
     /** TODO: Log trades to a CSV file */
     // std::cout << *trade << "\n";
-    last_trade_ = trade;
     trade_tape_.push_back(trade);
 };

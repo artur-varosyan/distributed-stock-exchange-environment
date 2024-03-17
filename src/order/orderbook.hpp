@@ -5,6 +5,7 @@
 #include <string>
 #include <chrono>
 #include <queue>
+#include <unordered_map>
 
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -13,6 +14,7 @@
 #include "order.hpp"
 #include "limitorder.hpp"
 #include "orderqueue.hpp"
+#include "trade.hpp"
 
 class OrderBook;
 typedef std::shared_ptr<OrderBook> OrderBookPtr;
@@ -29,21 +31,39 @@ public:
             std::string ticker;
             double best_bid;
             double best_ask;
-            double last_price;
-            int bid_size;
-            int ask_size;
+            int best_bid_size;
+            int best_ask_size;
+
+            int bids_volume;
+            int asks_volume;
+            int bids_count;
+            int asks_count;
+
+            double last_price_traded;
             int last_quantity_traded;
+
+            double high_price;
+            double low_price;
+            int cumulative_volume_traded;
+            int trades_count;
+
             unsigned long long timestamp;
 
         private:
             friend std::ostream& operator<<(std::ostream& os, const Summary& summary)
             {
                 os << "Summary " << summary.ticker << ":\n" 
-                << "LAST TRADE: " << summary.last_quantity_traded << " @ $" << summary.last_price << "\n"
-                << "BEST BID: " << summary.best_bid << "\n" 
-                << "BEST ASK: " << summary.best_ask << "\n" 
-                << "BID SIZE: " << summary.bid_size << "\n" 
-                << "ASK SIZE: " << summary.ask_size << "\n";
+                << "LAST TRADE: " << summary.last_quantity_traded << " @ $" << summary.last_price_traded << "\n"
+                << "BEST BID: " << summary.best_bid_size << " @ $" << summary.best_bid << "\n" 
+                << "BEST ASK: " << summary.best_bid_size << " @ $" << summary.best_ask << "\n" 
+                << "BID VOL: " << summary.bids_volume << "\n" 
+                << "ASK VOL: " << summary.asks_volume << "\n"
+                << "BID ORDERS: " << summary.bids_count << "\n" 
+                << "ASK ORDERS: " << summary.asks_count << "\n"
+                << "VOLUME TRADED: " << summary.cumulative_volume_traded << "\n"
+                << "HIGH: " << summary.high_price << "\n"
+                << "LOW: " << summary.low_price << "\n"
+                << "TRADES: " << summary.trades_count << "\n";
                 return os;
             }
 
@@ -54,10 +74,22 @@ public:
                 ar & ticker;
                 ar & best_bid;
                 ar & best_ask;
-                ar & bid_size;
-                ar & ask_size;
-                ar & last_price;
+                ar & best_bid_size;
+                ar & best_ask_size;
+
+                ar & bids_volume;
+                ar & asks_volume;
+                ar & bids_count;
+                ar & asks_count;
+
+                ar & last_price_traded;
                 ar & last_quantity_traded;
+
+                ar & high_price;
+                ar & low_price;
+                ar & cumulative_volume_traded;
+                ar & trades_count;
+
                 ar & timestamp;
             }
     };
@@ -67,8 +99,11 @@ public:
     : ticker_{std::string(ticker)},
       bids_{Order::Side::BID},
       asks_{Order::Side::ASK},
-      bid_size_{0},
-      ask_size_{0}
+      bids_volume_{0},
+      asks_volume_{0},
+      order_count_{0},
+      trade_volume_{0},
+      trade_count_{0}
     {
     }
     
@@ -93,6 +128,9 @@ public:
     /** Checks if the given order exists in the order book. */
     bool contains(int order_id, Order::Side side);
 
+    /** Logs the details of the executed trade for statistics. */
+    void logTrade(TradePtr trade);
+
     /** Returns the summary of the current state of the order book. */
     Summary getSummary();
 
@@ -108,8 +146,16 @@ private:
     OrderQueue bids_;
     OrderQueue asks_;
 
-    int bid_size_;
-    int ask_size_;
+    int bids_volume_;
+    int asks_volume_;
+    int order_count_;
+
+    std::optional<TradePtr> last_trade_;
+
+    std::optional<double> trade_high_;
+    std::optional<double> trade_low_;
+    int trade_volume_;
+    int trade_count_;
 };
 
 #endif

@@ -124,7 +124,6 @@ private:
     OrderFactory order_factory_;
     TradeFactory trade_factory_;
 
-    std::optional<TradePtr> last_trade_;
     std::vector<TradePtr> trade_tape_;
 
     /** Conditional variable signalling whether trading window is open */
