@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
 
         std::thread t([&](){
             // Allow time for connections
-            std::this_thread::sleep_for(std::chrono::seconds(10));
+            std::this_thread::sleep_for(std::chrono::seconds(20));
             exchange.startTradingSession();
             // Start trading session 
             std::this_thread::sleep_for(std::chrono::seconds(30));

@@ -338,6 +338,9 @@ void StockExchange::endTradingSession()
             sendBroadcast(address, std::dynamic_pointer_cast<Message>(msg));
         }
     }
+
+    // Write the trade tape to a CSV file
+    CSVWriter::writeToFile("trade_tape.csv", trade_tape_);
 };
 
 OrderBookPtr StockExchange::getOrderBookFor(std::string_view ticker)
@@ -348,6 +351,6 @@ OrderBookPtr StockExchange::getOrderBookFor(std::string_view ticker)
 void StockExchange::addTradeToTape(TradePtr trade)
 {
     /** TODO: Log trades to a CSV file */
-    // std::cout << *trade << "\n";
-    trade_tape_.push_back(trade);
+    std::cout << *trade << "\n";
+    trade_tape_.push_back(std::static_pointer_cast<CSVPrintable>(trade));
 };

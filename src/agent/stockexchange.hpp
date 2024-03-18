@@ -8,6 +8,8 @@
 #include "../order/orderfactory.hpp"
 #include "../order/tradefactory.hpp"
 #include "../utilities/syncqueue.hpp"
+#include "../utilities/csvwriter.hpp"
+#include "../utilities/csvprintable.hpp"
 #include "../message/message.hpp"
 #include "../message/market_data_message.hpp"
 #include "../message/limit_order_message.hpp"
@@ -125,7 +127,7 @@ private:
     OrderFactory order_factory_;
     TradeFactory trade_factory_;
 
-    std::vector<TradePtr> trade_tape_;
+    std::vector<CSVPrintablePtr> trade_tape_;
 
     /** Conditional variable signalling whether trading window is open */
     bool trading_window_open_ = false;

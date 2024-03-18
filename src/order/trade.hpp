@@ -6,9 +6,11 @@
 
 #include <boost/serialization/serialization.hpp>
 
+#include "../utilities/csvprintable.hpp"
+
 class TradeFactory;
 
-class Trade : std::enable_shared_from_this<Trade>
+class Trade : std::enable_shared_from_this<Trade>, public CSVPrintable
 {
 public: 
 
@@ -27,6 +29,17 @@ public:
     int seller_id;
     int aggressing_order_id;
     int resting_order_id;
+
+
+    std::string describeCSVHeaders() const override
+    {
+        return "id,ticker,quantity,price,timestamp,buyer_id,seller_id,aggressing_order_id,resting_order_id";
+    }
+
+    std::string toCSV() const override
+    {
+        return std::to_string(id) + "," + ticker + "," + std::to_string(quantity) + "," + std::to_string(price) + "," + std::to_string(timestamp) + "," + std::to_string(buyer_id) + "," + std::to_string(seller_id) + "," + std::to_string(aggressing_order_id) + "," + std::to_string(resting_order_id);
+    }
 
 private:
 
