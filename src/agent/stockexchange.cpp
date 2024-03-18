@@ -279,6 +279,15 @@ void StockExchange::addTradeableAsset(std::string_view ticker)
 {
     order_books_.insert({std::string{ticker}, OrderBook::create(ticker)});
     subscribers_.insert({std::string{ticker}, {}});
+
+    // Create a new CSV file for logging trades
+    std::time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::stringstream ss;
+    ss << std::put_time( std::localtime( &t ), "%FT%T%z" );
+    std::string timestamp = ss.str();
+    std::string path = "trades_" + std::string{ticker} + "_"  + timestamp + ".csv";
+    CSVWriterPtr writer = std::make_shared<CSVWriter>(path);
+    trade_tapes_.insert({std::string{ticker}, writer});
 };
 
 void StockExchange::publishMarketData(std::string_view ticker)
@@ -327,6 +336,12 @@ void StockExchange::endTradingSession()
     trading_window_lock.unlock();
     trading_window_cv_.notify_all();
 
+    // Iterate through all tickers and close all open csv files
+    for (auto const& [ticker, writer] : trade_tapes_)
+    {
+        writer->stop();
+    }
+
     EventMessagePtr msg = std::make_shared<EventMessage>(EventMessage::EventType::TRADING_SESSION_END);
     msg->sender_id = this->agent_id;
 
@@ -338,9 +353,6 @@ void StockExchange::endTradingSession()
             sendBroadcast(address, std::dynamic_pointer_cast<Message>(msg));
         }
     }
-
-    // Write the trade tape to a CSV file
-    CSVWriter::writeToFile("trade_tape.csv", trade_tape_);
 };
 
 OrderBookPtr StockExchange::getOrderBookFor(std::string_view ticker)
@@ -348,9 +360,14 @@ OrderBookPtr StockExchange::getOrderBookFor(std::string_view ticker)
     return order_books_.at(std::string{ticker});
 };
 
+CSVWriterPtr StockExchange::getTradeTapeFor(std::string_view ticker)
+{
+    return trade_tapes_.at(std::string{ticker});
+};
+
 void StockExchange::addTradeToTape(TradePtr trade)
 {
     /** TODO: Log trades to a CSV file */
     std::cout << *trade << "\n";
-    trade_tape_.push_back(std::static_pointer_cast<CSVPrintable>(trade));
+    getTradeTapeFor(trade->ticker)->writeRow(std::static_pointer_cast<CSVPrintable>(trade));
 };

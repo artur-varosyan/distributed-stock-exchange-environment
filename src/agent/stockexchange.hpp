@@ -4,9 +4,9 @@
 #include "../agent/agent.hpp"
 #include "../order/order.hpp"
 #include "../order/orderbook.hpp"
-#include "../order/trade.hpp"
 #include "../order/orderfactory.hpp"
-#include "../order/tradefactory.hpp"
+#include "../trade/trade.hpp"
+#include "../trade/tradefactory.hpp"
 #include "../utilities/syncqueue.hpp"
 #include "../utilities/csvwriter.hpp"
 #include "../utilities/csvprintable.hpp"
@@ -29,9 +29,8 @@ public:
       exchange_name_{exchange_name},
       order_books_{},
       subscribers_{},
-      msg_queue_{},
-      market_update_queue_{},
-      trade_tape_{}
+      trade_tapes_{},
+      msg_queue_{}
     {
     }
 
@@ -40,9 +39,8 @@ public:
       exchange_name_{exchange_name},
       order_books_{},
       subscribers_{},
-      msg_queue_{},
-      market_update_queue_{},
-      trade_tape_{}
+      trade_tapes_{},
+      msg_queue_{}
     {
     }
 
@@ -51,12 +49,6 @@ public:
 
     /** Adds the given asset as tradeable and initialises an empty order book. */
     void addTradeableAsset(std::string_view ticker);
-
-    /** Sends execution report to the trader. */
-    void sendExecutionReport(std::string_view trader, ExecutionReportMessagePtr msg);
-
-    /** Publishes market data to all subscribers. */
-    void publishMarketData(std::string_view ticker);
 
     /** Starts trading session and informs all market data subscribers. */
     void startTradingSession();
@@ -67,16 +59,19 @@ public:
     /** Returns the pointer to the order book for the given ticker. */
     OrderBookPtr getOrderBookFor(std::string_view ticker);
 
+    CSVWriterPtr getTradeTapeFor(std::string_view ticker);
+
     /** Adds the given subscriber to the market data subscribers list. */
     void addSubscriber(std::string_view ticker, int subscriber_id, std::string_view address);
 
 private:
 
+    /**
+     *   HELPER METHODS
+    */
+
     /** Runs the matching engine. */
     void runMatchingEngine();
-
-    /** Runs the market data publisher. */
-    void runMarketDataPublisher();
 
     /** Checks if the given order crosses the spread. */
     bool crossesSpread(LimitOrderPtr order);
@@ -90,8 +85,17 @@ private:
     /** Adds the given trade to the trade tape. */
     void addTradeToTape(TradePtr trade);
 
-    /** Handles a market order message. 
-     * The exchange only accepts Immediate or Cancel (IOC) orders. */
+    /** Sends execution report to the trader. */
+    void sendExecutionReport(std::string_view trader, ExecutionReportMessagePtr msg);
+
+    /** Publishes market data to all subscribers. */
+    void publishMarketData(std::string_view ticker);
+
+    /**
+     *   MESSAGE HANDLERS
+    */
+
+    /** Handles a market order message. Immediate or Cancel (IOC) orders only. */
     void onMarketOrder(MarketOrderMessagePtr msg);
 
     /** Handles a limit order message. */
@@ -109,11 +113,18 @@ private:
     /** Checks the type of the incoming broadcast and makes a callback. */
     void handleBroadcastFrom(std::string_view sender, MessagePtr message) override;
 
+    /**
+     *   PRIVATE MEMBERS
+    */
+
     /** The unique name of the exchange*/
     std::string exchange_name_;
 
     /** Order books for each ticker traded. */
     std::unordered_map<std::string, OrderBookPtr> order_books_;
+
+    /** Trade tape for each ticker traded. */
+    std::unordered_map<std::string, CSVWriterPtr> trade_tapes_;
 
     /** Subscribers for each ticker traded. */
     std::unordered_map<std::string, std::unordered_map<int, std::string>> subscribers_;
@@ -121,13 +132,8 @@ private:
     /** Thread-safe FIFO queue for incoming messages to be processed by the matching engine. */
     SyncQueue<MessagePtr> msg_queue_;
 
-    /** Thread-safe market update queue. */
-    SyncQueue<OrderBook::Summary> market_update_queue_;
-
     OrderFactory order_factory_;
     TradeFactory trade_factory_;
-
-    std::vector<CSVPrintablePtr> trade_tape_;
 
     /** Conditional variable signalling whether trading window is open */
     bool trading_window_open_ = false;

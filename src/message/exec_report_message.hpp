@@ -7,7 +7,7 @@
 #include "message.hpp"
 #include "messagetype.hpp"
 #include "../order/order.hpp"
-#include "../order/trade.hpp"
+#include "../trade/trade.hpp"
 
 class ExecutionReportMessage : public Message
 {

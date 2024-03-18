@@ -4,7 +4,7 @@
 #include <iostream>
 #include <chrono>
 
-#include "trade.hpp"
+#include "../trade/trade.hpp"
 
 class OrderFactory;
 

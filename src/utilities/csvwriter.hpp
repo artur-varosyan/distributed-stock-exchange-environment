@@ -5,35 +5,45 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <thread>
 
+#include "syncqueue.hpp"
 #include "csvprintable.hpp"
 
 class CSVWriter
 {
 public:
 
-    /** Writes the vector of printable items to the given CSV file. */
-    static void writeToFile(std::string path, const std::vector<CSVPrintablePtr>& items)
+    CSVWriter() = delete;
+
+    CSVWriter(std::string path)
+    : path_{path},
+      file_{path}
     {
-        std::cout << "Writing " << items.size() << " items to " << path << " ..." << std::endl;
+    };
 
-        // Open file at given path
-        std::ofstream file(path);
+    ~CSVWriter()
+    {
+        stop();
+    };
 
-        // Write headers
-        file << items[0]->describeCSVHeaders() << std::endl;
-
-        // Iterate through items and write to file
-        for (const CSVPrintablePtr& item : items)
-        {
-            file << item->toCSV() << std::endl;
-        }
-
-        // Close file
-        file.close();
-
-        std::cout << "Finished writing " << items.size() << " items to " << path << std::endl;
+    /** Stops the CSV writer and closes the file. */
+    void stop()
+    {
+        file_.close();
     }
+
+    /** Writes the given item as a CSV row immediately. */
+    void writeRow(CSVPrintablePtr item) {
+        file_ << item->toCSV() << std::endl;
+    }
+
+private:
+
+    std::string path_;
+    std::ofstream file_;
 };
+
+typedef std::shared_ptr<CSVWriter> CSVWriterPtr;
 
 #endif

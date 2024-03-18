@@ -14,7 +14,7 @@
 #include "order.hpp"
 #include "limitorder.hpp"
 #include "orderqueue.hpp"
-#include "trade.hpp"
+#include "../trade/trade.hpp"
 
 class OrderBook;
 typedef std::shared_ptr<OrderBook> OrderBookPtr;

@@ -2,8 +2,8 @@
 #define TRADE_FACTORY_HPP
 
 #include "trade.hpp"
-#include "limitorder.hpp"
-#include "marketorder.hpp"
+#include "../order/limitorder.hpp"
+#include "../order/marketorder.hpp"
 
 class TradeFactory
 {

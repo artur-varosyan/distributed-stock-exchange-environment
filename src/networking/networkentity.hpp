@@ -14,8 +14,6 @@ namespace asio = boost::asio;
 using asio::ip::tcp;
 using asio::ip::udp;
 
-typedef std::shared_ptr<Message> MessagePtr;
-
 class NetworkEntity : protected TCPServer, protected UDPServer
 {
 public:
