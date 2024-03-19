@@ -2,6 +2,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/shared_ptr.hpp>
+#include <boost/serialization/optional.hpp>
 
 #include "networkentity.hpp"
 #include "../message/message.hpp"

@@ -28,6 +28,8 @@ public:
         public:
             Summary() = default;
 
+            /** TODO: Decide how to present the summary in case of lack of trades. */
+
             std::string ticker;
             double best_bid;
             double best_ask;

@@ -1,9 +1,6 @@
 #ifndef ORDER_ACK_MESSAGE_HPP
 #define ORDER_ACK_MESSAGE_HPP
 
-#include <optional>
-#include <boost/serialization/optional.hpp>
-
 #include "message.hpp"
 #include "messagetype.hpp"
 #include "../order/order.hpp"
@@ -18,14 +15,14 @@ public:
     /** Creates an ExecutionReport message from a new or cancelled order. */
     static std::shared_ptr<ExecutionReportMessage> createFromOrder(OrderPtr order, Order::Status status)
     {
-        std::optional<double> price;
+        double price;
         if (order->type == Order::Type::LIMIT)
         {
             price = std::dynamic_pointer_cast<LimitOrder>(order)->price;
         }
         else
         {
-            price = std::nullopt;
+            price = 0;
         }
 
         std::shared_ptr<ExecutionReportMessage> message = std::make_shared<ExecutionReportMessage>();
@@ -36,9 +33,9 @@ public:
         message->price = price;
         message->remaining_quantity = order->remaining_quantity;
         message->cumulative_quantity = order->cumulative_quantity;
-        message->avg_price = std::nullopt;
-        message->trade_price = std::nullopt;
-        message->trade_quantity = std::nullopt;
+        message->avg_price = 0;
+        message->trade_price = 0;
+        message->trade_quantity = 0;
         return message;
     };
 
@@ -46,14 +43,14 @@ public:
     static std::shared_ptr<ExecutionReportMessage> createFromTrade(OrderPtr order, TradePtr trade)
     {
         Order::Status status = order->remaining_quantity == 0 ? Order::Status::FILLED : Order::Status::PARTIALLY_FILLED;
-        std::optional<double> price;
+        double price;
         if (order->type == Order::Type::LIMIT)
         {
             price = std::dynamic_pointer_cast<LimitOrder>(order)->price;
         }
         else
         {
-            price = std::nullopt;
+            price = trade->price;
         }
 
         std::shared_ptr<ExecutionReportMessage> message = std::make_shared<ExecutionReportMessage>();
@@ -75,15 +72,15 @@ public:
     Order::Status status;
     Order::Side side;
     Order::Type type;
-    std::optional<double> price;           /** The price at which the order was placed. (only limit orders) */
+    double price;                          /** The price at which the order was placed. (only limit orders) */
     int remaining_quantity;                /** The remaining quantity of the order to be fulfilled. */
     int cumulative_quantity;               /** The quantity of the order that has been fulfilled already. */
 
     // Only present in the case of a filled or partially filled order.
 
-    std::optional<double> avg_price;       /** The average price at which the order has been fulfilled. */
-    std::optional<double> trade_price;     /** The price at which the last fill was fulfilled. */
-    std::optional<int> trade_quantity;     /** The quantity of the order that was last fulfilled. */
+    double avg_price;       /** The average price at which the order has been fulfilled. */
+    double trade_price;     /** The price at which the last fill was fulfilled. */
+    int trade_quantity;     /** The quantity of the order that was last fulfilled. */
 
 private:
     

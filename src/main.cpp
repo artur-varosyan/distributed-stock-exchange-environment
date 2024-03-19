@@ -45,10 +45,10 @@ int main(int argc, char** argv) {
 
         std::thread t([&](){
             // Allow time for connections
-            std::this_thread::sleep_for(std::chrono::seconds(20));
+            std::this_thread::sleep_for(std::chrono::seconds(30));
             exchange.startTradingSession();
             // Start trading session 
-            std::this_thread::sleep_for(std::chrono::seconds(30));
+            std::this_thread::sleep_for(std::chrono::seconds(60));
             exchange.endTradingSession();
             // exchange.stop();
         });

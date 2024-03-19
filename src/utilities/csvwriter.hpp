@@ -35,6 +35,11 @@ public:
 
     /** Writes the given item as a CSV row immediately. */
     void writeRow(CSVPrintablePtr item) {
+        if (!started_) 
+        {
+            file_ << item->describeCSVHeaders() << std::endl;
+            started_ = true;
+        }
         file_ << item->toCSV() << std::endl;
     }
 
@@ -42,6 +47,7 @@ private:
 
     std::string path_;
     std::ofstream file_;
+    bool started_ = false;
 };
 
 typedef std::shared_ptr<CSVWriter> CSVWriterPtr;

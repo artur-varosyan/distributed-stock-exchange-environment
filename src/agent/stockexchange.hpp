@@ -1,6 +1,8 @@
 #ifndef STOCK_EXCHANGE_HPP
 #define STOCK_EXCHANGE_HPP
 
+#include <random>
+
 #include "../agent/agent.hpp"
 #include "../order/order.hpp"
 #include "../order/orderbook.hpp"
@@ -30,7 +32,8 @@ public:
       order_books_{},
       subscribers_{},
       trade_tapes_{},
-      msg_queue_{}
+      msg_queue_{},
+      random_generator_{std::random_device{}()}
     {
     }
 
@@ -40,7 +43,8 @@ public:
       order_books_{},
       subscribers_{},
       trade_tapes_{},
-      msg_queue_{}
+      msg_queue_{},
+      random_generator_{std::random_device{}()}
     {
     }
 
@@ -59,6 +63,7 @@ public:
     /** Returns the pointer to the order book for the given ticker. */
     OrderBookPtr getOrderBookFor(std::string_view ticker);
 
+    /** Returns the trade tape writer for the given ticker. */
     CSVWriterPtr getTradeTapeFor(std::string_view ticker);
 
     /** Adds the given subscriber to the market data subscribers list. */
@@ -76,8 +81,8 @@ private:
     /** Checks if the given order crosses the spread. */
     bool crossesSpread(LimitOrderPtr order);
 
-    /** Matches the given order with the orders currently present in the OrderBook */
-    void matchOrders(LimitOrderPtr order);
+    /** Matches the given order with the orders currently present in the OrderBook. */
+    void matchWithOrderBook(LimitOrderPtr order);
 
     /** Executes the trade between the resting and aggressing orders. */
     void executeTrade(LimitOrderPtr resting_order, OrderPtr aggressing_order, TradePtr trade);
@@ -85,11 +90,21 @@ private:
     /** Adds the given trade to the trade tape. */
     void addTradeToTape(TradePtr trade);
 
+    /** Creates a new trade tape CSV file. */
+    void createTradeTape(std::string_view ticker);
+
+    /**
+     *   MESSAGE SENDERS
+    */
+
     /** Sends execution report to the trader. */
     void sendExecutionReport(std::string_view trader, ExecutionReportMessagePtr msg);
 
     /** Publishes market data to all subscribers. */
     void publishMarketData(std::string_view ticker);
+
+    /** Broadcasts the given message to all subscribers of the given ticker. */
+    void broadcastToSubscribers(std::string_view ticker, MessagePtr msg);
 
     /**
      *   MESSAGE HANDLERS
@@ -139,6 +154,9 @@ private:
     bool trading_window_open_ = false;
     std::mutex trading_window_mutex_;
     std::condition_variable trading_window_cv_;
+
+    /** Used for randomising the order of UDP broadcasts */
+    std::mt19937 random_generator_;
 };
 
 #endif

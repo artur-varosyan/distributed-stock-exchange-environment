@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "stockexchange.hpp"
 #include "../utilities/syncqueue.hpp"
 
@@ -58,8 +60,7 @@ void StockExchange::onLimitOrder(LimitOrderMessagePtr msg)
 
     if (crossesSpread(order))
     {
-        // std::cout << "Order crosses spread" << "\n";
-        matchOrders(order);
+        matchWithOrderBook(order);
     }
     else
     {
@@ -159,7 +160,7 @@ bool StockExchange::crossesSpread(LimitOrderPtr order)
     return false;
 };
 
-void StockExchange::matchOrders(LimitOrderPtr order)
+void StockExchange::matchWithOrderBook(LimitOrderPtr order)
 {
     if (order->side == Order::Side::BID) {
         std::optional<LimitOrderPtr> best_ask = getOrderBookFor(order->ticker)->bestAsk();
@@ -280,15 +281,24 @@ void StockExchange::addTradeableAsset(std::string_view ticker)
     order_books_.insert({std::string{ticker}, OrderBook::create(ticker)});
     subscribers_.insert({std::string{ticker}, {}});
 
-    // Create a new CSV file for logging trades
+    createTradeTape(ticker);
+};
+
+void StockExchange::createTradeTape(std::string_view ticker)
+{
+    // Get current ISO 8601 timestamp
     std::time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     std::stringstream ss;
     ss << std::put_time( std::localtime( &t ), "%FT%T%z" );
     std::string timestamp = ss.str();
-    std::string path = "trades_" + std::string{ticker} + "_"  + timestamp + ".csv";
-    CSVWriterPtr writer = std::make_shared<CSVWriter>(path);
+
+    // Set path to CSV file
+    std::string filename = "trades_" + std::string{ticker} + "_"  + timestamp + ".csv";
+
+    // Create a CSV writer
+    CSVWriterPtr writer = std::make_shared<CSVWriter>(filename);
     trade_tapes_.insert({std::string{ticker}, writer});
-};
+}
 
 void StockExchange::publishMarketData(std::string_view ticker)
 {
@@ -298,13 +308,8 @@ void StockExchange::publishMarketData(std::string_view ticker)
     msg->sender_id = this->agent_id;
     msg->summary = summary;
 
-    /** Send message to all subscribers of the given ticker */
-    /** TODO: This should be randomised or UDP multicast */
-
-    for (auto const& [subscriber_id, address] : subscribers_.at(std::string{ticker}))
-    {
-        sendBroadcast(address, std::dynamic_pointer_cast<Message>(msg));
-    }
+    // Send message to all subscribers of the given ticker 
+    broadcastToSubscribers(ticker, std::dynamic_pointer_cast<Message>(msg));
 };
 
 void StockExchange::startTradingSession()
@@ -321,10 +326,7 @@ void StockExchange::startTradingSession()
     // Send a message to subscribers of all tickers
     for (auto const& [ticker, ticker_subscribers] : subscribers_)
     {
-        for (auto const& [subscriber_id, address] : ticker_subscribers)
-        {
-            sendBroadcast(address, std::dynamic_pointer_cast<Message>(msg));
-        }
+        broadcastToSubscribers(ticker, std::dynamic_pointer_cast<Message>(msg));
     }
 };
 
@@ -348,10 +350,7 @@ void StockExchange::endTradingSession()
     // Send a message to subscribers of all tickers
     for (auto const& [ticker, ticker_subscribers] : subscribers_)
     {
-        for (auto const& [subscriber_id, address] : ticker_subscribers)
-        {
-            sendBroadcast(address, std::dynamic_pointer_cast<Message>(msg));
-        }
+        broadcastToSubscribers(ticker, std::dynamic_pointer_cast<Message>(msg));
     }
 };
 
@@ -367,7 +366,20 @@ CSVWriterPtr StockExchange::getTradeTapeFor(std::string_view ticker)
 
 void StockExchange::addTradeToTape(TradePtr trade)
 {
-    /** TODO: Log trades to a CSV file */
     std::cout << *trade << "\n";
     getTradeTapeFor(trade->ticker)->writeRow(std::static_pointer_cast<CSVPrintable>(trade));
 };
+
+void StockExchange::broadcastToSubscribers(std::string_view ticker, MessagePtr msg)
+{
+    // Randomise the subscribers list
+    std::unordered_map<int, std::string> ticker_subcribers(subscribers_.at(std::string{ticker}));
+    std::vector<std::pair<int, std::string>> randomised_subscribers(ticker_subcribers.begin(), ticker_subcribers.end());
+    std::shuffle(randomised_subscribers.begin(), randomised_subscribers.end(), random_generator_);
+
+    // Send a broadcast to each one
+    for (auto const& [subscriber_id, address] : randomised_subscribers)
+    {
+        sendBroadcast(address, std::dynamic_pointer_cast<Message>(msg));
+    }
+}

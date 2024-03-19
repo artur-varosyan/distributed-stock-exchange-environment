@@ -3,6 +3,7 @@
 
 #include <queue>
 #include <optional>
+#include <functional>
 
 #include "limitorder.hpp"
 

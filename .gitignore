@@ -37,3 +37,6 @@ build/
 # IDE
 .vscode/
 .idea/
+
+# Other
+.DS_STORE
