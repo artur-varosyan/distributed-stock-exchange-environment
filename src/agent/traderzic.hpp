@@ -29,8 +29,11 @@ public:
         std::cout << "Trading window started.\n";
         is_trading_ = true;
         double price = getRandomPrice();
-        if (is_trading_) placeLimitOrder(exchange_, trader_side_, ticker_, 100, price);
-        std::cout << ">> " << (trader_side_ == Order::Side::BID ? "BID" : "ASK") << " " << 100 << " @ " << price << "\n";
+        if (is_trading_) 
+        {
+            placeLimitOrder(exchange_, trader_side_, ticker_, 100, price);
+            std::cout << ">> " << (trader_side_ == Order::Side::BID ? "BID" : "ASK") << " " << 100 << " @ " << price << "\n";
+        }
     }
 
     void onTradingEnd() override
@@ -43,8 +46,11 @@ public:
     {
         int quantity = 100;
         double price = getRandomPrice();
-        if (is_trading_) placeLimitOrder(exchange_, trader_side_, ticker_, quantity, price);
-        std::cout << ">> " << (trader_side_ == Order::Side::BID ? "BID" : "ASK") << " " << quantity << " @ " << price << "\n";
+        if (is_trading_) 
+        {
+            placeLimitOrder(exchange_, trader_side_, ticker_, quantity, price);
+            std::cout << ">> " << (trader_side_ == Order::Side::BID ? "BID" : "ASK") << " " << quantity << " @ " << price << "\n";
+        }
     }
 
     void onExecutionReport(std::string_view exchange, ExecutionReportMessagePtr msg) override

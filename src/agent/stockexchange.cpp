@@ -274,6 +274,21 @@ void StockExchange::onSubscribe(SubscribeMessagePtr msg)
 void StockExchange::addSubscriber(std::string_view ticker, int subscriber_id, std::string_view address)
 {
     subscribers_.at(std::string{ticker}).insert({subscriber_id, std::string{address}});
+
+    // If trader connects after trading has started, inform the trader that trading window is open
+    std::unique_lock lock {trading_window_mutex_};
+    if (trading_window_open_) 
+    {
+        lock.unlock();
+
+        EventMessagePtr msg = std::make_shared<EventMessage>(EventMessage::EventType::TRADING_SESSION_START); 
+        msg->sender_id = this->agent_id;
+        sendBroadcast(address, std::dynamic_pointer_cast<Message>(msg));
+    }
+    else 
+    {
+        lock.unlock();
+    }
 };
 
 void StockExchange::addTradeableAsset(std::string_view ticker)
@@ -311,6 +326,30 @@ void StockExchange::publishMarketData(std::string_view ticker)
     // Send message to all subscribers of the given ticker 
     broadcastToSubscribers(ticker, std::dynamic_pointer_cast<Message>(msg));
 };
+
+void StockExchange::setTradingWindow(int &connect_time, int &trading_time)
+{
+    if (trading_window_thread_ != nullptr)
+    {
+        throw new std::runtime_error("Trading window already has been set");
+    }
+
+    trading_window_thread_ = new std::thread([&](){
+
+        // Allow time for connections
+        std::cout << "Exchange waiting for connections for " << connect_time << " seconds...\n";
+        std::this_thread::sleep_for(std::chrono::seconds(connect_time));
+
+        // Start trading session 
+        std::cout << "Trading session starts now for " << trading_time << " seconds...\n";
+        startTradingSession();
+        std::this_thread::sleep_for(std::chrono::seconds(trading_time));
+
+        // End trading session
+        endTradingSession();
+        std::cout << "Trading session ended.\n";
+    });
+}
 
 void StockExchange::startTradingSession()
 {

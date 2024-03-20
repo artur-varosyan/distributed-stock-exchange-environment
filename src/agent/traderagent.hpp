@@ -42,7 +42,9 @@ public:
 
     // /** Cancels the order with the given id at the given exchange. */
     void cancelOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int order_id);
-    
+
+    /** The trader will remain idle and no handlers will be called until the specified duration after trading start.  */
+    void addDelayedStart(int delay_in_seconds);
 
     /** Derived classes must implement these: */
 
@@ -68,6 +70,15 @@ private:
 
     /** Checks the type of the incoming broadcast and makes a callback. */
     void handleBroadcastFrom(std::string_view sender, MessagePtr message) override;
+
+    /** Signals that trading has started and starts sending callbacks to handlers. */
+    void signalTradingStart();
+
+    /** Used for delayed start of the trader. */
+    bool trading_window_open_ = false;
+    unsigned int start_delay_in_seconds_ = 0;
+    std::mutex mutex_;
+    std::thread* delay_thread_;
 };
 
 #endif

@@ -5,17 +5,13 @@
 
 std::optional<MessagePtr> TraderAgent::handleMessageFrom(std::string_view sender, MessagePtr message)
 {
+    // If trading window (for this trader) not yet open ignore message
+    std::unique_lock lock{mutex_};
+    if (!trading_window_open_) return std::nullopt;
+    lock.unlock();
+
     switch (message->type)
     {
-        case MessageType::MARKET_DATA: 
-        {
-            MarketDataMessagePtr msg = std::dynamic_pointer_cast<MarketDataMessage>(message);
-            if (msg == nullptr) {
-                throw std::runtime_error("Failed to cast message to MarketDataMessage");
-            }
-            onMarketData(sender, msg);
-            break;
-        }
         case MessageType::EXECUTION_REPORT:
         {
             ExecutionReportMessagePtr msg = std::dynamic_pointer_cast<ExecutionReportMessage>(message);
@@ -23,23 +19,6 @@ std::optional<MessagePtr> TraderAgent::handleMessageFrom(std::string_view sender
                 throw std::runtime_error("Failed to cast message to ExecutionReportMessage");
             }
             onExecutionReport(sender, msg);
-            break;
-        }
-        case MessageType::EVENT:
-        {
-            EventMessagePtr msg = std::dynamic_pointer_cast<EventMessage>(message);
-            if (msg == nullptr) {
-                throw std::runtime_error("Failed to cast message to EventMessage");
-            }
-
-            if (msg->event_type == EventMessage::EventType::TRADING_SESSION_START)
-            {
-                onTradingStart();
-            }
-            else if (msg->event_type == EventMessage::EventType::TRADING_SESSION_END)
-            {
-                onTradingEnd();
-            }
             break;
         }
         case MessageType::CANCEL_REJECT:
@@ -67,20 +46,16 @@ void TraderAgent::handleBroadcastFrom(std::string_view sender, MessagePtr messag
     {
         case MessageType::MARKET_DATA: 
         {
+            // If trading window (for this trader) not yet open ignore message
+            std::unique_lock lock{mutex_};
+            if (!trading_window_open_) return;
+            lock.unlock();
+
             MarketDataMessagePtr msg = std::dynamic_pointer_cast<MarketDataMessage>(message);
             if (msg == nullptr) {
                 throw std::runtime_error("Failed to cast message to MarketDataMessage");
             }
             onMarketData(sender, msg);
-            break;
-        }
-        case MessageType::EXECUTION_REPORT:
-        {
-            ExecutionReportMessagePtr msg = std::dynamic_pointer_cast<ExecutionReportMessage>(message);
-            if (msg == nullptr) {
-                throw std::runtime_error("Failed to cast message to ExecutionReportMessage");
-            }
-            onExecutionReport(sender, msg);
             break;
         }
         case MessageType::EVENT:
@@ -92,7 +67,7 @@ void TraderAgent::handleBroadcastFrom(std::string_view sender, MessagePtr messag
 
             if (msg->event_type == EventMessage::EventType::TRADING_SESSION_START)
             {
-                onTradingStart();
+                signalTradingStart();
             }
             else if (msg->event_type == EventMessage::EventType::TRADING_SESSION_END)
             {
@@ -150,4 +125,27 @@ void TraderAgent::cancelOrder(std::string_view exchange, Order::Side side, std::
     msg->side = side;
 
     Agent::sendMessageTo(exchange, std::dynamic_pointer_cast<Message>(msg));
+}
+
+void TraderAgent::addDelayedStart(int delay_in_seconds)
+{
+    start_delay_in_seconds_ = delay_in_seconds;
+}
+
+void TraderAgent::signalTradingStart()
+{
+    delay_thread_ = new std::thread([&](){
+        if (start_delay_in_seconds_ > 0) 
+        {
+            std::cout << "Delayed trader start: waiting " << start_delay_in_seconds_ << " to start...\n";
+            std::this_thread::sleep_for(std::chrono::seconds(start_delay_in_seconds_));
+        }
+
+        std::cout << "Trader starts now.\n";
+        onTradingStart();
+
+        std::unique_lock lock{mutex_};
+        trading_window_open_ = true;
+        lock.unlock();
+    });
 }

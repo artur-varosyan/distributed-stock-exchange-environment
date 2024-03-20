@@ -35,6 +35,7 @@ asio::awaitable<void> UDPServer::sendBroadcast(std::string_view address, const u
     udp::endpoint endpoint(asio::ip::make_address(address), port);
     // std::cout << "Created an endpoint. Co-awaiting\n";
     co_await sendBroadcast(endpoint, message);
+    // std::cout << "Broadcast was sent\n";
 }
 
 asio::awaitable<void> UDPServer::sendBroadcast(udp::endpoint endpoint, std::string message)

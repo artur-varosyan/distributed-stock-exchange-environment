@@ -69,7 +69,6 @@ void NetworkEntity::connect(ipv4_view address, std::function<void()> const& call
 void NetworkEntity::sendBroadcast(ipv4_view address, MessagePtr message)
 {
     std::pair<std::string, unsigned int> pair = splitAddress(address);
-    // std::cout << "Cospawning an asio coroutine\n";
     asio::post(io_context_, [=, this](){
         asio::co_spawn(this->io_context_, UDPServer::sendBroadcast(pair.first, pair.second, serialiseMessage(message)), asio::detached);
     });
@@ -115,7 +114,7 @@ void NetworkEntity::removeConnection(std::string_view address, unsigned int port
 
 std::string NetworkEntity::handleMessage(std::string_view sender_adress, unsigned int sender_port, std::string_view message)
 {
-    // std::cout << "Received message from " << sender_adress << ":" << sender_port << ": " << message << "\n";
+    // std::cout << "Received message from " << sender_adress << ":" << sender_port << "\n";
 
     try 
     {
@@ -142,7 +141,7 @@ void NetworkEntity::handleBroadcast(std::string_view sender_adress, unsigned int
     try 
     {
         MessagePtr msg = deserialiseMessage(message);
-        handleMessage(concatAddress(sender_adress, sender_port), msg);
+        handleBroadcast(concatAddress(sender_adress, sender_port), msg);
     }
     catch (std::exception& e)
     {

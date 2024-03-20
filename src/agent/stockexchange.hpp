@@ -54,6 +54,9 @@ public:
     /** Adds the given asset as tradeable and initialises an empty order book. */
     void addTradeableAsset(std::string_view ticker);
 
+    /** Waits for incoming connections then opens trading window for the specified duration (seconds). */
+    void setTradingWindow(int &connect_time, int &trading_time);
+
     /** Starts trading session and informs all market data subscribers. */
     void startTradingSession();
 
@@ -154,6 +157,7 @@ private:
     bool trading_window_open_ = false;
     std::mutex trading_window_mutex_;
     std::condition_variable trading_window_cv_;
+    std::thread* trading_window_thread_ = nullptr;
 
     /** Used for randomising the order of UDP broadcasts */
     std::mt19937 random_generator_;
