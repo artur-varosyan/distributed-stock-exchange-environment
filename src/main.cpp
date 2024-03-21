@@ -13,6 +13,7 @@
 #include "agent/stockexchange.hpp"
 #include "agent/marketdatawatcher.hpp"
 #include "agent/traderzic.hpp"
+#include "agent/tradershvr.hpp"
 #include "message/message.hpp"
 #include "message/messagetype.hpp"
 #include "message/market_data_message.hpp"
@@ -27,6 +28,7 @@ std::string showUsage() {
     ss << "  " << "exchange" << "\t" << "multithreaded stock exchange implementation" << "\n";
     ss << "  " << "watcher" << "\t" << "live market data watcher" << "\n";
     ss << "  " << "zic" << "\t\t" << "zero intelligence constrained trader" << "\n";
+    ss << "  " << "shvr" << "\t\t" << "shaver trader" << "\n";
     ss << "\n";
     return ss.str();
 }
@@ -122,6 +124,26 @@ int main(int argc, char** argv) {
         });
         trader.start();
     } 
+    else if (agent_type == "shvr")
+    {
+        // Get configuration
+        std::string exchange_name { vm["exchange-name"].as<std::string>() };
+        std::string exchange_addr { vm["exchange-addr"].as<std::string>() };
+        std::string ticker { vm["ticker"].as<std::string>() };
+
+        Order::Side trader_side = (vm["side"].as<std::string>() == "buyer") ? Order::Side::BID : Order::Side::ASK;
+        double limit { vm["limit"].as<double>() };
+
+        TraderShaver trader{io_context, agent_id, port, exchange_name, ticker, trader_side, limit};
+
+        unsigned int delay { vm["delay"].as<unsigned int>() };
+        trader.addDelayedStart(delay);
+
+        trader.connect(exchange_addr, exchange_name, [&](){
+            trader.subscribeToMarket(exchange_name, ticker);
+        });
+        trader.start();
+    }
     else {
         std::cerr << "Invalid agent type: " << agent_type << "\n";
         std::cout << "\n" << showUsage() << desc << std::endl;
