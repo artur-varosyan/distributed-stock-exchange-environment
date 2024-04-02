@@ -9,14 +9,12 @@ class TraderZIC : public TraderAgent
 public:
 
     TraderZIC(
-        asio::io_context& io_context, 
         int agent_id, 
-        unsigned int port, 
         std::string_view exchange, 
         std::string_view ticker, 
         Order::Side trader_side,
         double limit_price
-    ) : TraderAgent(io_context, agent_id, port),
+    ) : TraderAgent(agent_id),
         exchange_{exchange},
         ticker_{ticker},
         trader_side_{trader_side},

@@ -26,19 +26,8 @@ class StockExchange : public Agent
 {
 public:
 
-    StockExchange(asio::io_context& io_context, int agent_id, std::string_view exchange_name, unsigned int port)
-    : Agent(io_context, agent_id, port),
-      exchange_name_{exchange_name},
-      order_books_{},
-      subscribers_{},
-      trade_tapes_{},
-      msg_queue_{},
-      random_generator_{std::random_device{}()}
-    {
-    }
-
-    StockExchange(asio::io_context& io_context, int agent_id, std::string_view exchange_name)
-    : Agent(io_context, agent_id),
+    StockExchange(int agent_id, std::string_view exchange_name)
+    : Agent(agent_id),
       exchange_name_{exchange_name},
       order_books_{},
       subscribers_{},
@@ -158,6 +147,7 @@ private:
     std::mutex trading_window_mutex_;
     std::condition_variable trading_window_cv_;
     std::thread* trading_window_thread_ = nullptr;
+    std::thread* matching_engine_thread_ = nullptr;
 
     /** Used for randomising the order of UDP broadcasts */
     std::mt19937 random_generator_;

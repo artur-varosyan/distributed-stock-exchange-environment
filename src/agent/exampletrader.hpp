@@ -11,14 +11,8 @@ class ExampleTrader : public TraderAgent
 {
 public:
 
-    ExampleTrader(asio::io_context& io_context, int agent_id, unsigned int port)
-    : TraderAgent(io_context, agent_id, port),
-      order_ids_{}
-    {
-    }
-
-    ExampleTrader(asio::io_context& io_context, int agent_id)
-    : TraderAgent(io_context, agent_id),
+    ExampleTrader(int agent_id)
+    : TraderAgent(agent_id),
       order_ids_{}
     {
     }

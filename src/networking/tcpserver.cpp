@@ -16,6 +16,8 @@ asio::awaitable<void> TCPServer::start()
 
 asio::awaitable<void> TCPServer::messageListener(TCPConnectionPtr connection)
 {
+    // std::cout << "Starting to listen for messages..." << "\n";
+
     std::string address { connection->getSocket().remote_endpoint().address().to_string() };
     unsigned int port { connection->getSocket().remote_endpoint().port() };
 
@@ -33,7 +35,7 @@ asio::awaitable<void> TCPServer::messageListener(TCPConnectionPtr connection)
     }
     catch (std::exception& e)
     {
-        std::cout << "Connection dropped from " << address << ":" << port << "\n";
+        // std::cout << "Connection dropped from " << address << ":" << port << "\n";
         // std::cout << "Exception in message listener: " << e.what() << "\n";
 
         // Remove connection from list

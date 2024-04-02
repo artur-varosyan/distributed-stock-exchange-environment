@@ -6,7 +6,7 @@
 void StockExchange::start()
 {
     // Create a Matching Engine Thread
-    std::thread matching_engine_thread(&StockExchange::runMatchingEngine, this);
+    matching_engine_thread_ = new std::thread(&StockExchange::runMatchingEngine, this);
     
     // Main thread continues to handle incoming and outgoing communication
     Agent::start();

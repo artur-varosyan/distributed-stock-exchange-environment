@@ -2,16 +2,16 @@
 #include <string>
 
 #include "agent.hpp"
+#include "../networking/networkentity.hpp"
 
 void Agent::start()
 {
-    std::cout << "Starting listening on port " << port << "...\n";
-    NetworkEntity::start();
+
 }
 
 void Agent::connect(ipv4_view address, std::string_view agent_name, std::function<void()> const& callback)
 {
-    NetworkEntity::connect(address, [=, this]() {
+    network()->connect(address, [=, this]() {
         addToAddressBook(address, agent_name);
         callback();
     });
@@ -29,6 +29,8 @@ void Agent::removeFromAddressBook(std::string_view agent_name)
 
 std::optional<MessagePtr> Agent::handleMessage(ipv4_view sender, MessagePtr message)
 {
+    // std::cout << "In agent handle message" << "\n";
+
     // Check if sender is in known agents address book
     if (known_agents.right.find(std::string(sender)) != known_agents.right.end())
     {
@@ -64,7 +66,7 @@ void Agent::sendMessageTo(std::string_view agent_name, MessagePtr message)
     if (known_agents.left.find(std::string{agent_name}) != known_agents.left.end())
     {
         // std::cout << "Agent found in address book\n";
-        NetworkEntity::sendMessage(known_agents.left.at(std::string{agent_name}), message);
+        network()->sendMessage(known_agents.left.at(std::string{agent_name}), message);
     }
     else
     {
@@ -76,10 +78,35 @@ void Agent::sendBroadcastTo(std::string_view agent_name, MessagePtr message)
 {
     if (known_agents.left.find(std::string{agent_name}) != known_agents.left.end())
     {
-        NetworkEntity::sendBroadcast(known_agents.left.at(std::string{agent_name}), message);
+        network()->sendBroadcast(known_agents.left.at(std::string{agent_name}), message);
     }
     else
     {
         throw std::runtime_error("Unknown agent name");
     }
+}
+
+void Agent::sendBroadcast(std::string_view address, MessagePtr message)
+{
+    network()->sendBroadcast(address, message);
+}
+
+NetworkEntity* Agent::network()
+{
+    if (!network_.has_value()) 
+    {
+        throw std::runtime_error("Agent has not been asigned to a network entity.");
+    }
+
+    return network_.value();
+}
+
+unsigned int Agent::myPort()
+{
+    return network()->port();
+}
+
+void Agent::setNetwork(NetworkEntity *network)
+{
+    network_ = network;
 }

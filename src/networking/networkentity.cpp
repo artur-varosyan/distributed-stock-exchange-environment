@@ -5,6 +5,7 @@
 #include <boost/serialization/optional.hpp>
 
 #include "networkentity.hpp"
+#include "../agent/agent.hpp"
 #include "../message/message.hpp"
 #include "../message/messagetype.hpp"
 #include "../message/market_data_message.hpp"
@@ -32,6 +33,8 @@ void NetworkEntity::start()
 {
     asio::co_spawn(io_context_, TCPServer::start(), asio::detached);
     asio::co_spawn(io_context_, UDPServer::start(), asio::detached);
+    std::cout << "Listening on port " << port() << "...\n";
+
     io_context_.run();
 }
 
@@ -119,7 +122,7 @@ std::string NetworkEntity::handleMessage(std::string_view sender_adress, unsigne
     try 
     {
         MessagePtr msg = deserialiseMessage(message);
-        std::optional<MessagePtr> response = handleMessage(concatAddress(sender_adress, sender_port), msg);
+        std::optional<MessagePtr> response = agent()->handleMessage(concatAddress(sender_adress, sender_port), msg);
         if (response.has_value()) 
         {
             return serialiseMessage(response.value());
@@ -141,7 +144,7 @@ void NetworkEntity::handleBroadcast(std::string_view sender_adress, unsigned int
     try 
     {
         MessagePtr msg = deserialiseMessage(message);
-        handleBroadcast(concatAddress(sender_adress, sender_port), msg);
+        agent()->handleBroadcast(concatAddress(sender_adress, sender_port), msg);
     }
     catch (std::exception& e)
     {
@@ -150,4 +153,36 @@ void NetworkEntity::handleBroadcast(std::string_view sender_adress, unsigned int
     }
     
     return;
+}
+
+unsigned int NetworkEntity::port()
+{
+    return port_;
+}
+
+std::string NetworkEntity::addr()
+{
+    if (!addr_.has_value())
+    {
+        throw std::runtime_error("The address of the network entity is unknown.");
+    }
+
+    return addr_.value();
+}
+
+void NetworkEntity::setAgent(std::shared_ptr<Agent> agent)
+{
+    agent_ = agent;
+    agent->setNetwork(this);
+    agent->start();
+}
+
+std::shared_ptr<Agent> NetworkEntity::agent()
+{
+    if (!agent_.has_value())
+    {
+        throw std::runtime_error("No agent has been assigned to this NetworkEntity.");
+    }
+
+    return agent_.value();
 }

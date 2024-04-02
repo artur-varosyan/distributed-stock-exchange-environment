@@ -9,8 +9,8 @@ class EchoAgent : public Agent
 {
 public:
 
-    EchoAgent(asio::io_context& io_context, int agent_id)
-    : Agent(io_context, agent_id)
+    EchoAgent(int agent_id)
+    : Agent(agent_id)
     {
     }
 

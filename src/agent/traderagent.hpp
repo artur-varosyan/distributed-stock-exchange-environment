@@ -21,13 +21,8 @@ public:
     TraderAgent() = delete;
     virtual ~TraderAgent() = default;
 
-    TraderAgent(asio::io_context& io_context, int agent_id, unsigned int port)
-    : Agent(io_context, agent_id, port)
-    {
-    }
-
-    TraderAgent(asio::io_context& io_context, int agent_id)
-    : Agent(io_context, agent_id)
+    TraderAgent(int agent_id)
+    : Agent(agent_id)
     {
     }
 

@@ -7,13 +7,8 @@ class MarketDataWatcher : public TraderAgent
 {
 public:
 
-    MarketDataWatcher(asio::io_context& io_context, int agent_id, unsigned int port)
-    : TraderAgent(io_context, agent_id, port)
-    {
-    };
-
-    MarketDataWatcher(asio::io_context& io_context, int agent_id)
-    : TraderAgent(io_context, agent_id)
+    MarketDataWatcher(int agent_id)
+    : TraderAgent(agent_id)
     {
     };
 

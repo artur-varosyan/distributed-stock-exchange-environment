@@ -9,6 +9,7 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/program_options.hpp>
 
+#include "networking/networkentity.hpp"
 #include "agent/exampletrader.hpp"
 #include "agent/stockexchange.hpp"
 #include "agent/marketdatawatcher.hpp"
@@ -38,7 +39,7 @@ int main(int argc, char** argv) {
     po::options_description desc("Allowed options");
     desc.add_options()
         ("help", "show help message")
-        ("port", po::value<unsigned int>()->default_value(8080), "set the port of the current agent")
+        ("port", po::value<unsigned short>()->default_value(8080), "set the port of the current agent")
         ("ticker", po::value<std::string>()->default_value(std::string{"AAPL"}), "set the ticker to trade")
         ("exchange-name", po::value<std::string>()->default_value(std::string{"LSE"}), "set the name of the exchange")
         ("connect-time", po::value<int>()->default_value(30), "(exchange only) the time allowed for traders to connect (seconds)")
@@ -61,9 +62,11 @@ int main(int argc, char** argv) {
 
     std::string agent_type { argv[1] };
     int agent_id { std::stoi(argv[2]) };
-    unsigned int port { vm["port"].as<unsigned int>() };
+    unsigned short port { vm["port"].as<unsigned short>() };
 
     asio::io_context io_context;
+    NetworkEntity entity{io_context, port};
+
     if (agent_type == "exchange")
     {
         // Get configuration
@@ -72,10 +75,12 @@ int main(int argc, char** argv) {
         int connect_time { vm["connect-time"].as<int>() };
         int trading_time { vm["trading-time"].as<int>() };
 
-        StockExchange exchange{io_context, agent_id, exchange_name, port};
-        exchange.addTradeableAsset(ticker);
-        exchange.setTradingWindow(connect_time, trading_time);
-        exchange.start();
+        std::shared_ptr<StockExchange> exchange (new StockExchange{agent_id, exchange_name});
+        entity.setAgent(std::static_pointer_cast<Agent>(exchange));
+
+        exchange->addTradeableAsset(ticker);
+        exchange->setTradingWindow(connect_time, trading_time);
+
     }
     else if (agent_type == "trader") {
 
@@ -84,11 +89,11 @@ int main(int argc, char** argv) {
         std::string exchange_addr { vm["exchange-addr"].as<std::string>() };
         std::string ticker { vm["ticker"].as<std::string>() };
 
-        ExampleTrader trader{io_context, agent_id, port};
-        trader.connect(exchange_addr, exchange_name, [&](){
-            trader.subscribeToMarket(exchange_name, ticker);
+        std::shared_ptr<ExampleTrader> trader (new ExampleTrader{agent_id});
+        trader->connect(exchange_addr, exchange_name, [&](){
+            trader->subscribeToMarket(exchange_name, ticker);
         });
-        trader.start();
+
     }
     else if (agent_type == "watcher") {
 
@@ -97,12 +102,13 @@ int main(int argc, char** argv) {
         std::string exchange_addr { vm["exchange-addr"].as<std::string>() };
         std::string ticker { vm["ticker"].as<std::string>() };
 
-        MarketDataWatcher watcher{io_context, agent_id, port};
+        std::shared_ptr<MarketDataWatcher> watcher (new MarketDataWatcher{agent_id});
+        entity.setAgent(std::static_pointer_cast<Agent>(watcher));
 
-        watcher.connect(exchange_addr, exchange_name, [&](){
-            watcher.subscribeToMarket(exchange_name, ticker);
+        watcher->connect(exchange_addr, exchange_name, [&](){
+            watcher->subscribeToMarket(exchange_name, ticker);
         });
-        watcher.start();
+
     } 
     else if (agent_type == "zic") 
     {
@@ -114,15 +120,16 @@ int main(int argc, char** argv) {
         Order::Side trader_side = (vm["side"].as<std::string>() == "buyer") ? Order::Side::BID : Order::Side::ASK;
         double limit { vm["limit"].as<double>() };
 
-        TraderZIC trader{io_context, agent_id, port, exchange_name, ticker, trader_side, limit};
+        std::shared_ptr<TraderZIC> trader (new TraderZIC{agent_id, exchange_name, ticker, trader_side, limit});
+        entity.setAgent(std::static_pointer_cast<Agent>(trader));
 
         unsigned int delay { vm["delay"].as<unsigned int>() };
-        trader.addDelayedStart(delay);
+        trader->addDelayedStart(delay);
 
-        trader.connect(exchange_addr, exchange_name, [&](){
-            trader.subscribeToMarket(exchange_name, ticker);
+        trader->connect(exchange_addr, exchange_name, [&](){
+            trader->subscribeToMarket(exchange_name, ticker);
         });
-        trader.start();
+
     } 
     else if (agent_type == "shvr")
     {
@@ -134,21 +141,25 @@ int main(int argc, char** argv) {
         Order::Side trader_side = (vm["side"].as<std::string>() == "buyer") ? Order::Side::BID : Order::Side::ASK;
         double limit { vm["limit"].as<double>() };
 
-        TraderShaver trader{io_context, agent_id, port, exchange_name, ticker, trader_side, limit};
+        std::shared_ptr<TraderShaver> trader (new TraderShaver{agent_id, exchange_name, ticker, trader_side, limit});
+        entity.setAgent(std::static_pointer_cast<Agent>(trader));
 
         unsigned int delay { vm["delay"].as<unsigned int>() };
-        trader.addDelayedStart(delay);
+        trader->addDelayedStart(delay);
 
-        trader.connect(exchange_addr, exchange_name, [&](){
-            trader.subscribeToMarket(exchange_name, ticker);
+        trader->connect(exchange_addr, exchange_name, [&](){
+            trader->subscribeToMarket(exchange_name, ticker);
         });
-        trader.start();
+
     }
     else {
         std::cerr << "Invalid agent type: " << agent_type << "\n";
         std::cout << "\n" << showUsage() << desc << std::endl;
         exit(1);
     }
+
+    // Start listening for connections
+    entity.start();
 
     return 0;
 }
