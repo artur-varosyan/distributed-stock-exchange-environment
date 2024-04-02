@@ -3,7 +3,7 @@ project(simulation)
 
 set(CMAKE_CXX_STANDARD 20)
 
-find_package(Boost 1.75.0 COMPONENTS system filesystem serialization REQUIRED)
+find_package(Boost 1.82.0 COMPONENTS system filesystem serialization program_options REQUIRED)
 
 if(Boost_FOUND)
 

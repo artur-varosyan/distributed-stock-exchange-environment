@@ -46,6 +46,8 @@ public:
     /** The trader will remain idle and no handlers will be called until the specified duration after trading start.  */
     void addDelayedStart(int delay_in_seconds);
 
+protected:
+
     /** Derived classes must implement these: */
 
     /** The callback function called when trading window starts. */
@@ -73,6 +75,9 @@ private:
 
     /** Signals that trading has started and starts sending callbacks to handlers. */
     void signalTradingStart();
+
+    /** TODO: Signals that trading has ended and stops sending callbacks to handlers. */
+    // void signalTradingEnd();
 
     /** Used for delayed start of the trader. */
     bool trading_window_open_ = false;
