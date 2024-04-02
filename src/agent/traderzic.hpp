@@ -8,17 +8,12 @@ class TraderZIC : public TraderAgent
 {
 public:
 
-    TraderZIC(
-        int agent_id, 
-        std::string_view exchange, 
-        std::string_view ticker, 
-        Order::Side trader_side,
-        double limit_price
-    ) : TraderAgent(agent_id),
-        exchange_{exchange},
-        ticker_{ticker},
-        trader_side_{trader_side},
-        limit_price_{limit_price}
+    TraderZIC(NetworkEntity *network_entity, TraderConfig *config)
+    : TraderAgent(network_entity, config),
+      exchange_{config->exchange_name},
+      ticker_{config->ticker},
+      trader_side_{config->side},
+      limit_price_{config->limit}
     {
     }
 

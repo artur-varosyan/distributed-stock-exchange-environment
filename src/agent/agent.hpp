@@ -6,6 +6,7 @@
 #include <boost/asio.hpp>
 #include <boost/bimap.hpp>
 
+#include "../config/agentconfig.hpp"
 #include "../message/message.hpp"
 #include "../message/messagetype.hpp"
 
@@ -23,14 +24,8 @@ public:
     Agent() = delete;
     virtual ~Agent() = default;
 
-    Agent(int agent_id)
-    : agent_id{agent_id},
-      network_{std::nullopt}
-    {
-    }
-
-    Agent(int agent_id, NetworkEntity *network)
-    : agent_id{agent_id},
+    Agent(NetworkEntity *network, AgentConfig *config)
+    : agent_id{config->agent_id},
       network_{network}
     {
     }
@@ -86,12 +81,9 @@ protected:
 
 private:
 
-    friend class NetworkEntity;
-    void setNetwork(NetworkEntity *network);
-
     NetworkEntity* network();
 
-    std::optional<NetworkEntity*> network_;
+    NetworkEntity* network_;
 };
 
 #endif

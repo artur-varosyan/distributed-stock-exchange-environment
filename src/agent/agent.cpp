@@ -11,6 +11,7 @@ void Agent::start()
 
 void Agent::connect(ipv4_view address, std::string_view agent_name, std::function<void()> const& callback)
 {
+    // std::cout << "Connecting to " << agent_name << "\n";
     network()->connect(address, [=, this]() {
         addToAddressBook(address, agent_name);
         callback();
@@ -93,20 +94,10 @@ void Agent::sendBroadcast(std::string_view address, MessagePtr message)
 
 NetworkEntity* Agent::network()
 {
-    if (!network_.has_value()) 
-    {
-        throw std::runtime_error("Agent has not been asigned to a network entity.");
-    }
-
-    return network_.value();
+    return network_;
 }
 
 unsigned int Agent::myPort()
 {
     return network()->port();
-}
-
-void Agent::setNetwork(NetworkEntity *network)
-{
-    network_ = network;
 }

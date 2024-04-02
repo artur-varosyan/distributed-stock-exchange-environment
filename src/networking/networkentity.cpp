@@ -173,7 +173,6 @@ std::string NetworkEntity::addr()
 void NetworkEntity::setAgent(std::shared_ptr<Agent> agent)
 {
     agent_ = agent;
-    agent->setNetwork(this);
     agent->start();
 }
 

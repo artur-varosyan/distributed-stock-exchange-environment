@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "agent.hpp"
+#include "../config/traderconfig.hpp"
 #include "../order/order.hpp"
 #include "../message/market_data_message.hpp"
 #include "../message/exec_report_message.hpp"
@@ -21,9 +22,16 @@ public:
     TraderAgent() = delete;
     virtual ~TraderAgent() = default;
 
-    TraderAgent(int agent_id)
-    : Agent(agent_id)
+    TraderAgent(NetworkEntity *network_entity, TraderConfig *config)
+    : Agent(network_entity, config)
     {
+        // Automatically connect to exchange on initialisation
+        connect(config->exchange_addr, config->exchange_name, [=](){
+            subscribeToMarket(config->exchange_name, config->ticker);
+        });
+
+        // Add delayed start
+        addDelayedStart(config->delay);
     }
 
     /** Subscribes to updates for the stock with the given ticker at the given exchange. */

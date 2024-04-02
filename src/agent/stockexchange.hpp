@@ -4,6 +4,7 @@
 #include <random>
 
 #include "../agent/agent.hpp"
+#include "../config/exchangeconfig.hpp"
 #include "../order/order.hpp"
 #include "../order/orderbook.hpp"
 #include "../order/orderfactory.hpp"
@@ -26,15 +27,23 @@ class StockExchange : public Agent
 {
 public:
 
-    StockExchange(int agent_id, std::string_view exchange_name)
-    : Agent(agent_id),
-      exchange_name_{exchange_name},
+    StockExchange(NetworkEntity *network_entity, ExchangeConfig *config)
+    : Agent(network_entity, config),
+      exchange_name_{config->name},
       order_books_{},
       subscribers_{},
       trade_tapes_{},
       msg_queue_{},
       random_generator_{std::random_device{}()}
     {
+      // Add all tickers to exchange
+      for (auto ticker : config->tickers)
+      {
+        addTradeableAsset(ticker);
+      }
+
+      // Set trading window
+      setTradingWindow(config->connect_time, config->trading_time);
     }
 
     /** Starts the exchange. */

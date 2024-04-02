@@ -7,8 +7,8 @@ class MarketDataWatcher : public TraderAgent
 {
 public:
 
-    MarketDataWatcher(int agent_id)
-    : TraderAgent(agent_id)
+    MarketDataWatcher(NetworkEntity* network_entity, TraderConfig *config)
+    : TraderAgent(network_entity, config)
     {
     };
 
