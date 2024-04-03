@@ -16,6 +16,7 @@
 #include "agent/marketdatawatcher.hpp"
 #include "agent/traderzic.hpp"
 #include "agent/tradershvr.hpp"
+#include "agent/orchestratoragent.hpp"
 
 #include "message/message.hpp"
 #include "message/messagetype.hpp"
@@ -27,9 +28,20 @@
 namespace asio = boost::asio;
 namespace po = boost::program_options;
 
-std::string showUsage() {
+std::string showUsage() 
+{
     std::stringstream ss;
-    ss << "Usage: " << "./simulation" << " <agent> <agent_id> [options]" << "\n\n";
+    ss << "Usage: " << "./simulation" << " <mode>" << "\n\n";
+    ss << "Modes:\n";
+    ss << "  " << "local" << "\t\t" << "run simulation in local mode" << "\n";
+    ss << "  " << "orchestrator" << "\t" << "orchestrate the cloud simulation from this node" << "\n";
+    ss << "  " << "cloud" << "\t\t" << "run a simulation node" << "\n";
+    return ss.str();
+}
+
+std::string showLocalUsage() {
+    std::stringstream ss;
+    ss << "Usage: " << "./simulation local" << " <agent> <agent_id> [options]" << "\n\n";
     ss << "Agents:\n";
     ss << "  " << "exchange" << "\t" << "multithreaded stock exchange implementation" << "\n";
     ss << "  " << "watcher" << "\t" << "live market data watcher" << "\n";
@@ -39,8 +51,8 @@ std::string showUsage() {
     return ss.str();
 }
 
-int main(int argc, char** argv) {
-
+void local_runner(int argc, char** argv)
+{
     po::options_description desc("Allowed options");
     desc.add_options()
         ("help", "show help message")
@@ -61,7 +73,7 @@ int main(int argc, char** argv) {
 
     if (argc < 3 || vm.count("help"))
     {
-        std::cout << "\n" << showUsage() << desc << std::endl;
+        std::cout << "\n" << showLocalUsage() << desc << std::endl;
         exit(1);
     }
 
@@ -148,9 +160,140 @@ int main(int argc, char** argv) {
     }
     else {
         std::cerr << "Invalid agent type: " << agent_type << "\n";
-        std::cout << "\n" << showUsage() << desc << std::endl;
+        std::cout << "\n" << showLocalUsage() << desc << std::endl;
         exit(1);
     } 
+}
+
+void cloud_runner(int argc, char** argv)
+{
+    po::options_description cloud_desc("Allowed options");
+    cloud_desc.add_options()
+        ("help", "show help message")
+        ("port", po::value<unsigned short>()->default_value(8080), "set the port of the current agent")
+    ;
+
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, cloud_desc), vm);
+    po::notify(vm);
+
+    if (vm.count("help"))
+    {
+        std::cout << "\n" << cloud_desc << std::endl;
+        exit(1);
+    }
+
+    unsigned short port { vm["port"].as<unsigned short>() };
+
+    asio::io_context io_context;
+    NetworkEntity entity{io_context, port};
+    entity.start();
+}
+
+void orchestrator(int argc, char** argv)
+{
+    // Create a local OrchestratorAgent
+
+    asio::io_context io_context;
+    NetworkEntity entity{io_context, 10001};
+
+    AgentConfig orchestrator_config;
+    orchestrator_config.agent_id = 999;
+
+    std::shared_ptr<OrchestratorAgent> orchestrator (new OrchestratorAgent{&entity, &orchestrator_config});
+    entity.setAgent(std::static_pointer_cast<Agent>(orchestrator));
+
+    // === Configure the simulation ===
+
+    std::vector<std::string> addresses {
+        std::string{"18.133.220.80:8080"},
+        std::string{"18.135.100.172:8080"},
+        std::string{"18.130.243.145:8080"},
+        std::string{"18.133.222.17:8080"},
+        std::string{"35.177.10.71:8080"},
+        std::string{"13.40.106.193:8080"},
+        std::string{"3.9.146.9:8080"},
+        std::string{"35.178.32.102:8080"},
+        std::string{"3.8.120.151:8080"}
+    };
+
+    // 1. Create an Exchange
+
+    ExchangeConfig exchange_config;
+    exchange_config.agent_id = 99;
+    exchange_config.addr = addresses.at(0);
+    exchange_config.name = std::string{"NYSE"};
+    exchange_config.tickers = std::vector{std::string{"MSFT"}};
+    exchange_config.connect_time = 30;
+    exchange_config.trading_time = 60;
+
+    orchestrator->configureNode(exchange_config.addr, AgentType::STOCK_EXCHANGE, (AgentConfig*) &exchange_config);
+
+    // 2. Create traders
+
+    // Sellers
+    for (int i=1; i < 5; i++)
+    {
+        TraderConfig* trader_config = new TraderConfig();
+        trader_config->agent_id = i;
+        trader_config->addr = addresses.at(i);
+        trader_config->exchange_name = exchange_config.name;
+        trader_config->exchange_addr = exchange_config.addr;
+        trader_config->limit = 50;
+        trader_config->delay = i * 10;
+        trader_config->ticker = std::string{"MSFT"};
+        trader_config->side = Order::Side::ASK;
+
+        std::string trader_addr {addresses.at(i)};
+        std::cout << "Configuring node with addr " << trader_addr << "\n"; 
+
+        orchestrator->configureNode(trader_addr, AgentType::TRADER_ZIC, (AgentConfig*) trader_config);
+    }
+
+    // Buyers
+    for (int i=5; i < 9; i++)
+    {
+        TraderConfig* trader_config = new TraderConfig();
+        trader_config->agent_id = i;
+        trader_config->addr = addresses.at(i);
+        trader_config->exchange_name = exchange_config.name;
+        trader_config->exchange_addr = exchange_config.addr;
+        trader_config->limit = 150;
+        trader_config->delay = (i-4) * 10;
+        trader_config->ticker = std::string{"MSFT"};
+        trader_config->side = Order::Side::BID;
+
+        std::string trader_addr {addresses.at(i)};
+        std::cout << "Configuring node with addr " << trader_addr << "\n";
+
+        orchestrator->configureNode(trader_addr, AgentType::TRADER_ZIC, (AgentConfig*) trader_config);
+    }
+
+    entity.start();
+}
+
+int main(int argc, char** argv)
+{
+
+    if (argc < 2)
+    {
+        std::cout << showUsage() << std::endl;
+        exit(1);
+    }
+
+    std::string mode { argv[1] };
+    if (mode == "local")
+    {
+        local_runner(argc, argv);
+    }
+    else if (mode == "orchestrator")
+    {
+        orchestrator(argc, argv);
+    }
+    else
+    {
+        cloud_runner(argc, argv);
+    }
 
     return 0;
 }

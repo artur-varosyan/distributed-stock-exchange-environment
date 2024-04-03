@@ -10,6 +10,7 @@
 #include "tcpserver.hpp"
 #include "udpserver.hpp"
 #include "../message/message.hpp"
+#include "../message/config_message.hpp"
 
 class Agent;
 
@@ -66,7 +67,7 @@ private:
     std::shared_ptr<Agent> agent();
 
     /** Initialises the agent running inside this NetworkEntity using a config message. */
-    void createAgentFromConfig(MessagePtr msg);
+    void createAgentFromConfig(ConfigMessagePtr msg);
 
     /** Adds a given connection to the bimap of open connections. */
     void addConnection(std::string_view address, unsigned int port, TCPConnectionPtr connection) override;

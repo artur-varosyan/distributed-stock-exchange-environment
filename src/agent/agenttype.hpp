@@ -3,8 +3,7 @@
 
 enum class AgentType : int
 {
-    ECHO,
-    EXAMPLE,
+    TRADER_EXAMPLE,
     STOCK_EXCHANGE,
     MARKET_WATCHER,
     TRADER_ZIC,

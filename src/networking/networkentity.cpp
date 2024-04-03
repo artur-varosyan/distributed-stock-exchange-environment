@@ -6,6 +6,7 @@
 
 #include "networkentity.hpp"
 #include "../agent/agent.hpp"
+#include "../agent/agentfactory.hpp"
 #include "../message/message.hpp"
 #include "../message/messagetype.hpp"
 #include "../message/market_data_message.hpp"
@@ -26,6 +27,13 @@ BOOST_CLASS_EXPORT(MarketOrderMessage);
 BOOST_CLASS_EXPORT(CancelOrderMessage);
 BOOST_CLASS_EXPORT(EventMessage);
 BOOST_CLASS_EXPORT(CancelRejectMessage);
+
+/** TODO: This should be elsewhere */
+BOOST_CLASS_EXPORT(AgentConfig);
+BOOST_CLASS_EXPORT(ExchangeConfig);
+BOOST_CLASS_EXPORT(TraderConfig);
+
+BOOST_CLASS_EXPORT(ConfigMessage);
 
 namespace archive = boost::archive;
 
@@ -118,14 +126,22 @@ void NetworkEntity::removeConnection(std::string_view address, unsigned int port
 std::string NetworkEntity::handleMessage(std::string_view sender_adress, unsigned int sender_port, std::string_view message)
 {
     // std::cout << "Received message from " << sender_adress << ":" << sender_port << "\n";
+    // std::cout << "Received message " << message << "\n";
 
     try 
     {
         MessagePtr msg = deserialiseMessage(message);
-        std::optional<MessagePtr> response = agent()->handleMessage(concatAddress(sender_adress, sender_port), msg);
-        if (response.has_value()) 
+        if (msg->type == MessageType::CONFIG)
         {
-            return serialiseMessage(response.value());
+            createAgentFromConfig(std::dynamic_pointer_cast<ConfigMessage>(msg));
+        }
+        else
+        {
+            std::optional<MessagePtr> response = agent()->handleMessage(concatAddress(sender_adress, sender_port), msg);
+            if (response.has_value()) 
+            {
+                return serialiseMessage(response.value());
+            }
         }
     }
     catch (std::exception& e)
@@ -184,4 +200,10 @@ std::shared_ptr<Agent> NetworkEntity::agent()
     }
 
     return agent_.value();
+}
+
+void NetworkEntity::createAgentFromConfig(ConfigMessagePtr msg)
+{
+    addr_ = splitAddress(msg->config->addr).first;
+    setAgent(AgentFactory::createAgent(this, msg->agent_type, msg->config));
 }

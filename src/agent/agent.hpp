@@ -34,7 +34,7 @@ public:
     virtual void start();
 
     /** Establishes a lasting connection with the agent at the given address. */
-    void connect(ipv4_view address, std::string_view agent_name, std::function<void()> const& callback);
+    void connect(ipv4_address address, std::string agent_name, std::function<void()> const& callback);
 
     /** Sends a message to the known agent with the given name. */
     void sendMessageTo(std::string_view agent_name, MessagePtr message);

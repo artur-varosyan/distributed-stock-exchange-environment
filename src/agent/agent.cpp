@@ -9,10 +9,11 @@ void Agent::start()
 
 }
 
-void Agent::connect(ipv4_view address, std::string_view agent_name, std::function<void()> const& callback)
+void Agent::connect(ipv4_address address, std::string agent_name, std::function<void()> const& callback)
 {
     // std::cout << "Connecting to " << agent_name << "\n";
     network()->connect(address, [=, this]() {
+        // std::cout << "Inside name " << agent_name << "\n";
         addToAddressBook(address, agent_name);
         callback();
     });
@@ -20,6 +21,7 @@ void Agent::connect(ipv4_view address, std::string_view agent_name, std::functio
 
 void Agent::addToAddressBook(ipv4_view address, std::string_view agent_name)
 {
+    // std::cout << "Adding to address book " << address << " " << agent_name << "\n";
     known_agents.left.insert({std::string{agent_name}, std::string{address}});
 }
 
@@ -100,4 +102,9 @@ NetworkEntity* Agent::network()
 unsigned int Agent::myPort()
 {
     return network()->port();
+}
+
+std::string Agent::myAddr()
+{
+    return network()->addr();
 }

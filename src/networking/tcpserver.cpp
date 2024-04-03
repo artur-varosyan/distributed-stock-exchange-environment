@@ -75,6 +75,7 @@ asio::awaitable<void> TCPServer::listener()
 
 asio::awaitable<void> TCPServer::sendMessage(TCPConnectionPtr connection, std::string message)
 {
+    // std::cout << "sending: " << message << "\n";
     co_await connection->send(message);
 }
 

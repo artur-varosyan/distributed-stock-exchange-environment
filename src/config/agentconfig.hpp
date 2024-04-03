@@ -13,9 +13,10 @@ class AgentConfig
 public:
 
     AgentConfig() = default;
+    virtual ~AgentConfig() = default;
 
     int agent_id;
-    // std::string addr;
+    std::string addr;
 
 private:
 
@@ -24,6 +25,7 @@ private:
     void serialize(Archive & ar, const unsigned int version)
     {
         ar & agent_id;
+        ar & addr;
     }
 };
 
