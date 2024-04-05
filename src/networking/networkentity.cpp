@@ -90,12 +90,22 @@ void NetworkEntity::sendBroadcast(ipv4_view address, MessagePtr message)
 
 void NetworkEntity::sendMessage(ipv4_view address, MessagePtr message, bool async)
 {
-    std::pair<std::string, unsigned int> pair = splitAddress(address);
-    TCPConnectionPtr connection = connections_.left.at(concatAddress(pair.first, pair.second));
+    // If TCP connection exists with the given address, send the message
+    if (connections_.left.find(std::string{address}) != connections_.left.end())
+    {
+        TCPConnectionPtr connection = connections_.left.at(std::string{address});
 
-    asio::post(io_context_, [=, this](){
-        asio::co_spawn(io_context_, TCPServer::sendMessage(connection, serialiseMessage(message), async), asio::detached);
-    });
+        asio::post(io_context_, [=, this](){
+            asio::co_spawn(io_context_, TCPServer::sendMessage(connection, serialiseMessage(message), async), asio::detached);
+        });
+        
+    }
+    // Abort sending message if TCP connection cannot be found
+    else 
+    {
+        std::cout << "Message failed to send: no TCP connection with " << address << "\n";
+    }
+
 }
 
 std::string NetworkEntity::concatAddress(std::string_view address, unsigned int port)
@@ -212,6 +222,6 @@ void NetworkEntity::configureEntity(std::string_view sender_address, ConfigMessa
     setAgent(AgentFactory::createAgent(this, msg->agent_type, msg->config));
 
     // Send configuration acknowledgement back to orchestrator
-    ConfigAckMessagePtr msg = std::make_shared<ConfigAckMessage>();
-    sendMessage(sender_address, std::static_pointer_cast<Message>(msg), true);
+    // ConfigAckMessagePtr ack_msg = std::make_shared<ConfigAckMessage>();
+    // sendMessage(sender_address, std::static_pointer_cast<Message>(ack_msg), true);
 }

@@ -206,7 +206,27 @@ void orchestrator(int argc, char** argv)
     // === Configure the simulation ===
 
     std::vector<std::string> addresses {
-        
+        std::string{"3.10.235.244:8080"}, // Exchange
+        std::string{"3.10.169.119:8080"},
+        std::string{"3.8.5.9:8080"},
+        std::string{"35.178.211.56:8080"},
+        std::string{"18.171.237.110:8080"},
+        std::string{"3.9.176.186:8080"},
+        std::string{"18.170.217.194:8080"},
+        std::string{"18.171.144.108:8080"},
+        std::string{"52.56.119.26:8080"},
+        std::string{"3.10.226.101:8080"},
+        std::string{"3.8.78.18:8080"},
+        std::string{"18.130.111.152:8080"},
+        std::string{"3.10.235.166:8080"},
+        std::string{"18.132.114.96:8080"},
+        std::string{"18.171.135.14:8080"},
+        std::string{"35.178.235.209:8080"},
+        std::string{"3.9.14.37:8080"},
+        std::string{"35.177.86.91:8080"},
+        std::string{"18.170.37.160:8080"},
+        std::string{"18.171.135.197:8080"},
+        std::string{"3.9.16.125:8080"}
     };
 
     // 1. Create an Exchange
@@ -251,7 +271,7 @@ void orchestrator(int argc, char** argv)
     }
 
     // Buyers ZIC
-    for (int i=11; i < 21; i++)
+    for (int i=11; i < 20; i++)
     {
         TraderConfig* trader_config = new TraderConfig();
         trader_config->agent_id = i;
@@ -270,42 +290,42 @@ void orchestrator(int argc, char** argv)
     }
 
     // Sellers SHVR
-    for (int i=21; i < 25; i++)
-    {
-        TraderConfig* trader_config = new TraderConfig();
-        trader_config->agent_id = i;
-        trader_config->addr = addresses.at(i);
-        trader_config->exchange_name = exchange_config.name;
-        trader_config->exchange_addr = exchange_config.addr;
-        trader_config->limit = 50 + ((i-21)*20);
-        trader_config->delay = 30;
-        trader_config->ticker = std::string{"AMZN"};
-        trader_config->side = Order::Side::ASK;
+    // for (int i=21; i < 25; i++)
+    // {
+    //     TraderConfig* trader_config = new TraderConfig();
+    //     trader_config->agent_id = i;
+    //     trader_config->addr = addresses.at(i);
+    //     trader_config->exchange_name = exchange_config.name;
+    //     trader_config->exchange_addr = exchange_config.addr;
+    //     trader_config->limit = 50 + ((i-21)*20);
+    //     trader_config->delay = 30;
+    //     trader_config->ticker = std::string{"AMZN"};
+    //     trader_config->side = Order::Side::ASK;
 
-        std::string trader_addr {addresses.at(i)};
-        std::cout << "Configuring node with addr " << trader_addr << "\n"; 
+    //     std::string trader_addr {addresses.at(i)};
+    //     std::cout << "Configuring node with addr " << trader_addr << "\n"; 
 
-        orchestrator->configureNode(trader_addr, AgentType::TRADER_SHVR, (AgentConfig*) trader_config);
-    }
+    //     orchestrator->configureNode(trader_addr, AgentType::TRADER_SHVR, (AgentConfig*) trader_config);
+    // }
 
-    // Buyers SHVR
-    for (int i=25; i < 29; i++)
-    {
-        TraderConfig* trader_config = new TraderConfig();
-        trader_config->agent_id = i;
-        trader_config->addr = addresses.at(i);
-        trader_config->exchange_name = exchange_config.name;
-        trader_config->exchange_addr = exchange_config.addr;
-        trader_config->limit = 150 - ((i-25)*20);
-        trader_config->delay = 30;
-        trader_config->ticker = std::string{"AMZN"};
-        trader_config->side = Order::Side::BID;
+    // // Buyers SHVR
+    // for (int i=25; i < 29; i++)
+    // {
+    //     TraderConfig* trader_config = new TraderConfig();
+    //     trader_config->agent_id = i;
+    //     trader_config->addr = addresses.at(i);
+    //     trader_config->exchange_name = exchange_config.name;
+    //     trader_config->exchange_addr = exchange_config.addr;
+    //     trader_config->limit = 150 - ((i-25)*20);
+    //     trader_config->delay = 30;
+    //     trader_config->ticker = std::string{"AMZN"};
+    //     trader_config->side = Order::Side::BID;
 
-        std::string trader_addr {addresses.at(i)};
-        std::cout << "Configuring node with addr " << trader_addr << "\n";
+    //     std::string trader_addr {addresses.at(i)};
+    //     std::cout << "Configuring node with addr " << trader_addr << "\n";
 
-        orchestrator->configureNode(trader_addr, AgentType::TRADER_SHVR, (AgentConfig*) trader_config);
-    }
+    //     orchestrator->configureNode(trader_addr, AgentType::TRADER_SHVR, (AgentConfig*) trader_config);
+    // }
 
     entity.start();
 }

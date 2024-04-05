@@ -36,8 +36,10 @@ asio::awaitable<void> TCPServer::messageListener(TCPConnectionPtr connection)
     }
     catch (std::exception& e)
     {
-        // std::cout << "Connection dropped from " << address << ":" << port << "\n";
-        std::cout << "Exception in message listener: " << e.what() << "\n";
+        /** TODO: Handle EOF as clean connection drop */
+
+        std::cout << "Connection dropped from " << address << ":" << port << "\n";
+        // std::cout << "Exception in message listener: " << e.what() << "\n";
 
         // Remove connection from list
         removeConnection(address, port);
@@ -57,6 +59,9 @@ asio::awaitable<void> TCPServer::handleAccept(tcp::socket socket)
 
     // Start listening for messages from this connection
     asio::co_spawn(io_context_, messageListener(connection), asio::detached);
+
+    // Start a writing coroutine to send messages to this connection
+    asio::co_spawn(io_context_, connection->writer(), asio::detached);
 
     co_return;
 }
@@ -104,6 +109,9 @@ asio::awaitable<void> TCPServer::connect(std::string address, const unsigned int
         
         // Start listening for messages from this connection
         asio::co_spawn(io_context_, messageListener(connection), asio::detached);
+
+        // Start a writing coroutine to send messages to this connection
+        asio::co_spawn(io_context_, connection->writer(), asio::detached);
     }
     catch (std::exception& e)
     {
