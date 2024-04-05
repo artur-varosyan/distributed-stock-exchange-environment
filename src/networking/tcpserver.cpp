@@ -22,21 +22,22 @@ asio::awaitable<void> TCPServer::messageListener(TCPConnectionPtr connection)
     unsigned int port { connection->getSocket().remote_endpoint().port() };
 
     try {
+        std::string read_buffer;
         while (true)
         {
-            std::string message = co_await connection->read();
+            std::string message = co_await connection->read(read_buffer);
 
             std::string response = handleMessage(address, port, message);
             if (!response.empty())
             {
-                co_await connection->send(response);
+                co_await connection->send(response, false);
             }
         }
     }
     catch (std::exception& e)
     {
         // std::cout << "Connection dropped from " << address << ":" << port << "\n";
-        // std::cout << "Exception in message listener: " << e.what() << "\n";
+        std::cout << "Exception in message listener: " << e.what() << "\n";
 
         // Remove connection from list
         removeConnection(address, port);
@@ -73,10 +74,9 @@ asio::awaitable<void> TCPServer::listener()
     }
 }
 
-asio::awaitable<void> TCPServer::sendMessage(TCPConnectionPtr connection, std::string message)
+asio::awaitable<void> TCPServer::sendMessage(TCPConnectionPtr connection, std::string message, bool async)
 {
-    // std::cout << "sending: " << message << "\n";
-    co_await connection->send(message);
+    co_await connection->send(message, async);
 }
 
 asio::awaitable<void> TCPServer::connect(std::string address, const unsigned int port, std::function<void()> callback)

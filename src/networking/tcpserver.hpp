@@ -31,7 +31,7 @@ public:
     asio::awaitable<void> connect(std::string address, const unsigned int port, std::function<void()> callback);
 
     /** Sends a message to a given connection. */
-    asio::awaitable<void> sendMessage(TCPConnectionPtr connection, std::string message);
+    asio::awaitable<void> sendMessage(TCPConnectionPtr connection, std::string message, bool async);
 
 
     /** Derived classes must implement the following: */

@@ -15,7 +15,7 @@ RUN apk add build-base cmake
 RUN apk add boost-dev
 
 # Install the boost library
-# RUN yum install -y wget tar bzip2
+# RUN apk add wget tar bzip2
 # RUN wget https://boostorg.jfrog.io/artifactory/main/release/1.84.0/source/boost_1_84_0.tar.bz2
 # RUN ls -al
 # RUN tar --bzip2 -xf boost_1_84_0.tar.bz2
@@ -26,5 +26,9 @@ RUN cmake -B build
 
 # Compile the project
 RUN cd build && make
+
+WORKDIR /app/build
+
+ENTRYPOINT [ "./simulation" ]
 
 

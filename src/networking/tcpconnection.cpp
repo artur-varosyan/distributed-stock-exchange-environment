@@ -5,11 +5,18 @@
 
 namespace asio = boost::asio;
 
-asio::awaitable<void> TCPConnection::send(std::string_view message)
+asio::awaitable<void> TCPConnection::send(std::string_view message, bool async)
 {
     try {
-        // std::cout << "TCPCOnn Sending message to " << socket_.remote_endpoint() << ": " << message << "\n";
-        co_await asio::async_write(socket_, asio::buffer(message), asio::use_awaitable);
+        if (async)
+        {
+            co_await asio::async_write(socket_, asio::buffer(message), asio::use_awaitable);
+        }
+        else 
+        {
+            asio::write(socket_, asio::buffer(message));
+            co_return;
+        }
     }
     catch (std::exception& e)
     {
@@ -17,11 +24,12 @@ asio::awaitable<void> TCPConnection::send(std::string_view message)
     }
 }
 
-asio::awaitable<std::string> TCPConnection::read()
+asio::awaitable<std::string> TCPConnection::read(std::string& read_buffer)
 {
-    char data[65536];
-    std::size_t n = co_await socket_.async_read_some(asio::buffer(data), asio::use_awaitable);
+    std::size_t n = co_await asio::async_read_until(socket_, asio::dynamic_buffer(read_buffer, 4096), "#END#", asio::use_awaitable);
     // std::cout << "Message from " << socket_.remote_endpoint() << ": " << std::string(data, n) << " of size " << n << "\n";
 
-    co_return std::string(data, n);
+    std::string msg = read_buffer.substr(0, n);
+    read_buffer.erase(0, n);
+    co_return msg;
 }

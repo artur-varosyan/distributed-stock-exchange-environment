@@ -16,10 +16,10 @@ public:
     }
 
     /** Sends the given message to the connected client. */
-    asio::awaitable<void> send(std::string_view message);
+    asio::awaitable<void> send(std::string_view message, bool async);
 
     /** Reads a message from the connected client. */
-    asio::awaitable<std::string> read();
+    asio::awaitable<std::string> read(std::string& read_buffer);
 
     tcp::socket& getSocket() { return socket_; }
 

@@ -17,6 +17,8 @@
 #include "../message/cancel_order_message.hpp"
 #include "../message/event_message.hpp"
 #include "../message/cancel_reject_message.hpp"
+#include "../message/config_message.hpp"
+#include "../message/config_ack_message.hpp"
 
 BOOST_CLASS_EXPORT(Message);
 BOOST_CLASS_EXPORT(MarketDataMessage);
@@ -34,6 +36,7 @@ BOOST_CLASS_EXPORT(ExchangeConfig);
 BOOST_CLASS_EXPORT(TraderConfig);
 
 BOOST_CLASS_EXPORT(ConfigMessage);
+BOOST_CLASS_EXPORT(ConfigAckMessage);
 
 namespace archive = boost::archive;
 
@@ -51,7 +54,7 @@ std::string NetworkEntity::serialiseMessage(MessagePtr message)
     std::stringstream ss;
     archive::text_oarchive oa{ss};
     oa << message;
-    return ss.str();
+    return ss.str() + std::string{"#END#"};
 }
 
 MessagePtr NetworkEntity::deserialiseMessage(std::string_view message)
@@ -85,17 +88,14 @@ void NetworkEntity::sendBroadcast(ipv4_view address, MessagePtr message)
     });
 }
 
-void NetworkEntity::sendMessage(ipv4_view address, MessagePtr message)
+void NetworkEntity::sendMessage(ipv4_view address, MessagePtr message, bool async)
 {
     std::pair<std::string, unsigned int> pair = splitAddress(address);
     TCPConnectionPtr connection = connections_.left.at(concatAddress(pair.first, pair.second));
 
     asio::post(io_context_, [=, this](){
-        // std::cout << "Posted task is running\n" << "\n";
-        asio::co_spawn(io_context_, TCPServer::sendMessage(connection, serialiseMessage(message)), asio::detached);
-        // std::cout << "Coroutine spawned\n" << "\n";
+        asio::co_spawn(io_context_, TCPServer::sendMessage(connection, serialiseMessage(message), async), asio::detached);
     });
-    // std::cout << "Task posted\n" << "\n";
 }
 
 std::string NetworkEntity::concatAddress(std::string_view address, unsigned int port)
@@ -128,12 +128,12 @@ std::string NetworkEntity::handleMessage(std::string_view sender_adress, unsigne
     // std::cout << "Received message from " << sender_adress << ":" << sender_port << "\n";
     // std::cout << "Received message " << message << "\n";
 
-    try 
+    try     
     {
         MessagePtr msg = deserialiseMessage(message);
         if (msg->type == MessageType::CONFIG)
         {
-            createAgentFromConfig(std::dynamic_pointer_cast<ConfigMessage>(msg));
+            configureEntity(sender_adress, std::dynamic_pointer_cast<ConfigMessage>(msg));
         }
         else
         {
@@ -146,8 +146,9 @@ std::string NetworkEntity::handleMessage(std::string_view sender_adress, unsigne
     }
     catch (std::exception& e)
     {
-        std::cout << "Failed to deserialise message" << "\n";
-        std::cout << e.what() << "\n";
+        std::cout << "Failed to deserialise message from " << sender_adress << "\n";
+        std::cout << "Reason: " << e.what() << "\n";
+        std::cout << "Message " << message << "\n";
     }
 
     return std::string{};
@@ -164,7 +165,7 @@ void NetworkEntity::handleBroadcast(std::string_view sender_adress, unsigned int
     }
     catch (std::exception& e)
     {
-        std::cout << "Failed to deserialise message" << "\n";
+        std::cout << "Failed to deserialise message from " << sender_adress << "\n";
         std::cout << e.what() << "\n";
     }
     
@@ -202,8 +203,15 @@ std::shared_ptr<Agent> NetworkEntity::agent()
     return agent_.value();
 }
 
-void NetworkEntity::createAgentFromConfig(ConfigMessagePtr msg)
+void NetworkEntity::configureEntity(std::string_view sender_address, ConfigMessagePtr msg)
 {
+    // Set own address
     addr_ = splitAddress(msg->config->addr).first;
+
+    // Initialise a new agent
     setAgent(AgentFactory::createAgent(this, msg->agent_type, msg->config));
+
+    // Send configuration acknowledgement back to orchestrator
+    ConfigAckMessagePtr msg = std::make_shared<ConfigAckMessage>();
+    sendMessage(sender_address, std::static_pointer_cast<Message>(msg), true);
 }

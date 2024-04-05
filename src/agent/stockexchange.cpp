@@ -134,7 +134,7 @@ void StockExchange::onCancelOrder(CancelOrderMessagePtr msg)
         reject->sender_id = this->agent_id;
         reject->order_id = msg->order_id;
 
-        sendMessageTo(std::to_string(msg->sender_id), std::dynamic_pointer_cast<Message>(reject));
+        sendMessageTo(std::to_string(msg->sender_id), std::dynamic_pointer_cast<Message>(reject), true);
 
     }
 };
@@ -226,7 +226,7 @@ void StockExchange::executeTrade(LimitOrderPtr resting_order, OrderPtr aggressin
 
 void StockExchange::sendExecutionReport(std::string_view trader, ExecutionReportMessagePtr msg)
 {
-    sendMessageTo(trader, std::dynamic_pointer_cast<Message>(msg));
+    sendMessageTo(trader, std::dynamic_pointer_cast<Message>(msg), true);
 };
 
 std::optional<MessagePtr> StockExchange::handleMessageFrom(std::string_view sender, MessagePtr message)
@@ -305,10 +305,10 @@ void StockExchange::createTradeTape(std::string_view ticker)
     std::time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     std::stringstream ss;
     ss << std::put_time( std::localtime( &t ), "%FT%T%z" );
-    std::string timestamp = ss.str();
+    std::string timestamp = ss.str(); 
 
     // Set path to CSV file
-    std::string filename = "trades_" + std::string{ticker} + "_"  + timestamp + ".csv";
+    std::string filename = "results/trades_" + std::string{ticker} + "_"  + timestamp + ".csv";
 
     // Create a CSV writer
     CSVWriterPtr writer = std::make_shared<CSVWriter>(filename);

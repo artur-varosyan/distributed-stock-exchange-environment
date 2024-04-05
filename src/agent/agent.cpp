@@ -63,13 +63,13 @@ void Agent::handleBroadcast(ipv4_view sender, MessagePtr message)
     }
 }
 
-void Agent::sendMessageTo(std::string_view agent_name, MessagePtr message)
+void Agent::sendMessageTo(std::string_view agent_name, MessagePtr message, bool async)
 {
     // std::cout << "Sending message to " << agent_name << "\n";
     if (known_agents.left.find(std::string{agent_name}) != known_agents.left.end())
     {
         // std::cout << "Agent found in address book\n";
-        network()->sendMessage(known_agents.left.at(std::string{agent_name}), message);
+        network()->sendMessage(known_agents.left.at(std::string{agent_name}), message, async);
     }
     else
     {

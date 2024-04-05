@@ -15,7 +15,6 @@ public:
     Order::Side side;
     int quantity;
     double price;
-    int separator;
 
 private:
 
@@ -28,7 +27,6 @@ private:
         ar & side;
         ar & quantity;
         ar & price;
-        ar & separator;
     }
 
 };

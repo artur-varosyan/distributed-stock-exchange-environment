@@ -40,6 +40,17 @@ public:
     {
     }
 
+    NetworkEntity(asio::io_context& io_context, std::string addr, unsigned short port)
+    : io_context_(io_context),
+      port_(port),
+      addr_(addr),
+      agent_(std::nullopt),
+      TCPServer(io_context, port),
+      UDPServer(io_context, port),
+      connections_{}
+    {
+    }
+
     /** Starts both servers and listens for incoming connections. */
     virtual void start();
 
@@ -50,7 +61,7 @@ public:
     void sendBroadcast(ipv4_view address, MessagePtr message);
 
     /** Sends a message to the given IPv4 address. */
-    void sendMessage(ipv4_view address, MessagePtr message);
+    void sendMessage(ipv4_view address, MessagePtr message, bool async);
 
     /** Returns the listening port of the NetworkEntity. */
     unsigned int port();
@@ -67,7 +78,7 @@ private:
     std::shared_ptr<Agent> agent();
 
     /** Initialises the agent running inside this NetworkEntity using a config message. */
-    void createAgentFromConfig(ConfigMessagePtr msg);
+    void configureEntity(std::string_view sender_address, ConfigMessagePtr msg);
 
     /** Adds a given connection to the bimap of open connections. */
     void addConnection(std::string_view address, unsigned int port, TCPConnectionPtr connection) override;

@@ -37,7 +37,7 @@ public:
     void connect(ipv4_address address, std::string agent_name, std::function<void()> const& callback);
 
     /** Sends a message to the known agent with the given name. */
-    void sendMessageTo(std::string_view agent_name, MessagePtr message);
+    void sendMessageTo(std::string_view agent_name, MessagePtr message, bool async = false);
 
     /** Sends a broadcast to the agent with the given name. */
     void sendBroadcastTo(std::string_view agent_name, MessagePtr message);
