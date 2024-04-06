@@ -6,32 +6,6 @@
 
 namespace asio = boost::asio;
 
-asio::awaitable<void> TCPConnection::writer()
-{
-    try {
-        while (socket_.is_open())
-        {
-            // Wait for new message added to queue
-            if (queue_.empty())
-            {
-                /** TODO: Decide how to handle this error code. */
-                boost::system::error_code ec;
-                co_await timer_.async_wait(asio::redirect_error(asio::use_awaitable, ec));
-            }
-            // Send message to the connection
-            else
-            {
-                co_await asio::async_write(socket_, asio::buffer(queue_.front()), asio::use_awaitable);
-                queue_.pop();
-            }
-        }
-    }
-    catch (std::exception& e)
-    {
-        std::cout << "TCP connection writer failed. Exception " << e.what() << "\n";
-    }
-}
-
 asio::awaitable<void> TCPConnection::send(std::string_view message, bool async)
 {
     try {
@@ -61,4 +35,9 @@ asio::awaitable<std::string> TCPConnection::read(std::string& read_buffer)
     read_buffer.erase(0, n);
     
     co_return msg;
+}
+
+bool TCPConnection::open()
+{
+    return socket_.is_open();
 }

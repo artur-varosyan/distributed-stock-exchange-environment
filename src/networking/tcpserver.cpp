@@ -16,10 +16,8 @@ asio::awaitable<void> TCPServer::start()
 
 asio::awaitable<void> TCPServer::messageListener(TCPConnectionPtr connection)
 {
-    // std::cout << "Starting to listen for messages..." << "\n";
-
-    std::string address { connection->getSocket().remote_endpoint().address().to_string() };
-    unsigned int port { connection->getSocket().remote_endpoint().port() };
+    std::string address { connection->socket().remote_endpoint().address().to_string() };
+    unsigned int port { connection->socket().remote_endpoint().port() };
 
     try {
         std::string read_buffer;
@@ -36,12 +34,43 @@ asio::awaitable<void> TCPServer::messageListener(TCPConnectionPtr connection)
     }
     catch (std::exception& e)
     {
-        /** TODO: Handle EOF as clean connection drop */
-
+        std::cout << "TCP message listener failed" << "\n";
         std::cout << "Connection dropped from " << address << ":" << port << "\n";
-        // std::cout << "Exception in message listener: " << e.what() << "\n";
+        std::cout << "Reason:\n" << e.what() << "\n";
 
-        // Remove connection from list
+        removeConnection(address, port);
+    }
+}
+
+asio::awaitable<void> TCPServer::messageWriter(TCPConnectionPtr connection)
+{
+    std::string address { connection->socket().remote_endpoint().address().to_string() };
+    unsigned int port { connection->socket().remote_endpoint().port() };
+    
+    try {
+        while (connection->open())
+        {
+            // Wait for new message added to queue
+            if (connection->queue().empty())
+            {
+                /** TODO: Decide how to handle this error code. */
+                boost::system::error_code ec;
+                co_await connection->timer().async_wait(asio::redirect_error(asio::use_awaitable, ec));
+            }
+            // Send message to the connection
+            else
+            {
+                co_await asio::async_write(connection->socket(), asio::buffer(connection->queue().front()), asio::use_awaitable);
+                connection->queue().pop();
+            }
+        }
+    }
+    catch (std::exception& e)
+    {
+        std::cout << "TCP message writer failed" << "\n";
+        std::cout << "Connection dropped from " << address << ":" << port << "\n";
+        std::cout << "Reason:\n" << e.what() << "\n";
+
         removeConnection(address, port);
     }
 }
@@ -61,7 +90,7 @@ asio::awaitable<void> TCPServer::handleAccept(tcp::socket socket)
     asio::co_spawn(io_context_, messageListener(connection), asio::detached);
 
     // Start a writing coroutine to send messages to this connection
-    asio::co_spawn(io_context_, connection->writer(), asio::detached);
+    asio::co_spawn(io_context_, messageWriter(connection), asio::detached);
 
     co_return;
 }
@@ -70,7 +99,6 @@ asio::awaitable<void> TCPServer::listener()
 {
     auto executor = co_await asio::this_coro::executor;
     tcp::acceptor acceptor(executor, {tcp::v4(), tcp_port_});
-    // std::cout << "Listening for TCP on port " << tcp_port_ << "\n";
 
     while (true)
     {
@@ -90,14 +118,8 @@ asio::awaitable<void> TCPServer::connect(std::string address, const unsigned int
     tcp::endpoint endpoint(addr, port);
     tcp::socket socket(io_context_);
 
-    // tcp::endpoint local_endpoint(asio::ip::make_address("127.0.0.1"), tcp_port_);
-
     try
     {
-        /** TODO: Decide if outgoing client port should be specified. */
-        // socket.open(local_endpoint.protocol());
-        // socket.bind(local_endpoint);
-
         co_await socket.async_connect(endpoint, asio::use_awaitable);
 
         // Create a shared pointer to this connection and add to list
@@ -111,7 +133,7 @@ asio::awaitable<void> TCPServer::connect(std::string address, const unsigned int
         asio::co_spawn(io_context_, messageListener(connection), asio::detached);
 
         // Start a writing coroutine to send messages to this connection
-        asio::co_spawn(io_context_, connection->writer(), asio::detached);
+        asio::co_spawn(io_context_, messageWriter(connection), asio::detached);
     }
     catch (std::exception& e)
     {

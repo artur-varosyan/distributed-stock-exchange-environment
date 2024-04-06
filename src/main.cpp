@@ -206,27 +206,11 @@ void orchestrator(int argc, char** argv)
     // === Configure the simulation ===
 
     std::vector<std::string> addresses {
-        std::string{"3.10.235.244:8080"}, // Exchange
-        std::string{"3.10.169.119:8080"},
-        std::string{"3.8.5.9:8080"},
-        std::string{"35.178.211.56:8080"},
-        std::string{"18.171.237.110:8080"},
-        std::string{"3.9.176.186:8080"},
-        std::string{"18.170.217.194:8080"},
-        std::string{"18.171.144.108:8080"},
-        std::string{"52.56.119.26:8080"},
-        std::string{"3.10.226.101:8080"},
-        std::string{"3.8.78.18:8080"},
-        std::string{"18.130.111.152:8080"},
-        std::string{"3.10.235.166:8080"},
-        std::string{"18.132.114.96:8080"},
-        std::string{"18.171.135.14:8080"},
-        std::string{"35.178.235.209:8080"},
-        std::string{"3.9.14.37:8080"},
-        std::string{"35.177.86.91:8080"},
-        std::string{"18.170.37.160:8080"},
-        std::string{"18.171.135.197:8080"},
-        std::string{"3.9.16.125:8080"}
+        std::string{"18.171.57.85:8080"}, // Exchange
+        std::string{"3.10.221.145:8080"},
+        std::string{"35.178.174.204:8080"},
+        std::string{"18.133.221.85:8080"},
+        std::string{"3.9.115.201:8080"}
     };
 
     // 1. Create an Exchange
@@ -251,15 +235,18 @@ void orchestrator(int argc, char** argv)
 
     // 2. Create traders
 
+    int sellers = 2;
+    int buyers = 2;
+
     // Sellers ZIC
-    for (int i=1; i < 11; i++)
+    for (int i=1; i < 1+sellers; i++)
     {
         TraderConfig* trader_config = new TraderConfig();
         trader_config->agent_id = i;
         trader_config->addr = addresses.at(i);
         trader_config->exchange_name = exchange_config.name;
         trader_config->exchange_addr = exchange_config.addr;
-        trader_config->limit = 50 + ((i-1)*10);
+        trader_config->limit = 50;
         trader_config->delay = 0;
         trader_config->ticker = std::string{"AMZN"};
         trader_config->side = Order::Side::ASK;
@@ -271,14 +258,14 @@ void orchestrator(int argc, char** argv)
     }
 
     // Buyers ZIC
-    for (int i=11; i < 20; i++)
+    for (int i=1+sellers; i < 1+sellers+buyers; i++)
     {
         TraderConfig* trader_config = new TraderConfig();
         trader_config->agent_id = i;
         trader_config->addr = addresses.at(i);
         trader_config->exchange_name = exchange_config.name;
         trader_config->exchange_addr = exchange_config.addr;
-        trader_config->limit = 150 - ((i-11)*10);
+        trader_config->limit = 150;
         trader_config->delay = 0;
         trader_config->ticker = std::string{"AMZN"};
         trader_config->side = Order::Side::BID;

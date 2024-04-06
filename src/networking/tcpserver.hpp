@@ -47,8 +47,11 @@ public:
 
 private:
 
-    /** Listens for incoming messages from existing TCP connections. */
+    /** Listens for incoming messages from the given TCP connection. */
     asio::awaitable<void> messageListener(TCPConnectionPtr connection);
+
+    /** Listens for and sends outgoing messages to the given TCP connection. */
+    asio::awaitable<void> messageWriter(TCPConnectionPtr connection);
 
     /** Handles new incoming TCP connections. */
     asio::awaitable<void> handleAccept(tcp::socket socket);

@@ -128,8 +128,11 @@ void NetworkEntity::addConnection(std::string_view address, unsigned int port, T
 
 void NetworkEntity::removeConnection(std::string_view address, unsigned int port)
 {
-    connections_.left.erase(concatAddress(address, port));
-    // std::cout << "Removed connection from " << address << ":" << port << "\n";
+    std::string full_addr = concatAddress(address, port);
+    if (connections_.left.find(full_addr) != connections_.left.end())
+    {
+        connections_.left.erase(full_addr);
+    }
 }
 
 

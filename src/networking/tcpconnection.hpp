@@ -18,16 +18,23 @@ public:
     {
     }
 
-    /** Starts the writer waiting for new messages to be send to the queue. */
-    asio::awaitable<void> writer();
-
-    /** Sends the given message to the connected client. */
+    /** Queues the given message to be sent to the connected client. */
     asio::awaitable<void> send(std::string_view message, bool async);
 
     /** Reads a message from the connected client. */
     asio::awaitable<std::string> read(std::string& read_buffer);
 
-    tcp::socket& getSocket() { return socket_; }
+    /** Indicates whether the connection is open. */
+    bool open();
+
+    /** Returns the outgoing message queue for this connection. */
+    std::queue<std::string>& queue() { return queue_; };
+
+    /** Returns the socket associated with this connection. */
+    tcp::socket& socket() { return socket_; };
+
+    /** Returns the timer associated with this connection. */
+    asio::steady_timer& timer() { return timer_; };
 
 private:
 
