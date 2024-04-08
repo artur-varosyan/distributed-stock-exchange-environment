@@ -34,4 +34,6 @@ private:
 
 };
 
+typedef std::shared_ptr<TraderConfig> TraderConfigPtr;
+
 #endif

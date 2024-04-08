@@ -22,6 +22,7 @@
 #include "message/messagetype.hpp"
 #include "message/market_data_message.hpp"
 
+#include "config/configreader.hpp"
 #include "config/exchangeconfig.hpp"
 #include "config/traderconfig.hpp"
 
@@ -35,7 +36,7 @@ std::string showUsage()
     ss << "Modes:\n";
     ss << "  " << "local" << "\t\t" << "run simulation in local mode" << "\n";
     ss << "  " << "orchestrator" << "\t" << "orchestrate the cloud simulation from this node" << "\n";
-    ss << "  " << "cloud" << "\t\t" << "run a simulation node" << "\n";
+    ss << "  " << "node" << "\t\t" << "run as a simulation node" << "\n";
     return ss.str();
 }
 
@@ -87,74 +88,74 @@ void local_runner(int argc, char** argv)
     if (agent_type == "exchange")
     {
         // Create configuration
-        ExchangeConfig config;
-        config.agent_id = agent_id;
-        config.name = vm["exchange-name"].as<std::string>();
-        config.tickers = std::vector { vm["ticker"].as<std::string>() };
-        config.connect_time = vm["connect-time"].as<int>();
-        config.trading_time = vm["trading-time"].as<int>();
+        ExchangeConfigPtr config = std::make_shared<ExchangeConfig>();
+        config->agent_id = agent_id;
+        config->name = vm["exchange-name"].as<std::string>();
+        config->tickers = std::vector { vm["ticker"].as<std::string>() };
+        config->connect_time = vm["connect-time"].as<int>();
+        config->trading_time = vm["trading-time"].as<int>();
 
-        std::shared_ptr<StockExchange> exchange (new StockExchange{&entity, &config});
+        std::shared_ptr<StockExchange> exchange (new StockExchange{&entity, config});
         entity.setAgent(std::static_pointer_cast<Agent>(exchange));
         entity.start();
     }
     else if (agent_type == "trader") {
 
         // Create configuration
-        TraderConfig config;
-        config.agent_id = agent_id;
-        config.exchange_name = vm["exchange-name"].as<std::string>();
-        config.exchange_addr = vm["exchange-addr"].as<std::string>();
-        config.ticker = vm["ticker"].as<std::string>();
-        config.delay = vm["delay"].as<unsigned int>();
+        TraderConfigPtr config = std::make_shared<TraderConfig>();
+        config->agent_id = agent_id;
+        config->exchange_name = vm["exchange-name"].as<std::string>();
+        config->exchange_addr = vm["exchange-addr"].as<std::string>();
+        config->ticker = vm["ticker"].as<std::string>();
+        config->delay = vm["delay"].as<unsigned int>();
 
-        std::shared_ptr<ExampleTrader> trader (new ExampleTrader{&entity, &config});
+        std::shared_ptr<ExampleTrader> trader (new ExampleTrader{&entity, config});
         entity.setAgent(std::static_pointer_cast<Agent>(trader));
         entity.start();
     }
     else if (agent_type == "watcher") {
 
         // Create configuration
-        TraderConfig config;
-        config.agent_id = agent_id;
-        config.exchange_name = vm["exchange-name"].as<std::string>();
-        config.exchange_addr = vm["exchange-addr"].as<std::string>();
-        config.ticker = vm["ticker"].as<std::string>();
-        config.delay = vm["delay"].as<unsigned int>();
+        TraderConfigPtr config = std::make_shared<TraderConfig>();
+        config->agent_id = agent_id;
+        config->exchange_name = vm["exchange-name"].as<std::string>();
+        config->exchange_addr = vm["exchange-addr"].as<std::string>();
+        config->ticker = vm["ticker"].as<std::string>();
+        config->delay = vm["delay"].as<unsigned int>();
 
-        std::shared_ptr<MarketDataWatcher> watcher (new MarketDataWatcher{&entity, &config});
+        std::shared_ptr<MarketDataWatcher> watcher (new MarketDataWatcher{&entity, config});
         entity.setAgent(std::static_pointer_cast<Agent>(watcher));
         entity.start();
     } 
     else if (agent_type == "zic") 
     {
         // Create configuration
-        TraderConfig config;
-        config.agent_id = agent_id;
-        config.exchange_name = vm["exchange-name"].as<std::string>();
-        config.exchange_addr = vm["exchange-addr"].as<std::string>();
-        config.ticker = vm["ticker"].as<std::string>();
-        config.side = (vm["side"].as<std::string>() == "buyer") ? Order::Side::BID : Order::Side::ASK;
-        config.limit = vm["limit"].as<double>();
-        config.delay = vm["delay"].as<unsigned int>();
+        TraderConfigPtr config = std::make_shared<TraderConfig>();
+        config->agent_id = agent_id;
+        config->exchange_name = vm["exchange-name"].as<std::string>();
+        config->exchange_addr = vm["exchange-addr"].as<std::string>();
+        config->ticker = vm["ticker"].as<std::string>();
+        config->side = (vm["side"].as<std::string>() == "buyer") ? Order::Side::BID : Order::Side::ASK;
+        config->limit = vm["limit"].as<double>();
+        config->delay = vm["delay"].as<unsigned int>();
 
-        std::shared_ptr<TraderZIC> trader (new TraderZIC{&entity, &config});
+        std::shared_ptr<TraderZIC> trader (new TraderZIC{&entity, config});
         entity.setAgent(std::static_pointer_cast<Agent>(trader));
         entity.start();
     } 
     else if (agent_type == "shvr")
     {
         // Create configuration
-        TraderConfig config;
-        config.agent_id = agent_id;
-        config.exchange_name = vm["exchange-name"].as<std::string>();
-        config.exchange_addr = vm["exchange-addr"].as<std::string>();
-        config.ticker = vm["ticker"].as<std::string>();
-        config.side = (vm["side"].as<std::string>() == "buyer") ? Order::Side::BID : Order::Side::ASK;
-        config.limit = vm["limit"].as<double>();
-        config.delay = vm["delay"].as<unsigned int>();
+        TraderConfigPtr config = std::make_shared<TraderConfig>();
+        config->agent_id = agent_id;
+        config->exchange_name = vm["exchange-name"].as<std::string>();
+        config->exchange_addr = vm["exchange-addr"].as<std::string>();
+        config->ticker = vm["ticker"].as<std::string>();
+        config->side = (vm["side"].as<std::string>() == "buyer") ? Order::Side::BID : Order::Side::ASK;
+        config->limit = vm["limit"].as<double>();
+        config->delay = vm["delay"].as<unsigned int>();
 
-        std::shared_ptr<TraderShaver> trader (new TraderShaver{&entity, &config});
+        std::shared_ptr<TraderShaver> trader (new TraderShaver{&entity, config});
         entity.setAgent(std::static_pointer_cast<Agent>(trader));
         entity.start();
     }
@@ -165,21 +166,21 @@ void local_runner(int argc, char** argv)
     } 
 }
 
-void cloud_runner(int argc, char** argv)
+void node_runner(int argc, char** argv)
 {
-    po::options_description cloud_desc("Allowed options");
-    cloud_desc.add_options()
+    po::options_description desc("Allowed options");
+    desc.add_options()
         ("help", "show help message")
         ("port", po::value<unsigned short>()->default_value(8080), "set the port of the current agent")
     ;
 
     po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, cloud_desc), vm);
+    po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
 
     if (vm.count("help"))
     {
-        std::cout << "\n" << cloud_desc << std::endl;
+        std::cout << "\n" << desc << std::endl;
         exit(1);
     }
 
@@ -192,128 +193,41 @@ void cloud_runner(int argc, char** argv)
 
 void orchestrator(int argc, char** argv)
 {
-    // Create a local OrchestratorAgent
+    po::options_description desc("Allowed options");
+    desc.add_options()
+        ("help", "show help message")
+        ("port", po::value<unsigned short>()->default_value(8080), "set the port of the orchestrator agent")
+        ("config", po::value<std::string>()->default_value(std::string{"simulation.xml"}, "set the path to the configuration file"))
+    ;
 
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+
+    if (vm.count("help"))
+    {
+        std::cout << "\n" << desc << std::endl;
+        exit(1);
+    }
+
+    unsigned short port { vm["port"].as<unsigned short>() };
+    std::string filepath { vm["config"].as<std::string>() };
+
+    // Read the configuration file
+    SimulationConfigPtr simulation = ConfigReader::readConfig(filepath);
+
+    // Create a new network entity with orchestrator agent
     asio::io_context io_context;
     NetworkEntity entity{io_context, 10001};
 
-    AgentConfig orchestrator_config;
-    orchestrator_config.agent_id = 999;
+    AgentConfigPtr orchestrator_config = std::make_shared<AgentConfig>();
+    orchestrator_config->agent_id = 999;
 
-    std::shared_ptr<OrchestratorAgent> orchestrator (new OrchestratorAgent{&entity, &orchestrator_config});
+    std::shared_ptr<OrchestratorAgent> orchestrator (new OrchestratorAgent{&entity, orchestrator_config});
     entity.setAgent(std::static_pointer_cast<Agent>(orchestrator));
 
-    // === Configure the simulation ===
-
-    std::vector<std::string> addresses {
-        std::string{"18.171.57.85:8080"}, // Exchange
-        std::string{"3.10.221.145:8080"},
-        std::string{"35.178.174.204:8080"},
-        std::string{"18.133.221.85:8080"},
-        std::string{"3.9.115.201:8080"}
-    };
-
-    // 1. Create an Exchange
-
-    /** TODO: Synchronisation: First create the exchange then continue with the rest. */
-
-    ExchangeConfig exchange_config;
-    exchange_config.agent_id = 99;
-    exchange_config.addr = addresses.at(0);
-    exchange_config.name = std::string{"NASDAQ"};
-    exchange_config.tickers = std::vector{std::string{"AMZN"}};
-    exchange_config.connect_time = 60;
-    exchange_config.trading_time = 120;
-
-    orchestrator->configureNode(exchange_config.addr, AgentType::STOCK_EXCHANGE, (AgentConfig*) &exchange_config);
-
-    for (int i=0; i < 10000; i++)
-    {
-        std::cout << "Busy waiting for exchange.. i=" << i << std::endl;
-        std::cout << "\033[2J\033[1;1H";
-    }
-
-    // 2. Create traders
-
-    int sellers = 2;
-    int buyers = 2;
-
-    // Sellers ZIC
-    for (int i=1; i < 1+sellers; i++)
-    {
-        TraderConfig* trader_config = new TraderConfig();
-        trader_config->agent_id = i;
-        trader_config->addr = addresses.at(i);
-        trader_config->exchange_name = exchange_config.name;
-        trader_config->exchange_addr = exchange_config.addr;
-        trader_config->limit = 50;
-        trader_config->delay = 0;
-        trader_config->ticker = std::string{"AMZN"};
-        trader_config->side = Order::Side::ASK;
-
-        std::string trader_addr {addresses.at(i)};
-        std::cout << "Configuring node with addr " << trader_addr << "\n"; 
-
-        orchestrator->configureNode(trader_addr, AgentType::TRADER_ZIC, (AgentConfig*) trader_config);
-    }
-
-    // Buyers ZIC
-    for (int i=1+sellers; i < 1+sellers+buyers; i++)
-    {
-        TraderConfig* trader_config = new TraderConfig();
-        trader_config->agent_id = i;
-        trader_config->addr = addresses.at(i);
-        trader_config->exchange_name = exchange_config.name;
-        trader_config->exchange_addr = exchange_config.addr;
-        trader_config->limit = 150;
-        trader_config->delay = 0;
-        trader_config->ticker = std::string{"AMZN"};
-        trader_config->side = Order::Side::BID;
-
-        std::string trader_addr {addresses.at(i)};
-        std::cout << "Configuring node with addr " << trader_addr << "\n";
-
-        orchestrator->configureNode(trader_addr, AgentType::TRADER_ZIC, (AgentConfig*) trader_config);
-    }
-
-    // Sellers SHVR
-    // for (int i=21; i < 25; i++)
-    // {
-    //     TraderConfig* trader_config = new TraderConfig();
-    //     trader_config->agent_id = i;
-    //     trader_config->addr = addresses.at(i);
-    //     trader_config->exchange_name = exchange_config.name;
-    //     trader_config->exchange_addr = exchange_config.addr;
-    //     trader_config->limit = 50 + ((i-21)*20);
-    //     trader_config->delay = 30;
-    //     trader_config->ticker = std::string{"AMZN"};
-    //     trader_config->side = Order::Side::ASK;
-
-    //     std::string trader_addr {addresses.at(i)};
-    //     std::cout << "Configuring node with addr " << trader_addr << "\n"; 
-
-    //     orchestrator->configureNode(trader_addr, AgentType::TRADER_SHVR, (AgentConfig*) trader_config);
-    // }
-
-    // // Buyers SHVR
-    // for (int i=25; i < 29; i++)
-    // {
-    //     TraderConfig* trader_config = new TraderConfig();
-    //     trader_config->agent_id = i;
-    //     trader_config->addr = addresses.at(i);
-    //     trader_config->exchange_name = exchange_config.name;
-    //     trader_config->exchange_addr = exchange_config.addr;
-    //     trader_config->limit = 150 - ((i-25)*20);
-    //     trader_config->delay = 30;
-    //     trader_config->ticker = std::string{"AMZN"};
-    //     trader_config->side = Order::Side::BID;
-
-    //     std::string trader_addr {addresses.at(i)};
-    //     std::cout << "Configuring node with addr " << trader_addr << "\n";
-
-    //     orchestrator->configureNode(trader_addr, AgentType::TRADER_SHVR, (AgentConfig*) trader_config);
-    // }
-
+    // Configure simulation
+    orchestrator->configureSimulation(simulation);
     entity.start();
 }
 
@@ -337,7 +251,7 @@ int main(int argc, char** argv)
     }
     else
     {
-        cloud_runner(argc, argv);
+        node_runner(argc, argv);
     }
 
     return 0;

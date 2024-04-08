@@ -8,7 +8,7 @@ class TraderZIC : public TraderAgent
 {
 public:
 
-    TraderZIC(NetworkEntity *network_entity, TraderConfig *config)
+    TraderZIC(NetworkEntity *network_entity, TraderConfigPtr config)
     : TraderAgent(network_entity, config),
       exchange_{config->exchange_name},
       ticker_{config->ticker},

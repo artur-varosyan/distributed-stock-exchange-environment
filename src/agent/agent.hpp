@@ -12,6 +12,7 @@
 
 namespace asio = boost::asio;
 
+// Forward declaration to avoid circular dependency
 class NetworkEntity;
 
 class Agent : std::enable_shared_from_this<Agent>
@@ -24,7 +25,7 @@ public:
     Agent() = delete;
     virtual ~Agent() = default;
 
-    Agent(NetworkEntity *network, AgentConfig *config)
+    Agent(NetworkEntity* network, AgentConfigPtr config)
     : agent_id{config->agent_id},
       network_{network}
     {

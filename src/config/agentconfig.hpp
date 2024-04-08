@@ -7,8 +7,10 @@
 #include <boost/serialization/unordered_map.hpp>
 #include <boost/serialization/vector.hpp>
 
+#include "../agent/agenttype.hpp"
+
 /** Used to configure an instance of an agent in the simulation. */
-class AgentConfig
+class AgentConfig : std::enable_shared_from_this<AgentConfig>
 {
 public:
 
@@ -17,6 +19,7 @@ public:
 
     int agent_id;
     std::string addr;
+    AgentType type;
 
 private:
 
@@ -26,7 +29,10 @@ private:
     {
         ar & agent_id;
         ar & addr;
+        ar & type;
     }
 };
+
+typedef std::shared_ptr<AgentConfig> AgentConfigPtr;
 
 #endif

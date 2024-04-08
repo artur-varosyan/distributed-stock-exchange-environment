@@ -22,8 +22,8 @@ public:
     TraderAgent() = delete;
     virtual ~TraderAgent() = default;
 
-    TraderAgent(NetworkEntity *network_entity, TraderConfig *config)
-    : Agent(network_entity, config)
+    TraderAgent(NetworkEntity *network_entity, TraderConfigPtr config)
+    : Agent(network_entity, std::static_pointer_cast<AgentConfig>(config))
     {
         // Automatically connect to exchange on initialisation
         connect(config->exchange_addr, config->exchange_name, [=, this](){

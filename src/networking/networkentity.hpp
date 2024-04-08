@@ -2,6 +2,7 @@
 #define NETWORK_ENTITY_HPP
 
 #include <iostream>
+#include <memory>
 #include <functional>
 #include <optional>
 #include <boost/asio.hpp>

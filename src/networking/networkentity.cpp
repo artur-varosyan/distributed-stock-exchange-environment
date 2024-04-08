@@ -222,7 +222,8 @@ void NetworkEntity::configureEntity(std::string_view sender_address, ConfigMessa
     addr_ = splitAddress(msg->config->addr).first;
 
     // Initialise a new agent
-    setAgent(AgentFactory::createAgent(this, msg->agent_type, msg->config));
+    AgentConfigPtr config {msg->config};
+    setAgent(AgentFactory::createAgent(this, config));
 
     // Send configuration acknowledgement back to orchestrator
     // ConfigAckMessagePtr ack_msg = std::make_shared<ConfigAckMessage>();

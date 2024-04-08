@@ -27,8 +27,8 @@ class StockExchange : public Agent
 {
 public:
 
-    StockExchange(NetworkEntity *network_entity, ExchangeConfig *config)
-    : Agent(network_entity, config),
+    StockExchange(NetworkEntity *network_entity, ExchangeConfigPtr config)
+    : Agent(network_entity, std::static_pointer_cast<AgentConfig>(config)),
       exchange_name_{config->name},
       order_books_{},
       subscribers_{},

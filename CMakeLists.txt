@@ -25,6 +25,7 @@ add_executable(simulation src/main.cpp
                           src/agent/stockexchange.cpp
                           src/order/orderqueue.cpp
                           src/order/orderbook.cpp
+                          src/config/configreader.cpp
                           src/pugi/pugixml.cpp)
 
 if(Boost_FOUND)

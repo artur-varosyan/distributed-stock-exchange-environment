@@ -11,7 +11,7 @@ class ExampleTrader : public TraderAgent
 {
 public:
 
-    ExampleTrader(NetworkEntity *network_entity, TraderConfig *config)
+    ExampleTrader(NetworkEntity *network_entity, TraderConfigPtr config)
     : TraderAgent(network_entity, config),
       order_ids_{}
     {

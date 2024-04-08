@@ -7,7 +7,7 @@ class TraderShaver : public TraderAgent
 {
 public:
 
-    TraderShaver(NetworkEntity *network_entity, TraderConfig *config)
+    TraderShaver(NetworkEntity *network_entity, TraderConfigPtr config)
     : TraderAgent(network_entity, config),
       exchange_{config->exchange_name},
       ticker_{config->ticker},
