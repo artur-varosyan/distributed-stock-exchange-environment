@@ -46,7 +46,7 @@ public:
         this->connect(std::string(config->addr), std::to_string(config->agent_id), [=, this](){
 
             ConfigMessagePtr msg = std::make_shared<ConfigMessage>();
-            msg->config = config.get();
+            msg->config = config;
 
             std::string agent_id = std::to_string(config->agent_id);
             this->sendMessageTo(agent_id, std::static_pointer_cast<Message>(msg));

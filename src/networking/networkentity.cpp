@@ -19,10 +19,13 @@
 #include "../message/cancel_reject_message.hpp"
 #include "../message/config_message.hpp"
 #include "../message/config_ack_message.hpp"
+#include "../order/order.hpp"
+#include "../order/limitorder.hpp"
+#include "../order/marketorder.hpp"
+#include "../trade/trade.hpp"
 
 BOOST_CLASS_EXPORT(Message);
 BOOST_CLASS_EXPORT(MarketDataMessage);
-BOOST_CLASS_EXPORT(ExecutionReportMessage);
 BOOST_CLASS_EXPORT(SubscribeMessage);
 BOOST_CLASS_EXPORT(LimitOrderMessage);
 BOOST_CLASS_EXPORT(MarketOrderMessage);
@@ -37,6 +40,13 @@ BOOST_CLASS_EXPORT(TraderConfig);
 
 BOOST_CLASS_EXPORT(ConfigMessage);
 BOOST_CLASS_EXPORT(ConfigAckMessage);
+
+BOOST_CLASS_EXPORT(LimitOrder);
+BOOST_CLASS_EXPORT(MarketOrder);
+BOOST_CLASS_EXPORT(Order);
+BOOST_CLASS_EXPORT(CSVPrintable);
+BOOST_CLASS_EXPORT(Trade);
+BOOST_CLASS_EXPORT(ExecutionReportMessage);
 
 namespace archive = boost::archive;
 
@@ -222,8 +232,7 @@ void NetworkEntity::configureEntity(std::string_view sender_address, ConfigMessa
     addr_ = splitAddress(msg->config->addr).first;
 
     // Initialise a new agent
-    AgentConfigPtr config {msg->config};
-    setAgent(AgentFactory::createAgent(this, config));
+    setAgent(AgentFactory::createAgent(this, msg->config));
 
     // Send configuration acknowledgement back to orchestrator
     // ConfigAckMessagePtr ack_msg = std::make_shared<ConfigAckMessage>();

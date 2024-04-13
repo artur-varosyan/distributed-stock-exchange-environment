@@ -25,7 +25,6 @@ void StockExchange::runMatchingEngine()
         
         // Wait until new message is present
         MessagePtr msg = msg_queue_.pop();
-        std::cout << "Matching Engine queue size: " << msg_queue_.size() << "\n";
 
         // Pattern match the message type
         switch (msg->type) {
@@ -71,7 +70,7 @@ void StockExchange::onLimitOrder(LimitOrderMessagePtr msg)
     else
     {
         getOrderBookFor(order->ticker)->addOrder(order);
-        ExecutionReportMessagePtr report = ExecutionReportMessage::createFromOrder(order, Order::Status::NEW);
+        ExecutionReportMessagePtr report = ExecutionReportMessage::createFromOrder(order);
         report->sender_id = this->agent_id;
         sendExecutionReport(std::to_string(order->sender_id), report);
         publishMarketData(msg->ticker);
@@ -117,7 +116,8 @@ void StockExchange::onMarketOrder(MarketOrderMessagePtr msg)
     // If the market order is not fully executed, cancel the remaining quantity
     if (!order->isFilled())
     {
-        ExecutionReportMessagePtr report = ExecutionReportMessage::createFromOrder(order, Order::Status::CANCELLED);
+        order->setStatus(Order::Status::CANCELLED);
+        ExecutionReportMessagePtr report = ExecutionReportMessage::createFromOrder(order);
         sendExecutionReport(std::to_string(order->sender_id), report);
     }
 };
@@ -129,7 +129,8 @@ void StockExchange::onCancelOrder(CancelOrderMessagePtr msg)
     if (order.has_value()) 
     {
         // Send an execution report message
-        ExecutionReportMessagePtr report = ExecutionReportMessage::createFromOrder(order.value(), Order::Status::CANCELLED);
+        order.value()->setStatus(Order::Status::CANCELLED);
+        ExecutionReportMessagePtr report = ExecutionReportMessage::createFromOrder(order.value());
         report->sender_id = this->agent_id;
         sendExecutionReport(std::to_string(msg->sender_id), report);
     }

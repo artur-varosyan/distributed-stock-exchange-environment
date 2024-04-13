@@ -5,6 +5,10 @@
 #include <chrono>
 
 #include <boost/serialization/serialization.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/shared_ptr.hpp>
 
 #include "../utilities/csvprintable.hpp"
 
@@ -47,6 +51,7 @@ private:
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version)
     {
+        ar & boost::serialization::base_object<CSVPrintable>(*this);
         ar & id;
         ar & ticker;
         ar & quantity;

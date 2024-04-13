@@ -46,7 +46,7 @@ public:
     // /** Cancels the order with the given id at the given exchange. */
     void cancelOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int order_id);
 
-    /** The trader will remain idle and no handlers will be called until the specified duration after trading start.  */
+    /** The trader will remain idle and no handlers will be called until the specified duration after trading start. */
     void addDelayedStart(int delay_in_seconds);
 
 protected:

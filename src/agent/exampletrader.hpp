@@ -49,16 +49,16 @@ public:
 
     void onExecutionReport(std::string_view exchange, ExecutionReportMessagePtr msg) override
     {
-        std::cout << "Received execution report from " << exchange << ": Order: " << msg->order_id << " Status: " << msg->status << "\n";
-        if (msg->status == Order::Status::FILLED || msg->status == Order::Status::CANCELLED)
+        std::cout << "Received execution report from " << exchange << ": Order: " << msg->order->id << " Status: " << msg->order->status << "\n";
+        if (msg->order->status == Order::Status::FILLED || msg->order->status == Order::Status::CANCELLED)
         {
-            order_ids_.erase(msg->order_id);
+            order_ids_.erase(msg->order->id);
         }
         else 
         {
-            if (!order_ids_.contains(msg->order_id))
+            if (!order_ids_.contains(msg->order->id))
             {
-                order_ids_.insert(msg->order_id);
+                order_ids_.insert(msg->order->id);
             }
         }
     }

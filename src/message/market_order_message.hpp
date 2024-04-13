@@ -10,6 +10,7 @@ public:
 
     MarketOrderMessage() : Message(MessageType::MARKET_ORDER) {};
 
+    int client_order_id;
     std::string ticker;
     Order::Side side;
     int quantity;
@@ -21,6 +22,7 @@ private:
     void serialize(Archive & ar, const unsigned int version)
     {
         ar & boost::serialization::base_object<Message>(*this);
+        ar & client_order_id;
         ar & ticker;
         ar & side;
         ar & quantity;

@@ -41,8 +41,8 @@ public:
 
     void onExecutionReport(std::string_view exchange, ExecutionReportMessagePtr msg) override
     {
-        std::cout << "Received execution report from " << exchange << ": Order: " << msg->order_id << " Status: " << msg->status << 
-        " Qty remaining = " << msg->remaining_quantity << "\n";
+        std::cout << "Received execution report from " << exchange << ": Order: " << msg->order->id << " Status: " << msg->order->status << 
+        " Qty remaining = " << msg->order->remaining_quantity << "\n";
     }
 
     void onCancelReject(std::string_view exchange, CancelRejectMessagePtr msg) override

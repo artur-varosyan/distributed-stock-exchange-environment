@@ -2,7 +2,6 @@
 #define CONFIG_MESSAGE_HPP
 
 #include <unordered_map>
-#include <boost/serialization/split_member.hpp>
 
 #include "message.hpp"
 #include "../agent/agenttype.hpp"
@@ -22,7 +21,7 @@ public:
     AgentType agent_type;
 
     /** Agent-specific configuration object. */
-    AgentConfig* config;
+    AgentConfigPtr config;
 
 private:
 
