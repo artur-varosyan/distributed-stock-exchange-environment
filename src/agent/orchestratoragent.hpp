@@ -20,24 +20,23 @@ public:
     /** Configures the simulation given a simulation configuration. */
     void configureSimulation(SimulationConfigPtr simulation)
     {
-        // Initialise exchanges
-        for (auto exchange_config : simulation->exchanges())
-        {
-            configureNode(exchange_config);
-        }
+        configuration_thread_ = new std::thread([&](){
 
-        /** Temporary busy waiting
-         * TODO: Remove me */
-        for (int i=0; i<1000000; ++i)
-        {
-            std::cout << "";
-        } 
+            // Initialise exchanges
+            for (auto exchange_config : simulation->exchanges())
+            {
+                configureNode(exchange_config);
+            }
 
-        // Initialise traders
-        for (auto trader_config : simulation->traders())
-        {
-            configureNode(trader_config);
-        }
+            // Allow exchanges to initialise first
+            std::this_thread::sleep_for(std::chrono::seconds(10));
+
+            // Initialise traders
+            for (auto trader_config : simulation->traders())
+            {
+                configureNode(trader_config);
+            }
+        });
     }
 
     /** Sends a config message to the simulation node at the given address. */
@@ -69,6 +68,7 @@ private:
         std::cout << "Orchestrator received a broadcast" << "\n";
     }
 
+    std::thread* configuration_thread_;
 };
 
 #endif

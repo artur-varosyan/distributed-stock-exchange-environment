@@ -137,8 +137,8 @@ asio::awaitable<void> TCPServer::connect(std::string address, const unsigned int
     }
     catch (std::exception& e)
     {
-        std::cout << "Exception: " << e.what() << "\n";
-        std::cout << "Failed to connect to " << socket.remote_endpoint() << "\n";
+        std::cout << "Exception: " << e.what() << std::endl;
+        std::cout << "Failed to connect to " << address << ":" << port << std::endl;
         throw e;
     }
     

@@ -47,6 +47,10 @@ public:
                 std::shared_ptr<Agent> agent (new TraderShaver{network_entity, std::static_pointer_cast<TraderConfig>(config)});
                 return agent;
             }
+            default:
+            {
+                throw std::runtime_error("Failed to create agent. Unknown agent received");
+            }
         }
     }
 

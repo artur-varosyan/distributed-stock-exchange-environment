@@ -18,10 +18,11 @@ RUN apk add boost-dev
 RUN cmake -B build
 
 # Compile the project
-RUN cd build && make
+RUN cmake --build build
 
-WORKDIR /app/build
+# Set working directory
+WORKDIR /app/simulation
 
-ENTRYPOINT [ "./simulation" ]
+ENTRYPOINT [ "/app/build/simulation" ]
 
 

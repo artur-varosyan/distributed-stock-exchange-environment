@@ -25,6 +25,7 @@ void StockExchange::runMatchingEngine()
         
         // Wait until new message is present
         MessagePtr msg = msg_queue_.pop();
+        std::cout << "Matching Engine queue size: " << msg_queue_.size() << "\n";
 
         // Pattern match the message type
         switch (msg->type) {
@@ -50,6 +51,11 @@ void StockExchange::runMatchingEngine()
         }
         trading_window_lock.lock();
     }
+    
+    // Clear the message queue
+    std::cout << "Matching Engine stopping. Queue size discarded: " << msg_queue_.size() << "\n";
+    msg_queue_.close();
+
     trading_window_lock.unlock();
     std::cout << "Stopped running matching engine" << "\n";
 };
@@ -243,7 +249,7 @@ std::optional<MessagePtr> StockExchange::handleMessageFrom(std::string_view send
             break;
         }
         default:
-        {
+        {   
             // Send message to the matching engine
             msg_queue_.push(message);
         }
@@ -297,6 +303,7 @@ void StockExchange::addTradeableAsset(std::string_view ticker)
     subscribers_.insert({std::string{ticker}, {}});
 
     createTradeTape(ticker);
+    std::cout << "Added " << ticker << " as a tradeable asset" << std::endl;
 };
 
 void StockExchange::createTradeTape(std::string_view ticker)
@@ -304,11 +311,11 @@ void StockExchange::createTradeTape(std::string_view ticker)
     // Get current ISO 8601 timestamp
     std::time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     std::stringstream ss;
-    ss << std::put_time( std::localtime( &t ), "%FT%T%z" );
+    ss << std::put_time( std::localtime( &t ), "%FT%T" );
     std::string timestamp = ss.str(); 
 
     // Set path to CSV file
-    std::string filename = "results/trades_" + std::string{ticker} + "_"  + timestamp + ".csv";
+    std::string filename = "trades_" + std::string{ticker} + "_"  + timestamp + ".csv";
 
     // Create a CSV writer
     CSVWriterPtr writer = std::make_shared<CSVWriter>(filename);
@@ -327,21 +334,22 @@ void StockExchange::publishMarketData(std::string_view ticker)
     broadcastToSubscribers(ticker, std::dynamic_pointer_cast<Message>(msg));
 };
 
-void StockExchange::setTradingWindow(int &connect_time, int &trading_time)
+void StockExchange::setTradingWindow(int connect_time, int trading_time)
 {
     if (trading_window_thread_ != nullptr)
     {
         throw new std::runtime_error("Trading window already has been set");
     }
 
-    trading_window_thread_ = new std::thread([&](){
+    trading_window_thread_ = new std::thread([=, this](){
 
         // Allow time for connections
-        std::cout << "Exchange waiting for connections for " << connect_time << " seconds...\n";
+        std::cout << "Trading time set to " << trading_time << " seconds." << std::endl;
+        std::cout << "Waiting for connections for " << connect_time << " seconds..." << std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(connect_time));
 
         // Start trading session 
-        std::cout << "Trading session starts now for " << trading_time << " seconds...\n";
+        std::cout << "Trading session starts now" << std::endl;
         startTradingSession();
         std::this_thread::sleep_for(std::chrono::seconds(trading_time));
 

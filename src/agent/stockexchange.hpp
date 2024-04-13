@@ -53,7 +53,7 @@ public:
     void addTradeableAsset(std::string_view ticker);
 
     /** Waits for incoming connections then opens trading window for the specified duration (seconds). */
-    void setTradingWindow(int &connect_time, int &trading_time);
+    void setTradingWindow(int connect_time, int trading_time);
 
     /** Starts trading session and informs all market data subscribers. */
     void startTradingSession();

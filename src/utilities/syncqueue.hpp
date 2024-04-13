@@ -23,8 +23,11 @@ public:
     void push(T value)
     {
       std::unique_lock<std::mutex> lock(lock_); 
-      queue_.push(value);
-      cv_.notify_all();
+      if (!closed_) 
+      {
+        queue_.push(value);
+        cv_.notify_all();
+      }
     };
 
     /** Wait until present and pops the value from the start of the queue. */
@@ -46,11 +49,21 @@ public:
       return queue_.size();
     };
 
+    /** Clears all items in the queue and prevents future writes. */
+    void close()
+    {
+      std::unique_lock<std::mutex> lock(lock_); 
+      closed_ = true;
+      while (!queue_.empty()) queue_.pop();
+      lock.unlock();
+    }
+
 private:
 
     std::queue<T> queue_;
     std::mutex lock_;
     std::condition_variable cv_;
+    bool closed_ = false;
 };
 
 #endif
