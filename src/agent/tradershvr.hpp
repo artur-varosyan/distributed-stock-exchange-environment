@@ -14,6 +14,13 @@ public:
       trader_side_{config->side},
       limit_price_{config->limit}
     {
+        // Automatically connect to exchange on initialisation
+        connect(config->exchange_addr, config->exchange_name, [=, this](){
+            subscribeToMarket(config->exchange_name, config->ticker);
+        });
+
+        // Add delayed start
+        addDelayedStart(config->delay);
     }
 
     void onTradingStart() override

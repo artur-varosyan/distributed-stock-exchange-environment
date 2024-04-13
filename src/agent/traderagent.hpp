@@ -22,16 +22,9 @@ public:
     TraderAgent() = delete;
     virtual ~TraderAgent() = default;
 
-    TraderAgent(NetworkEntity *network_entity, TraderConfigPtr config)
+    TraderAgent(NetworkEntity *network_entity, AgentConfigPtr config)
     : Agent(network_entity, std::static_pointer_cast<AgentConfig>(config))
     {
-        // Automatically connect to exchange on initialisation
-        connect(config->exchange_addr, config->exchange_name, [=, this](){
-            subscribeToMarket(config->exchange_name, config->ticker);
-        });
-
-        // Add delayed start
-        addDelayedStart(config->delay);
     }
 
     /** Subscribes to updates for the stock with the given ticker at the given exchange. */

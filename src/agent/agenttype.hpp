@@ -3,7 +3,6 @@
 
 enum class AgentType : int
 {
-    TRADER_EXAMPLE,
     STOCK_EXCHANGE,
     MARKET_WATCHER,
     TRADER_ZIC,
@@ -17,7 +16,6 @@ inline std::string to_string(AgentType agent_type)
         case AgentType::MARKET_WATCHER: return std::string{"MarketDataWatcher"};
         case AgentType::TRADER_ZIC: return std::string{"TraderZIC"};
         case AgentType::TRADER_SHVR: return std::string{"TraderSHVR"};
-        case AgentType::TRADER_EXAMPLE: return std::string{"ExampleTrader"};
         default: return std::string{""};
     }
 }

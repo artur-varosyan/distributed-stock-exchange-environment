@@ -11,7 +11,6 @@
 
 #include "networking/networkentity.hpp"
 
-#include "agent/exampletrader.hpp"
 #include "agent/stockexchange.hpp"
 #include "agent/marketdatawatcher.hpp"
 #include "agent/traderzic.hpp"
@@ -97,20 +96,6 @@ void local_runner(int argc, char** argv)
 
         std::shared_ptr<StockExchange> exchange (new StockExchange{&entity, config});
         entity.setAgent(std::static_pointer_cast<Agent>(exchange));
-        entity.start();
-    }
-    else if (agent_type == "trader") {
-
-        // Create configuration
-        TraderConfigPtr config = std::make_shared<TraderConfig>();
-        config->agent_id = agent_id;
-        config->exchange_name = vm["exchange-name"].as<std::string>();
-        config->exchange_addr = vm["exchange-addr"].as<std::string>();
-        config->ticker = vm["ticker"].as<std::string>();
-        config->delay = vm["delay"].as<unsigned int>();
-
-        std::shared_ptr<ExampleTrader> trader (new ExampleTrader{&entity, config});
-        entity.setAgent(std::static_pointer_cast<Agent>(trader));
         entity.start();
     }
     else if (agent_type == "watcher") {
