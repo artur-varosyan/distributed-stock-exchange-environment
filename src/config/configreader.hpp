@@ -23,6 +23,7 @@ private:
 
     static ExchangeConfigPtr configureExchange(int id, pugi::xml_node& xml_node, std::string& addr);
     static AgentConfigPtr configureTrader(int id, pugi::xml_node& xml_node, std::string& addr, std::unordered_map<std::string, std::string>& exchange_addr);
+    static AgentConfigPtr configureArbitrageur(int id, pugi::xml_node& xml_node, std::string& addr, std::unordered_map<std::string, std::string>& exchange_addr);
 };
 
 #endif

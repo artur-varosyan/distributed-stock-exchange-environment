@@ -73,7 +73,8 @@ void Agent::sendMessageTo(std::string_view agent_name, MessagePtr message, bool 
     }
     else
     {
-        throw std::runtime_error("Unknown agent name");
+        std::string msg = std::string{"Unknown agent name: "} + std::string{agent_name};
+        throw std::runtime_error(msg);
     }
 }
 
@@ -85,7 +86,8 @@ void Agent::sendBroadcastTo(std::string_view agent_name, MessagePtr message)
     }
     else
     {
-        throw std::runtime_error("Unknown agent name");
+        std::string msg = std::string{"Unknown agent name: "} + std::string{agent_name};
+        throw std::runtime_error(msg);
     }
 }
 

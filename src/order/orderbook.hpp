@@ -96,6 +96,8 @@ public:
             }
     };
 
+    typedef std::shared_ptr<OrderBook::Summary> SummaryPtr;
+
 
     OrderBook(std::string_view ticker)
     : ticker_{std::string(ticker)},

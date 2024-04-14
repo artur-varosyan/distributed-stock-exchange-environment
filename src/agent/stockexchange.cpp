@@ -316,7 +316,7 @@ void StockExchange::createTradeTape(std::string_view ticker)
     std::string timestamp = ss.str(); 
 
     // Set path to CSV file
-    std::string filename = "trades_" + std::string{ticker} + "_"  + timestamp + ".csv";
+    std::string filename = "trades_" + std::string{exchange_name_} + "_" + std::string{ticker} + "_"  + timestamp + ".csv";
 
     // Create a CSV writer
     CSVWriterPtr writer = std::make_shared<CSVWriter>(filename);

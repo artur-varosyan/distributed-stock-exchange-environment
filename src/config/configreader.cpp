@@ -59,7 +59,19 @@ SimulationConfigPtr ConfigReader::readConfig(std::string& filepath)
     pugi::xml_node traders = agents.child("traders");
     for (auto trader : traders.children())
     {
-        AgentConfigPtr trader_config = configureTrader(agent_id, trader, trader_addrs.at(instance_id), exchange_addrs_map);
+        std::string type_tag { trader.name() };
+        AgentType type = AgentFactory::getAgentTypeForTag(type_tag);
+
+        AgentConfigPtr trader_config;
+        if (type == AgentType::ARBITRAGE_TRADER)
+        {
+            trader_config = configureArbitrageur(agent_id, trader, trader_addrs.at(instance_id), exchange_addrs_map);
+        }
+        else
+        {
+            trader_config = configureTrader(agent_id, trader, trader_addrs.at(instance_id), exchange_addrs_map);
+        }
+         
         trader_configs.push_back(trader_config);
         ++instance_id;
         ++agent_id;
@@ -107,5 +119,27 @@ AgentConfigPtr ConfigReader::configureTrader(int id, pugi::xml_node& xml_node, s
     else if (side == "sell") trader_config->side = Order::Side::ASK;
 
     return std::static_pointer_cast<AgentConfig>(trader_config);
+}
+
+AgentConfigPtr ConfigReader::configureArbitrageur(int id, pugi::xml_node& xml_node, std::string& addr, std::unordered_map<std::string, std::string>& exchange_addrs)
+{
+    ArbitrageurConfigPtr config = std::make_shared<ArbitrageurConfig>();
+    config->agent_id = id;
+    config->addr = addr;
+
+    std::string type_tag { xml_node.name() };
+    config->type = AgentFactory::getAgentTypeForTag(type_tag);
+
+    config->exchange0_name = std::string{xml_node.attribute("exchange0").value()};
+    config->exchange0_addr = exchange_addrs.at(config->exchange0_name);
+
+    config->exchange1_name = std::string{xml_node.attribute("exchange1").value()};
+    config->exchange1_addr = exchange_addrs.at(config->exchange1_name);
+    
+    config->ticker = std::string{xml_node.attribute("ticker").value()};
+    config->alpha = std::stod(xml_node.attribute("alpha").value());
+    config->delay = std::atoi(xml_node.attribute("delay").value());
+
+    return std::static_pointer_cast<AgentConfig>(config);
 }
 

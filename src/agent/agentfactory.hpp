@@ -9,6 +9,7 @@
 #include "marketdatawatcher.hpp"
 #include "traderzic.hpp"
 #include "tradershvr.hpp"
+#include "arbitragetrader.hpp"
 
 class AgentFactory
 {
@@ -41,6 +42,11 @@ public:
                 std::shared_ptr<Agent> agent (new TraderShaver{network_entity, std::static_pointer_cast<TraderConfig>(config)});
                 return agent;
             }
+            case AgentType::ARBITRAGE_TRADER:
+            {
+                std::shared_ptr<Agent> agent (new ArbitrageTrader{network_entity, std::static_pointer_cast<ArbitrageurConfig>(config)});
+                return agent;
+            }
             default:
             {
                 throw std::runtime_error("Failed to create agent. Unknown agent received");
@@ -65,7 +71,8 @@ private:
         {std::string{"exchange"}, AgentType::STOCK_EXCHANGE},
         {std::string{"watcher"}, AgentType::MARKET_WATCHER},
         {std::string{"zic"}, AgentType::TRADER_ZIC},
-        {std::string{"shvr"}, AgentType::TRADER_SHVR}
+        {std::string{"shvr"}, AgentType::TRADER_SHVR},
+        {std::string{"arbitrageur"}, AgentType::ARBITRAGE_TRADER}
     };
 
 };
