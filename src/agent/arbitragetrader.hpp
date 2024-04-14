@@ -91,18 +91,19 @@ private:
         }
     }
 
-    void placeArbitrageOrders(std::string_view bid_exchange, std::string_view ask_exchange, double bid_price, double ask_price, int size)
+    void placeArbitrageOrders(std::string_view best_bid_exchange, std::string_view best_ask_exchange, double bid_price, double ask_price, int size)
     {
         std::cout << "[Opportunity] " 
         << "BEST BID: " << best_bid_exchange_ << " @ " << best_bid_price_ << " "
         << "BEST ASK: " << best_ask_exchange_ << " @ " << best_ask_price_ << std::endl;
         
         std::cout << "[Arbitrage] " 
-        << "BID: " << bid_exchange << " @ " <<  bid_price 
-        << " ASK: " << ask_exchange << " @ " << ask_price << std::endl;
+        << "BID: " << best_ask_exchange << " @ " <<  bid_price 
+        << " ASK: " << best_bid_exchange << " @ " << ask_price << std::endl;
 
-        placeLimitOrder(bid_exchange, Order::Side::BID, ticker_, size, bid_price);
-        placeLimitOrder(ask_exchange, Order::Side::ASK, ticker_, size, ask_price);
+        // Note: Arbitrageur places bid order on the exchange with best ask and vice versa
+        placeLimitOrder(best_ask_exchange, Order::Side::BID, ticker_, size, bid_price);
+        placeLimitOrder(best_bid_exchange, Order::Side::ASK, ticker_, size, ask_price);
     }
 
     double best_bid_price_ = std::numeric_limits<double>::min();
