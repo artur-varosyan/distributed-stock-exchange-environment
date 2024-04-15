@@ -117,11 +117,20 @@ public:
     /** Removes the given order from the order book if exists. Returns nullopt if order does not exist. */
     std::optional<LimitOrderPtr> removeOrder(int order_id, Order::Side side);
 
+    /** Updates the order quantity and price based on the executed trade. */
+    void updateOrderWithTrade(OrderPtr order, TradePtr trade);
+
     /** Returns the best bid in the order book. */
     std::optional<LimitOrderPtr> bestBid();
 
     /** Returns the best ask in the order book. */
     std::optional<LimitOrderPtr> bestAsk();
+
+    /** Returns the aggregate size of all bids at the best bid price. */
+    int bestBidSize();
+
+    /** Returns the aggregate size of all asks at the best ask price. */
+    int bestAskSize();
 
     /** Removes the best bid from the order queue. */
     void popBestBid();
@@ -153,6 +162,9 @@ private:
     int bids_volume_;
     int asks_volume_;
     int order_count_;
+
+    std::unordered_map<double, int> bids_sizes_;
+    std::unordered_map<double, int> asks_sizes_;
 
     std::optional<TradePtr> last_trade_;
 

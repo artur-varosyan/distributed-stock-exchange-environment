@@ -208,8 +208,8 @@ void StockExchange::matchWithOrderBook(LimitOrderPtr order)
 void StockExchange::executeTrade(LimitOrderPtr resting_order, OrderPtr aggressing_order, TradePtr trade)
 {
     // Decrement the quantity of the orders by quantity traded
-    resting_order->updateOrderWithTrade(trade);
-    aggressing_order->updateOrderWithTrade(trade);
+    getOrderBookFor(resting_order->ticker)->updateOrderWithTrade(resting_order, trade);
+    getOrderBookFor(resting_order->ticker)->updateOrderWithTrade(aggressing_order, trade);
 
     // Re-insert the resting order if it has not been fully filled
     if (resting_order->remaining_quantity > 0) {

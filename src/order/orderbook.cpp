@@ -13,11 +13,13 @@ void OrderBook::addOrder(LimitOrderPtr order)
     {
         bids_.push(order);
         bids_volume_ += order->remaining_quantity;
+        bids_sizes_[order->price] += order->remaining_quantity;
     }
     else
     {
         asks_.push(order);
         asks_volume_ += order->remaining_quantity;
+        asks_sizes_[order->price] += order->remaining_quantity;
     }
     ++order_count_;
 }
@@ -30,6 +32,7 @@ std::optional<LimitOrderPtr> OrderBook::removeOrder(int order_id, Order::Side si
         if (order.has_value())
         {
             bids_volume_ -= order.value()->remaining_quantity;
+            bids_sizes_[order.value()->price] -= order.value()->remaining_quantity;
             --order_count_;
         }
         return order;
@@ -40,11 +43,48 @@ std::optional<LimitOrderPtr> OrderBook::removeOrder(int order_id, Order::Side si
         if (order.has_value())
         {
             asks_volume_ -= order.value()->remaining_quantity;
+            asks_sizes_[order.value()->price] -= order.value()->remaining_quantity;
             --order_count_;
         }
         return order;
     }
 }
+
+void OrderBook::updateOrderWithTrade(OrderPtr order, TradePtr trade)
+    {
+        // Update average price executed
+        order->avg_price = ((order->cumulative_quantity * order->avg_price) + (trade->quantity * trade->price)) / (order->cumulative_quantity + trade->quantity);
+
+        // Update quantities
+        order->cumulative_quantity += trade->quantity;
+        order->remaining_quantity -= trade->quantity;
+
+        // Update order status
+        if (order->remaining_quantity == 0)
+        {
+            order->status = Order::Status::FILLED;
+        }
+        else
+        {
+            order->status = Order::Status::PARTIALLY_FILLED;
+        }
+
+        // Update order book data
+        if (order->type == Order::Type::LIMIT)
+        {
+            LimitOrderPtr limit_order = std::dynamic_pointer_cast<LimitOrder>(order);
+            if (order->side == Order::Side::BID)
+            {
+                bids_volume_ -= limit_order->remaining_quantity;
+                bids_sizes_[limit_order->price] -= order->remaining_quantity;
+            }
+            else
+            {
+                asks_volume_ -= limit_order->remaining_quantity;
+                asks_sizes_[limit_order->price] -= limit_order->remaining_quantity;
+            }
+        }
+    }
 
 std::optional<LimitOrderPtr> OrderBook::bestBid()
 {
@@ -55,6 +95,19 @@ std::optional<LimitOrderPtr> OrderBook::bestBid()
     return bids_.top();
 }
 
+int OrderBook::bestBidSize()
+{
+    std::optional<LimitOrderPtr> best_bid = bestBid();
+    if (best_bid.has_value())
+    {
+        return bids_sizes_.at(best_bid.value()->price);
+    }
+    else 
+    {
+        return 0;
+    }
+}
+
 std::optional<LimitOrderPtr> OrderBook::bestAsk()
 {
     if (asks_.empty())
@@ -62,6 +115,19 @@ std::optional<LimitOrderPtr> OrderBook::bestAsk()
         return std::nullopt;
     }
     return asks_.top();
+}
+
+int OrderBook::bestAskSize()
+{
+    std::optional<LimitOrderPtr> best_ask = bestAsk();
+    if (best_ask.has_value())
+    {
+        return asks_sizes_.at(best_ask.value()->price);
+    }
+    else 
+    {
+        return 0;
+    }
 }
 
 void OrderBook::popBestBid()
@@ -111,8 +177,8 @@ OrderBook::Summary OrderBook::getSummary()
     summary.ticker = ticker_;
     summary.best_bid = bestBid().has_value() ? bestBid().value()->price : -1;
     summary.best_ask = bestAsk().has_value() ? bestAsk().value()->price : -1;
-    summary.best_bid_size = bestBid().has_value() ? bestBid().value()->remaining_quantity : 0;
-    summary.best_ask_size =  bestBid().has_value() ? bestBid().value()->remaining_quantity : 0;
+    summary.best_bid_size = bestBidSize();
+    summary.best_ask_size =  bestAskSize();
 
     summary.asks_volume = asks_volume_;
     summary.bids_volume = bids_volume_;

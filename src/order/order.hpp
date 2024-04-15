@@ -46,24 +46,6 @@ public:
 
     virtual ~Order() = default;
 
-    /** Updates the order quantity and price based on the executed trade. */
-    void updateOrderWithTrade(TradePtr trade)
-    {
-        avg_price = ((cumulative_quantity * avg_price) + (trade->quantity * trade->price)) / (cumulative_quantity + trade->quantity);
-        cumulative_quantity += trade->quantity;
-        remaining_quantity -= trade->quantity;
-
-        if (remaining_quantity == 0)
-        {
-            status = Order::Status::FILLED;
-        }
-        else
-        {
-            status = Order::Status::PARTIALLY_FILLED;
-        }
-    }
-
-    /** Returns true if the order is fully filled. */
     bool isFilled() const
     {
         return remaining_quantity <= 0;
