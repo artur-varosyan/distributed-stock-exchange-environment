@@ -15,6 +15,7 @@
 #include "limitorder.hpp"
 #include "orderqueue.hpp"
 #include "../trade/trade.hpp"
+#include "../trade/marketdata.hpp"
 
 class OrderBook;
 typedef std::shared_ptr<OrderBook> OrderBookPtr;
@@ -22,82 +23,6 @@ typedef std::shared_ptr<OrderBook> OrderBookPtr;
 /** The order book storing all orders for a single ticker. */
 class OrderBook : std::enable_shared_from_this<OrderBook> {
 public:
-
-    /** The level 1 summary of the current state of the order book. */
-    class Summary {
-        public:
-            Summary() = default;
-
-            /** TODO: Decide how to present the summary in case of lack of trades. */
-
-            std::string ticker;
-            double best_bid;
-            double best_ask;
-            int best_bid_size;
-            int best_ask_size;
-
-            int bids_volume;
-            int asks_volume;
-            int bids_count;
-            int asks_count;
-
-            double last_price_traded;
-            int last_quantity_traded;
-
-            double high_price;
-            double low_price;
-            int cumulative_volume_traded;
-            int trades_count;
-
-            unsigned long long timestamp;
-
-        private:
-            friend std::ostream& operator<<(std::ostream& os, const Summary& summary)
-            {
-                os << "Summary " << summary.ticker << ":\n" 
-                << "LAST TRADE: " << summary.last_quantity_traded << " @ $" << summary.last_price_traded << "\n"
-                << "BEST BID: " << summary.best_bid_size << " @ $" << summary.best_bid << "\n" 
-                << "BEST ASK: " << summary.best_bid_size << " @ $" << summary.best_ask << "\n" 
-                << "BID VOL: " << summary.bids_volume << "\n" 
-                << "ASK VOL: " << summary.asks_volume << "\n"
-                << "BID ORDERS: " << summary.bids_count << "\n" 
-                << "ASK ORDERS: " << summary.asks_count << "\n"
-                << "VOLUME TRADED: " << summary.cumulative_volume_traded << "\n"
-                << "HIGH: " << summary.high_price << "\n"
-                << "LOW: " << summary.low_price << "\n"
-                << "TRADES: " << summary.trades_count << "\n";
-                return os;
-            }
-
-            friend class boost::serialization::access;
-            template<class Archive>
-            void serialize(Archive & ar, const unsigned int version)
-            {
-                ar & ticker;
-                ar & best_bid;
-                ar & best_ask;
-                ar & best_bid_size;
-                ar & best_ask_size;
-
-                ar & bids_volume;
-                ar & asks_volume;
-                ar & bids_count;
-                ar & asks_count;
-
-                ar & last_price_traded;
-                ar & last_quantity_traded;
-
-                ar & high_price;
-                ar & low_price;
-                ar & cumulative_volume_traded;
-                ar & trades_count;
-
-                ar & timestamp;
-            }
-    };
-
-    typedef std::shared_ptr<OrderBook::Summary> SummaryPtr;
-
 
     OrderBook(std::string_view ticker)
     : ticker_{std::string(ticker)},
@@ -144,8 +69,8 @@ public:
     /** Logs the details of the executed trade for statistics. */
     void logTrade(TradePtr trade);
 
-    /** Returns the summary of the current state of the order book. */
-    Summary getSummary();
+    /** Returns live level 1 market data. */
+    MarketData getLiveMarketData();
 
     /** Creates a new order book for the given ticker. */
     static OrderBookPtr create(std::string_view ticker)

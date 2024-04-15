@@ -63,12 +63,12 @@ private:
     {
         if (trader_side_ == Order::Side::BID)
         {
-            double shaved_price = msg->summary.best_bid + 1;
+            double shaved_price = msg->data.best_bid + 1;
             return std::min(shaved_price, limit_price_);
         }
         else
         {
-            double shaved_price = msg->summary.best_ask - 1;
+            double shaved_price = msg->data.best_ask - 1;
             return std::max(shaved_price, limit_price_);
         }
     }

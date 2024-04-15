@@ -44,7 +44,7 @@ public:
     void onMarketData(std::string_view exchange, MarketDataMessagePtr msg) override
     {
         // Update market data for the given exchange
-        updateMarketData(exchange, msg->summary);
+        updateMarketData(exchange, msg->data);
         checkForAbitrage();
     }
 
@@ -60,7 +60,7 @@ public:
 
 private:
 
-    void updateMarketData(std::string_view exchange, OrderBook::Summary& data)
+    void updateMarketData(std::string_view exchange, MarketData& data)
     {
         // Update best known ask (ovewrite best ask if was from this exchange)
         if (best_ask_exchange_ == std::string{exchange} || data.best_ask < best_ask_price_)

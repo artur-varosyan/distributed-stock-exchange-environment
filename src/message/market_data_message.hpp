@@ -4,6 +4,7 @@
 #include "message.hpp"
 #include "messagetype.hpp"
 #include "../order/orderbook.hpp"
+#include "../trade/marketdata.hpp"
 
 class MarketDataMessage : public Message
 {
@@ -11,7 +12,7 @@ public:
 
     MarketDataMessage() : Message(MessageType::MARKET_DATA) {};
 
-    OrderBook::Summary summary;
+    MarketData data;
 
 private:
 
@@ -20,7 +21,7 @@ private:
     void serialize(Archive & ar, const unsigned int version)
     {
         ar & boost::serialization::base_object<Message>(*this);
-        ar & summary;
+        ar & data;
     }
 
 };

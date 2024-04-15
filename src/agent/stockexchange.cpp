@@ -325,11 +325,11 @@ void StockExchange::createTradeTape(std::string_view ticker)
 
 void StockExchange::publishMarketData(std::string_view ticker)
 {
-    OrderBook::Summary summary = getOrderBookFor(ticker)->getSummary();
+    MarketData data = getOrderBookFor(ticker)->getLiveMarketData();
     
     MarketDataMessagePtr msg = std::make_shared<MarketDataMessage>();
     msg->sender_id = this->agent_id;
-    msg->summary = summary;
+    msg->data = data;
 
     // Send message to all subscribers of the given ticker 
     broadcastToSubscribers(ticker, std::dynamic_pointer_cast<Message>(msg));
