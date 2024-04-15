@@ -12,7 +12,7 @@ public:
 
     MarketDataMessage() : Message(MessageType::MARKET_DATA) {};
 
-    MarketData data;
+    MarketDataPtr data;
 
 private:
 

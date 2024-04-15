@@ -303,11 +303,11 @@ void StockExchange::addTradeableAsset(std::string_view ticker)
     order_books_.insert({std::string{ticker}, OrderBook::create(ticker)});
     subscribers_.insert({std::string{ticker}, {}});
 
-    createTradeTape(ticker);
+    createDataFiles(ticker);
     std::cout << "Added " << ticker << " as a tradeable asset" << std::endl;
 };
 
-void StockExchange::createTradeTape(std::string_view ticker)
+void StockExchange::createDataFiles(std::string_view ticker)
 {
     // Get current ISO 8601 timestamp
     std::time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -315,17 +315,23 @@ void StockExchange::createTradeTape(std::string_view ticker)
     ss << std::put_time( std::localtime( &t ), "%FT%T" );
     std::string timestamp = ss.str(); 
 
-    // Set path to CSV file
-    std::string filename = "trades_" + std::string{exchange_name_} + "_" + std::string{ticker} + "_"  + timestamp + ".csv";
+    // Set path to CSV files
+    std::string suffix = std::string{exchange_name_} + "_" + std::string{ticker} + "_"  + timestamp;
+    std::string trades_file = "trades_" + suffix + ".csv";
+    std::string market_data_file = "data_" + suffix + ".csv";
 
-    // Create a CSV writer
-    CSVWriterPtr writer = std::make_shared<CSVWriter>(filename);
-    trade_tapes_.insert({std::string{ticker}, writer});
+    // Create a CSV writers
+    CSVWriterPtr trade_writer = std::make_shared<CSVWriter>(trades_file);
+    CSVWriterPtr market_data_writer = std::make_shared<CSVWriter>(market_data_file);
+
+    trade_tapes_.insert({std::string{ticker}, trade_writer});
+    market_data_feeds_.insert({std::string{ticker}, market_data_writer});
 }
 
 void StockExchange::publishMarketData(std::string_view ticker)
 {
-    MarketData data = getOrderBookFor(ticker)->getLiveMarketData();
+    MarketDataPtr data = getOrderBookFor(ticker)->getLiveMarketData();
+    addMarketDataSnapshot(data);
     
     MarketDataMessagePtr msg = std::make_shared<MarketDataMessage>();
     msg->sender_id = this->agent_id;
@@ -412,11 +418,21 @@ CSVWriterPtr StockExchange::getTradeTapeFor(std::string_view ticker)
     return trade_tapes_.at(std::string{ticker});
 };
 
+CSVWriterPtr StockExchange::getMarketDataFeedFor(std::string_view ticker)
+{
+    return market_data_feeds_.at(std::string{ticker});
+};
+
 void StockExchange::addTradeToTape(TradePtr trade)
 {
     std::cout << *trade << "\n";
-    getTradeTapeFor(trade->ticker)->writeRow(std::static_pointer_cast<CSVPrintable>(trade));
+    getTradeTapeFor(trade->ticker)->writeRow(trade);
 };
+
+void StockExchange::addMarketDataSnapshot(MarketDataPtr data)
+{
+    getMarketDataFeedFor(data->ticker)->writeRow(data);
+}
 
 void StockExchange::broadcastToSubscribers(std::string_view ticker, MessagePtr msg)
 {

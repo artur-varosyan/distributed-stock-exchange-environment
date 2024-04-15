@@ -33,6 +33,7 @@ public:
       order_books_{},
       subscribers_{},
       trade_tapes_{},
+      market_data_feeds_{},
       msg_queue_{},
       random_generator_{std::random_device{}()}
     {
@@ -67,6 +68,9 @@ public:
     /** Returns the trade tape writer for the given ticker. */
     CSVWriterPtr getTradeTapeFor(std::string_view ticker);
 
+    /** Returns the market data feed for the given ticker. */
+    CSVWriterPtr getMarketDataFeedFor(std::string_view ticker);
+
     /** Adds the given subscriber to the market data subscribers list. */
     void addSubscriber(std::string_view ticker, int subscriber_id, std::string_view address);
 
@@ -91,8 +95,11 @@ private:
     /** Adds the given trade to the trade tape. */
     void addTradeToTape(TradePtr trade);
 
-    /** Creates a new trade tape CSV file. */
-    void createTradeTape(std::string_view ticker);
+    /** Creates new trade tape and market data feed CSV files. */
+    void createDataFiles(std::string_view ticker);
+
+    /** Logs the given market data snapshot. */
+    void addMarketDataSnapshot(MarketDataPtr data);
 
     /**
      *   MESSAGE SENDERS
@@ -141,6 +148,9 @@ private:
 
     /** Trade tape for each ticker traded. */
     std::unordered_map<std::string, CSVWriterPtr> trade_tapes_;
+
+    /** Market data feed snapshots for each ticker traded. */
+    std::unordered_map<std::string, CSVWriterPtr> market_data_feeds_;
 
     /** Subscribers for each ticker traded. */
     std::unordered_map<std::string, std::unordered_map<int, std::string>> subscribers_;

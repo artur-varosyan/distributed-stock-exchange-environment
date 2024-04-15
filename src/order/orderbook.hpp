@@ -70,7 +70,7 @@ public:
     void logTrade(TradePtr trade);
 
     /** Returns live level 1 market data. */
-    MarketData getLiveMarketData();
+    MarketDataPtr getLiveMarketData();
 
     /** Creates a new order book for the given ticker. */
     static OrderBookPtr create(std::string_view ticker)

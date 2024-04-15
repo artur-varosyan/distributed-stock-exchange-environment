@@ -157,28 +157,28 @@ void OrderBook::logTrade(TradePtr trade)
     ++trade_count_;
 }
 
-MarketData OrderBook::getLiveMarketData()
+MarketDataPtr OrderBook::getLiveMarketData()
 {
-    MarketData data;
-    data.ticker = ticker_;
-    data.best_bid = bestBid().has_value() ? bestBid().value()->price : -1;
-    data.best_ask = bestAsk().has_value() ? bestAsk().value()->price : -1;
-    data.best_bid_size = bestBidSize();
-    data.best_ask_size =  bestAskSize();
+    MarketDataPtr data = std::make_shared<MarketData>();
+    data->ticker = ticker_;
+    data->best_bid = bestBid().has_value() ? bestBid().value()->price : -1;
+    data->best_ask = bestAsk().has_value() ? bestAsk().value()->price : -1;
+    data->best_bid_size = bestBidSize();
+    data->best_ask_size =  bestAskSize();
 
-    data.asks_volume = asks_volume_;
-    data.bids_volume = bids_volume_;
-    data.asks_count = asks_.size();
-    data.bids_count = bids_.size();
+    data->asks_volume = asks_volume_;
+    data->bids_volume = bids_volume_;
+    data->asks_count = asks_.size();
+    data->bids_count = bids_.size();
 
-    data.last_price_traded = last_trade_.has_value() ? last_trade_.value()->price : -1;
-    data.last_quantity_traded = last_trade_.has_value() ? last_trade_.value()->quantity : 0;
+    data->last_price_traded = last_trade_.has_value() ? last_trade_.value()->price : -1;
+    data->last_quantity_traded = last_trade_.has_value() ? last_trade_.value()->quantity : 0;
 
-    data.high_price = trade_high_.has_value() ? trade_high_.value() : -1;
-    data.low_price = trade_low_.has_value() ? trade_low_.value() : -1;
-    data.cumulative_volume_traded = trade_volume_;
-    data.trades_count = trade_count_;
+    data->high_price = trade_high_.has_value() ? trade_high_.value() : -1;
+    data->low_price = trade_low_.has_value() ? trade_low_.value() : -1;
+    data->cumulative_volume_traded = trade_volume_;
+    data->trades_count = trade_count_;
 
-    data.timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    data->timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     return data;
 }

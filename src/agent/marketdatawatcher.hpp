@@ -22,7 +22,7 @@ public:
         // Clear the screen
         std::cout << "\033[2J\033[1;1H";
         // Print the market data
-        std::cout << sender << ":\n" << msg->data << "\n";
+        std::cout << sender << ":\n" << *msg->data << "\n";
     }
 
     /** Subscribe to market data from the given market. */

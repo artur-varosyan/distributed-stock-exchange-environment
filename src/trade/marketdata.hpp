@@ -7,8 +7,10 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/string.hpp>
 
+#include "../utilities/csvprintable.hpp"
+
 /** The Level 1 Market Data Feed **/
-class MarketData {
+class MarketData : public CSVPrintable, std::enable_shared_from_this<MarketData> {
     public:
         MarketData() = default;
 
@@ -32,6 +34,16 @@ class MarketData {
         int trades_count;
 
         unsigned long long timestamp;
+
+        std::string describeCSVHeaders() const override
+        {
+            return "timestamp,ticker,best_bid,best_ask,best_bid_size,best_ask_size,bids_volume,asks_volume,bids_count,asks_count";
+        }
+
+        std::string toCSV() const override
+        {
+            return std::to_string(timestamp) + "," + ticker + "," + std::to_string(best_bid) + "," + std::to_string(best_ask) + "," + std::to_string(best_bid_size) + "," + std::to_string(best_ask_size) + "," + std::to_string(bids_volume) + "," + std::to_string(asks_volume) + "," + std::to_string(bids_count) + "," + std::to_string(asks_count);
+        }
 
     private:
         friend std::ostream& operator<<(std::ostream& os, const MarketData& data)

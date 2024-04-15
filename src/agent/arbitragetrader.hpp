@@ -60,21 +60,21 @@ public:
 
 private:
 
-    void updateMarketData(std::string_view exchange, MarketData& data)
+    void updateMarketData(std::string_view exchange, MarketDataPtr data)
     {
         // Update best known ask (ovewrite best ask if was from this exchange)
-        if (best_ask_exchange_ == std::string{exchange} || data.best_ask < best_ask_price_)
+        if (best_ask_exchange_ == std::string{exchange} || data->best_ask < best_ask_price_)
         {
-            best_ask_price_ = data.best_ask;
-            best_ask_size_ = data.best_ask_size;
+            best_ask_price_ = data->best_ask;
+            best_ask_size_ = data->best_ask_size;
             best_ask_exchange_ = std::string{exchange};
         }
 
         // Update best known bid (ovewrite best bid if was from this exchange)
-        if (best_bid_exchange_ == std::string{exchange} || data.best_bid > best_bid_price_)
+        if (best_bid_exchange_ == std::string{exchange} || data->best_bid > best_bid_price_)
         {
-            best_bid_price_ = data.best_bid;
-            best_bid_size_ = data.best_bid_size;
+            best_bid_price_ = data->best_bid;
+            best_bid_size_ = data->best_bid_size;
             best_bid_exchange_ = std::string{exchange};
         }
     }
