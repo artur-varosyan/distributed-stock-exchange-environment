@@ -38,6 +38,7 @@ BOOST_CLASS_EXPORT(AgentConfig);
 BOOST_CLASS_EXPORT(ExchangeConfig);
 BOOST_CLASS_EXPORT(TraderConfig);
 BOOST_CLASS_EXPORT(ArbitrageurConfig);
+BOOST_CLASS_EXPORT(MarketWatcherConfig);
 
 BOOST_CLASS_EXPORT(ConfigMessage);
 BOOST_CLASS_EXPORT(ConfigAckMessage);

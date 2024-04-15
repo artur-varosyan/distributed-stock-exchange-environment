@@ -29,7 +29,7 @@ public:
             }
             case AgentType::MARKET_WATCHER:
             {
-                std::shared_ptr<Agent> agent (new MarketDataWatcher{network_entity, std::static_pointer_cast<TraderConfig>(config)});
+                std::shared_ptr<Agent> agent (new MarketDataWatcher{network_entity, std::static_pointer_cast<MarketWatcherConfig>(config)});
                 return agent;
             }
             case AgentType::TRADER_ZIC:

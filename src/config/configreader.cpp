@@ -52,33 +52,52 @@ SimulationConfigPtr ConfigReader::readConfig(std::string& filepath)
         ++agent_id;
     }
 
-    // Traders
+    // Other agents
     std::vector<AgentConfigPtr> trader_configs;
 
     instance_id = 0;
     pugi::xml_node traders = agents.child("traders");
     for (auto trader : traders.children())
     {
-        std::string type_tag { trader.name() };
-        AgentType type = AgentFactory::getAgentTypeForTag(type_tag);
-
-        AgentConfigPtr trader_config;
-        if (type == AgentType::ARBITRAGE_TRADER)
-        {
-            trader_config = configureArbitrageur(agent_id, trader, trader_addrs.at(instance_id), exchange_addrs_map);
-        }
-        else
-        {
-            trader_config = configureTrader(agent_id, trader, trader_addrs.at(instance_id), exchange_addrs_map);
-        }
+        AgentConfigPtr agent_config = configureAgent(agent_id, trader, trader_addrs.at(instance_id), exchange_addrs_map);
          
-        trader_configs.push_back(trader_config);
+        trader_configs.push_back(agent_config);
         ++instance_id;
         ++agent_id;
     }
 
     SimulationConfigPtr simulation_config = std::make_shared<SimulationConfig>(exchange_configs, trader_configs);
     return simulation_config;
+}
+
+AgentConfigPtr ConfigReader::configureAgent(int id, pugi::xml_node& xml_node, std::string& addr, std::unordered_map<std::string, std::string>& exchange_addrs)
+{
+    std::string type_tag { xml_node.name() };
+    AgentType type = AgentFactory::getAgentTypeForTag(type_tag);
+
+    switch (type)
+    {
+        case AgentType::TRADER_ZIC:
+        {
+            return configureTrader(id, xml_node, addr, exchange_addrs, type);
+        }
+        case AgentType::TRADER_SHVR:
+        {
+            return configureTrader(id, xml_node, addr, exchange_addrs, type);
+        }
+        case AgentType::ARBITRAGE_TRADER:
+        {
+            return configureArbitrageur(id, xml_node, addr, exchange_addrs);
+        }
+        case AgentType::MARKET_WATCHER:
+        {
+            return configureMarketWatcher(id, xml_node, addr, exchange_addrs);
+        }
+        default:
+        {
+            throw std::runtime_error("Unknown XML tag in configuration file");
+        }
+    }
 }
 
 ExchangeConfigPtr ConfigReader::configureExchange(int id, pugi::xml_node& xml_node, std::string& addr)
@@ -99,13 +118,12 @@ ExchangeConfigPtr ConfigReader::configureExchange(int id, pugi::xml_node& xml_no
     return exchange_config;
 }
 
-AgentConfigPtr ConfigReader::configureTrader(int id, pugi::xml_node& xml_node, std::string& addr, std::unordered_map<std::string, std::string>& exchange_addrs)
+AgentConfigPtr ConfigReader::configureTrader(int id, pugi::xml_node& xml_node, std::string& addr, std::unordered_map<std::string, std::string>& exchange_addrs, AgentType trader_type)
 {
     TraderConfigPtr trader_config = std::make_shared<TraderConfig>();
     trader_config->agent_id = id;
 
-    std::string type_tag { xml_node.name() };
-    trader_config->type = AgentFactory::getAgentTypeForTag(type_tag);
+    trader_config->type = trader_type;
 
     trader_config->addr = addr;
     trader_config->exchange_name = std::string{xml_node.attribute("exchange").value()};
@@ -139,6 +157,21 @@ AgentConfigPtr ConfigReader::configureArbitrageur(int id, pugi::xml_node& xml_no
     config->ticker = std::string{xml_node.attribute("ticker").value()};
     config->alpha = std::stod(xml_node.attribute("alpha").value());
     config->delay = std::atoi(xml_node.attribute("delay").value());
+
+    return std::static_pointer_cast<AgentConfig>(config);
+}
+
+AgentConfigPtr ConfigReader::configureMarketWatcher(int id, pugi::xml_node& xml_node, std::string& addr, std::unordered_map<std::string, std::string>& exchange_addrs)
+{
+    MarketWatcherConfigPtr config = std::make_shared<MarketWatcherConfig>();
+    config->agent_id = id;
+    config->addr = addr;
+    config->type = AgentType::MARKET_WATCHER;
+
+    config->exchange_name = std::string{xml_node.attribute("exchange").value()};
+    config->exchange_addr = exchange_addrs.at(config->exchange_name);
+    
+    config->ticker = std::string{xml_node.attribute("ticker").value()};
 
     return std::static_pointer_cast<AgentConfig>(config);
 }
