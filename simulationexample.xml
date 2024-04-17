@@ -1,0 +1,31 @@
+<!-- Example simulation configuration file -->
+<simulation>
+
+    <!-- Specifies the available instances for use in the simulation -->
+    <instances>
+        <instance ip="127.0.0.1" port="9999" agent-type="exchange"/>
+        <instance ip="127.0.0.1" port="8080" agent-type="trader"/>
+        <instance ip="127.0.0.1" port="8081" agent-type="trader"/>
+        <instance ip="127.0.0.1" port="8082" agent-type="trader"/>
+        <instance ip="127.0.0.1" port="8083" agent-type="trader"/>
+    </instances>
+
+    <!-- Specifies the agents in the simulation -->
+    <agents>
+
+        <!-- Exchange agents are initialised before any trader agents -->
+        <exchanges>
+            <exchange name="NYSE" ticker="AAPL" connect-time="30" trading-time="120" />
+        </exchanges>
+
+        <!-- Traders are initialised after -->
+        <traders>
+            <zic exchange="NYSE" ticker="AAPL" side="buy"  limit="150" delay="0" />
+            <zic exchange="NYSE" ticker="AAPL" side="buy"  limit="150" delay="0" />
+            <zic exchange="NYSE" ticker="AAPL" side="sell" limit="50" delay="0" />
+            <zic exchange="NYSE" ticker="AAPL" side="sell" limit="50" delay="0" />
+        </traders>
+
+    </agents>
+
+</simulation>
