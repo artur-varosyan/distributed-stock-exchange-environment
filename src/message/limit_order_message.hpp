@@ -14,6 +14,7 @@ public:
     int client_order_id;
     std::string ticker;
     Order::Side side;
+    Order::TimeInForce time_in_force;
     int quantity;
     double price;
 
@@ -27,6 +28,7 @@ private:
         ar & client_order_id;
         ar & ticker;
         ar & side;
+        ar & time_in_force;
         ar & quantity;
         ar & price;
     }

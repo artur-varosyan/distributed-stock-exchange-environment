@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <stack>
 
 #include "stockexchange.hpp"
 #include "../utilities/syncqueue.hpp"
@@ -65,7 +66,14 @@ void StockExchange::onLimitOrder(LimitOrderMessagePtr msg)
 
     if (crossesSpread(order))
     {
-        matchWithOrderBook(order);
+        if (order->time_in_force == Order::TimeInForce::FOK)
+        {
+            matchOrderInFull(order);
+        }
+        else
+        {
+            matchOrder(order);
+        }
     }
     else
     {
@@ -74,7 +82,7 @@ void StockExchange::onLimitOrder(LimitOrderMessagePtr msg)
         report->sender_id = this->agent_id;
         sendExecutionReport(std::to_string(order->sender_id), report);
         publishMarketData(msg->ticker);
-    }
+    }    
 };
 
 void StockExchange::onMarketOrder(MarketOrderMessagePtr msg)
@@ -112,13 +120,10 @@ void StockExchange::onMarketOrder(MarketOrderMessagePtr msg)
         }
     }
 
-    // Immediate or Cancel (IOC)
     // If the market order is not fully executed, cancel the remaining quantity
     if (!order->isFilled())
     {
-        order->setStatus(Order::Status::CANCELLED);
-        ExecutionReportMessagePtr report = ExecutionReportMessage::createFromOrder(order);
-        sendExecutionReport(std::to_string(order->sender_id), report);
+        cancelOrder(order);
     }
 };
 
@@ -128,11 +133,7 @@ void StockExchange::onCancelOrder(CancelOrderMessagePtr msg)
     
     if (order.has_value()) 
     {
-        // Send an execution report message
-        order.value()->setStatus(Order::Status::CANCELLED);
-        ExecutionReportMessagePtr report = ExecutionReportMessage::createFromOrder(order.value());
-        report->sender_id = this->agent_id;
-        sendExecutionReport(std::to_string(msg->sender_id), report);
+        cancelOrder(order.value());
     }
     else
     {
@@ -142,7 +143,6 @@ void StockExchange::onCancelOrder(CancelOrderMessagePtr msg)
         reject->order_id = msg->order_id;
 
         sendMessageTo(std::to_string(msg->sender_id), std::dynamic_pointer_cast<Message>(reject), true);
-
     }
 };
 
@@ -167,7 +167,7 @@ bool StockExchange::crossesSpread(LimitOrderPtr order)
     return false;
 };
 
-void StockExchange::matchWithOrderBook(LimitOrderPtr order)
+void StockExchange::matchOrder(LimitOrderPtr order)
 {
     if (order->side == Order::Side::BID) {
         std::optional<LimitOrderPtr> best_ask = getOrderBookFor(order->ticker)->bestAsk();
@@ -199,11 +199,84 @@ void StockExchange::matchWithOrderBook(LimitOrderPtr order)
         }
     }
 
-    // If the incoming order is not fully executed, add it to the order book
-    if (!order->isFilled()){
+    // If the incoming order is Good-Til-Cancelled (GTC) and not fully executed, add it to the order book
+    if (!order->isFilled() && order->time_in_force == Order::TimeInForce::GTC){
         getOrderBookFor(order->ticker)->addOrder(order);
     }
+    // Cancel the remainder of the order otherwise
+    else if (order->time_in_force == Order::TimeInForce::IOC)
+    {
+        cancelOrder(order);
+    }
 };
+
+void StockExchange::matchOrderInFull(LimitOrderPtr order)
+{
+    int temp_rem_quantity = order->remaining_quantity;
+    std::stack<LimitOrderPtr> stack;
+
+    if (order->side == Order::Side::BID) {
+        std::optional<LimitOrderPtr> best_ask = getOrderBookFor(order->ticker)->bestAsk();
+        while (best_ask.has_value() && temp_rem_quantity > 0 && order->price >= best_ask.value()->price)
+        {
+            getOrderBookFor(order->ticker)->popBestAsk();
+
+            stack.push(best_ask.value());
+            temp_rem_quantity -= std::min(temp_rem_quantity, best_ask.value()->remaining_quantity);
+
+            best_ask = getOrderBookFor(order->ticker)->bestAsk();
+        }
+    }
+    else
+    {
+        std::optional<LimitOrderPtr> best_bid = getOrderBookFor(order->ticker)->bestBid();
+        while (best_bid.has_value() && temp_rem_quantity > 0 && order->price <= best_bid.value()->price)
+        {
+            getOrderBookFor(order->ticker)->popBestBid();
+
+            stack.push(best_bid.value());
+            temp_rem_quantity -= std::min(temp_rem_quantity, best_bid.value()->remaining_quantity);
+
+            best_bid = getOrderBookFor(order->ticker)->bestBid();
+        }
+    }
+
+    // Cancel the order if not executed in full and add all matching orders back to the order book
+    if (temp_rem_quantity > 0)
+    {
+        // Add all matching orders back to the order book
+        while (!stack.empty())
+        {
+            getOrderBookFor(order->ticker)->addOrder(stack.top());
+            stack.pop();
+        }
+        
+        // Cancel the incoming order
+        cancelOrder(order);
+    }
+    // Execute the order in full
+    else
+    {
+        while (!stack.empty())
+        {
+            LimitOrderPtr matched_order = stack.top();
+            stack.pop();
+
+            // Execute trade
+            TradePtr trade = trade_factory_.createFromLimitOrders(matched_order, order);
+            addTradeToTape(trade);
+            executeTrade(matched_order, order, trade);
+        }
+    }
+};
+
+void StockExchange::cancelOrder(OrderPtr order)
+{
+    order->setStatus(Order::Status::CANCELLED);
+    ExecutionReportMessagePtr report = ExecutionReportMessage::createFromOrder(order);
+    report->sender_id = this->agent_id;
+    sendExecutionReport(std::to_string(order->sender_id), report);
+}
 
 void StockExchange::executeTrade(LimitOrderPtr resting_order, OrderPtr aggressing_order, TradePtr trade)
 {

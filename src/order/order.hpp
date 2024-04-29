@@ -34,11 +34,26 @@ public:
         LIMIT
     };
 
+    enum class TimeInForce: int {
+        GTC,                         // Good-Til-Cancelled
+        IOC,                         // Immediate-Or-Cancel
+        FOK                          // Fill-Or-Kill
+    };
+
     Order() {};
 
     Order(int order_id, Type type)
     : id{order_id},
       type{type}
+    {
+        std::chrono::system_clock::duration now = std::chrono::system_clock::now().time_since_epoch();
+        timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
+    }
+
+    Order(int order_id, Type type, TimeInForce time_in_force)
+    : id{order_id},
+      type{type},
+      time_in_force{time_in_force}
     {
         std::chrono::system_clock::duration now = std::chrono::system_clock::now().time_since_epoch();
         timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
@@ -60,6 +75,7 @@ public:
     int client_order_id;
     int sender_id;
     Order::Type type;
+    Order::TimeInForce time_in_force;
     std::string ticker;
     Order::Side side;
     Order::Status status;
@@ -112,6 +128,7 @@ protected:
         ar & id;
         ar & client_order_id;
         ar & type;
+        ar & time_in_force;
         ar & ticker;
         ar & status;
         ar & side;

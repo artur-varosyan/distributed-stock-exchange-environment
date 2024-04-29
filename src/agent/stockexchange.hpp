@@ -86,8 +86,16 @@ private:
     /** Checks if the given order crosses the spread. */
     bool crossesSpread(LimitOrderPtr order);
 
-    /** Matches the given order with the orders currently present in the OrderBook. */
-    void matchWithOrderBook(LimitOrderPtr order);
+    /** Matches the given order with the orders currently present in the OrderBook.
+     *  Partial execution is allowed. */
+    void matchOrder(LimitOrderPtr order);
+
+    /** Matches the given order with the orders currently present in the OrderBook. 
+     *  Order must be executed in full. */
+    void matchOrderInFull(LimitOrderPtr order);
+
+    /** Cancels the given order and sends a cancellation report to the sender. */
+    void cancelOrder(OrderPtr order);
 
     /** Executes the trade between the resting and aggressing orders. */
     void executeTrade(LimitOrderPtr resting_order, OrderPtr aggressing_order, TradePtr trade);

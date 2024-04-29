@@ -93,7 +93,7 @@ void TraderAgent::subscribeToMarket(std::string_view exchange, std::string_view 
     Agent::sendMessageTo(exchange, std::dynamic_pointer_cast<Message>(msg));
 }
 
-void TraderAgent::placeLimitOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int quantity, double price)
+void TraderAgent::placeLimitOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int quantity, double price, Order::TimeInForce time_in_force)
 {
     LimitOrderMessagePtr msg = std::make_shared<LimitOrderMessage>();
     msg->sender_id = this->agent_id;
@@ -101,6 +101,7 @@ void TraderAgent::placeLimitOrder(std::string_view exchange, Order::Side side, s
     msg->quantity = quantity;
     msg->price = price;
     msg->side = side;
+    msg->time_in_force = time_in_force;
 
     Agent::sendMessageTo(exchange, std::dynamic_pointer_cast<Message>(msg));
 }

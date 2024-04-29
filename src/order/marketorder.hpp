@@ -9,7 +9,7 @@ public:
     MarketOrder(): Order() {};
 
     MarketOrder(int order_id) 
-    : Order(order_id, Order::Type::MARKET) {};
+    : Order(order_id, Order::Type::MARKET, Order::TimeInForce::IOC) {};
 
 private:
 

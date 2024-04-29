@@ -19,6 +19,7 @@ public:
         order->sender_id = msg->sender_id;
         order->ticker = msg->ticker;
         order->side = msg->side;
+        order->time_in_force = msg->time_in_force;
         order->price = msg->price;
         order->status = Order::Status::NEW;
         order->remaining_quantity = msg->quantity;
