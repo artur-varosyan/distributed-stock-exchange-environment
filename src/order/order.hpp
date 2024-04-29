@@ -47,7 +47,7 @@ public:
       type{type}
     {
         std::chrono::system_clock::duration now = std::chrono::system_clock::now().time_since_epoch();
-        timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
+        timestamp_processed = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
     }
 
     Order(int order_id, Type type, TimeInForce time_in_force)
@@ -56,7 +56,7 @@ public:
       time_in_force{time_in_force}
     {
         std::chrono::system_clock::duration now = std::chrono::system_clock::now().time_since_epoch();
-        timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
+        timestamp_processed = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
     }
 
     virtual ~Order() = default;
@@ -69,6 +69,11 @@ public:
     void setStatus(Order::Status new_status)
     {
         status = new_status;
+        if (new_status == Order::Status::FILLED)
+        {
+            std::chrono::system_clock::duration now = std::chrono::system_clock::now().time_since_epoch();
+            timestamp_executed = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
+        }
     }
 
     int id;
@@ -82,7 +87,10 @@ public:
     double avg_price;
     int remaining_quantity;
     int cumulative_quantity;
-    unsigned long long timestamp;
+    unsigned long long timestamp_sent;
+    unsigned long long timestamp_received;
+    unsigned long long timestamp_processed = 0;
+    unsigned long long timestamp_executed = 0;
 
 protected:
 
@@ -135,7 +143,10 @@ protected:
         ar & avg_price;
         ar & remaining_quantity;
         ar & cumulative_quantity;
-        ar & timestamp;
+        ar & timestamp_sent;
+        ar & timestamp_received;
+        ar & timestamp_processed;
+        ar & timestamp_executed;
     }
 };
 

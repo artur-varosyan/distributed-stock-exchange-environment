@@ -342,7 +342,7 @@ void StockExchange::onSubscribe(SubscribeMessagePtr msg)
 {
     if (order_books_.contains(std::string{msg->ticker}))
     {
-        std::cout << "Subscription address: " << msg->address << "\n";
+        std::cout << "Subscription address: " << msg->address << " Agent ID: " << msg->sender_id << "\n";
         addSubscriber(msg->ticker, msg->sender_id, msg->address);
     }
     else
@@ -362,7 +362,6 @@ void StockExchange::addSubscriber(std::string_view ticker, int subscriber_id, st
         lock.unlock();
 
         EventMessagePtr msg = std::make_shared<EventMessage>(EventMessage::EventType::TRADING_SESSION_START); 
-        msg->sender_id = this->agent_id;
         sendBroadcast(address, std::dynamic_pointer_cast<Message>(msg));
     }
     else 
@@ -407,7 +406,6 @@ void StockExchange::publishMarketData(std::string_view ticker)
     addMarketDataSnapshot(data);
     
     MarketDataMessagePtr msg = std::make_shared<MarketDataMessage>();
-    msg->sender_id = this->agent_id;
     msg->data = data;
 
     // Send message to all subscribers of the given ticker 
@@ -448,7 +446,6 @@ void StockExchange::startTradingSession()
     trading_window_cv_.notify_all();
 
     EventMessagePtr msg = std::make_shared<EventMessage>(EventMessage::EventType::TRADING_SESSION_START); 
-    msg->sender_id = this->agent_id;
 
     // Send a message to subscribers of all tickers
     for (auto const& [ticker, ticker_subscribers] : subscribers_)
@@ -472,7 +469,6 @@ void StockExchange::endTradingSession()
     }
 
     EventMessagePtr msg = std::make_shared<EventMessage>(EventMessage::EventType::TRADING_SESSION_END);
-    msg->sender_id = this->agent_id;
 
     // Send a message to subscribers of all tickers
     for (auto const& [ticker, ticker_subscribers] : subscribers_)

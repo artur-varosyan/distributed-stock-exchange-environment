@@ -29,7 +29,6 @@ public:
     void subscribeToMarket(std::string_view exchange, std::string_view ticker)
     {
         SubscribeMessagePtr msg = std::make_shared<SubscribeMessage>();
-        msg->sender_id = this->agent_id;
         msg->ticker = std::string{ticker};
         msg->address = myAddr() + std::string{":"} + std::to_string(myPort());
 

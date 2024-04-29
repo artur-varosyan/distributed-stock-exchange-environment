@@ -19,11 +19,7 @@ public:
     Message() = default;
 
     Message(MessageType type) 
-    : type{type}
-    {
-        std::chrono::system_clock::duration now = std::chrono::system_clock::now().time_since_epoch();
-        timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
-    };
+    : type{type} {};
 
     virtual ~Message() = default;
 
@@ -36,12 +32,25 @@ public:
         return oss.str().size();
     }
 
-    int sender_id;
-    // std::vector<int> receiver_ids;
-    MessageType type;
+    /** Marks the given message as sent and adds timestamp. */
+    void markSent(int sender_id)
+    {
+        this->sender_id = sender_id;
+        std::chrono::system_clock::duration now = std::chrono::system_clock::now().time_since_epoch();
+        timestamp_sent = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
+    }
 
-    /** TODO: Split timestamp into sent and received to measure latency */
-    unsigned long long timestamp;
+    /** Marks the given message as received and adds timestamp. */
+    void markReceived()
+    {
+        std::chrono::system_clock::duration now = std::chrono::system_clock::now().time_since_epoch();
+        timestamp_received = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
+    }
+
+    MessageType type;
+    int sender_id;
+    unsigned long long timestamp_sent;
+    unsigned long long timestamp_received;
 
 private:
 
@@ -52,9 +61,8 @@ private:
 
         ar & type;
         ar & sender_id;
-        // ar & receiver_ids;
-
-        ar & timestamp;
+        ar & timestamp_sent;
+        ar & timestamp_received;
     }
 
 };

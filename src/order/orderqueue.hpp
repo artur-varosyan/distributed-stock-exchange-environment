@@ -23,7 +23,7 @@ public:
                 }
                 else {
                     // Compare timestamps if prices are equal
-                    return a->timestamp <= b->timestamp;
+                    return a->timestamp_processed <= b->timestamp_processed;
                 }
             };
         } else {
@@ -34,7 +34,7 @@ public:
                 }
                 else {
                     // Compare timestamps if prices are equal
-                    return a->timestamp <= b->timestamp;
+                    return a->timestamp_processed <= b->timestamp_processed;
                 }
              };
         }

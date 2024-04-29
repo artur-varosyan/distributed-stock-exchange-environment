@@ -110,3 +110,8 @@ std::string Agent::myAddr()
 {
     return network()->addr();
 }
+
+int Agent::getAgentId()
+{
+    return agent_id;
+}

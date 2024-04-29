@@ -86,7 +86,6 @@ void TraderAgent::handleBroadcastFrom(std::string_view sender, MessagePtr messag
 void TraderAgent::subscribeToMarket(std::string_view exchange, std::string_view ticker)
 {
     SubscribeMessagePtr msg = std::make_shared<SubscribeMessage>();
-    msg->sender_id = this->agent_id;
     msg->ticker = std::string{ticker};
     msg->address = myAddr() + std::string{":"} + std::to_string(myPort());
 
@@ -96,7 +95,6 @@ void TraderAgent::subscribeToMarket(std::string_view exchange, std::string_view 
 void TraderAgent::placeLimitOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int quantity, double price, Order::TimeInForce time_in_force)
 {
     LimitOrderMessagePtr msg = std::make_shared<LimitOrderMessage>();
-    msg->sender_id = this->agent_id;
     msg->ticker = std::string{ticker};;
     msg->quantity = quantity;
     msg->price = price;
@@ -109,7 +107,6 @@ void TraderAgent::placeLimitOrder(std::string_view exchange, Order::Side side, s
 void TraderAgent::placeMarketOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int quantity)
 {
     MarketOrderMessagePtr msg = std::make_shared<MarketOrderMessage>();
-    msg->sender_id = this->agent_id;
     msg->ticker = std::string{ticker};
     msg->quantity = quantity;
     msg->side = side;
@@ -120,7 +117,6 @@ void TraderAgent::placeMarketOrder(std::string_view exchange, Order::Side side, 
 void TraderAgent::cancelOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int order_id)
 {
     CancelOrderMessagePtr msg = std::make_shared<CancelOrderMessage>();
-    msg->sender_id = this->agent_id;
     msg->order_id = order_id;
     msg->ticker = std::string{ticker};
     msg->side = side;

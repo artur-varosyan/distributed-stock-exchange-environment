@@ -95,6 +95,7 @@ void NetworkEntity::connect(ipv4_view address, std::function<void()> const& call
 void NetworkEntity::sendBroadcast(ipv4_view address, MessagePtr message)
 {
     std::pair<std::string, unsigned int> pair = splitAddress(address);
+    message->markSent(agent()->getAgentId());
     asio::post(io_context_, [=, this](){
         asio::co_spawn(this->io_context_, UDPServer::sendBroadcast(pair.first, pair.second, serialiseMessage(message)), asio::detached);
     });
@@ -106,7 +107,7 @@ void NetworkEntity::sendMessage(ipv4_view address, MessagePtr message, bool asyn
     if (connections_.left.find(std::string{address}) != connections_.left.end())
     {
         TCPConnectionPtr connection = connections_.left.at(std::string{address});
-
+        message->markSent(agent()->getAgentId());
         asio::post(io_context_, [=, this](){
             asio::co_spawn(io_context_, TCPServer::sendMessage(connection, serialiseMessage(message), async), asio::detached);
         });
@@ -156,6 +157,8 @@ std::string NetworkEntity::handleMessage(std::string_view sender_adress, unsigne
     try     
     {
         MessagePtr msg = deserialiseMessage(message);
+        msg->markReceived();
+
         if (msg->type == MessageType::CONFIG)
         {
             configureEntity(sender_adress, std::dynamic_pointer_cast<ConfigMessage>(msg));
@@ -186,6 +189,7 @@ void NetworkEntity::handleBroadcast(std::string_view sender_adress, unsigned int
     try 
     {
         MessagePtr msg = deserialiseMessage(message);
+        msg->markReceived();
         agent()->handleBroadcast(concatAddress(sender_adress, sender_port), msg);
     }
     catch (std::exception& e)

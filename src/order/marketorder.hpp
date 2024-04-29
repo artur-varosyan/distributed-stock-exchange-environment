@@ -15,7 +15,7 @@ private:
 
     friend std::ostream& operator<<(std::ostream& os, const MarketOrder& order)
     {
-        os << order.timestamp << " [MarketOrder] Id: " << order.id << " " << order.ticker << " " << order.remaining_quantity;
+        os << order.timestamp_processed << " [MarketOrder] Id: " << order.id << " " << order.ticker << " " << order.remaining_quantity;
         return os;
     }
 

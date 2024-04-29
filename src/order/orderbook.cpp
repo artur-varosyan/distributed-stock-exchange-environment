@@ -62,11 +62,11 @@ void OrderBook::updateOrderWithTrade(OrderPtr order, TradePtr trade)
         // Update order status
         if (order->remaining_quantity == 0)
         {
-            order->status = Order::Status::FILLED;
+            order->setStatus(Order::Status::FILLED);
         }
         else
         {
-            order->status = Order::Status::PARTIALLY_FILLED;
+            order->setStatus(Order::Status::PARTIALLY_FILLED);
         }
     }
 
