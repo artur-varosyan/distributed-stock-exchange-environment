@@ -49,6 +49,10 @@ void StockExchange::runMatchingEngine()
                 std::cout << "Exchange received unknown message type" << "\n";
             }
         }
+
+        msg->markProcessed();
+        addMessageToTape(msg);
+        
         trading_window_lock.lock();
     }
     
@@ -400,6 +404,22 @@ void StockExchange::createDataFiles(std::string_view ticker)
     market_data_feeds_.insert({std::string{ticker}, market_data_writer});
 }
 
+void StockExchange::createMessageTape() 
+{
+    // Get current ISO 8601 timestamp
+    std::time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::stringstream ss;
+    ss << std::put_time( std::localtime( &t ), "%FT%T" );
+    std::string timestamp = ss.str(); 
+
+    // Define CSV filename
+    std::string suffix = std::string{exchange_name_} + "_"  + timestamp;
+    std::string messages_file = "msgs_" + suffix + ".csv";
+
+    // Create message writer
+    this->message_tape_ = std::make_shared<CSVWriter>(messages_file);
+}
+
 void StockExchange::publishMarketData(std::string_view ticker)
 {
     MarketDataPtr data = getOrderBookFor(ticker)->getLiveMarketData();
@@ -501,6 +521,11 @@ void StockExchange::addTradeToTape(TradePtr trade)
 void StockExchange::addMarketDataSnapshot(MarketDataPtr data)
 {
     getMarketDataFeedFor(data->ticker)->writeRow(data);
+}
+
+void StockExchange::addMessageToTape(MessagePtr msg)
+{
+    message_tape_->writeRow(msg);
 }
 
 void StockExchange::broadcastToSubscribers(std::string_view ticker, MessagePtr msg)

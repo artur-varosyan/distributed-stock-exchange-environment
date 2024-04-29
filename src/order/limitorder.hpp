@@ -17,7 +17,7 @@ private:
 
     friend std::ostream& operator<<(std::ostream& os, const LimitOrder& order)
     {
-        os << order.timestamp_processed << " [LimitOrder] Id: " << order.id << " " << order.ticker << " " << order.remaining_quantity << " @ $" << order.price;
+        os << order.timestamp_created << " [LimitOrder] Id: " << order.id << " " << order.ticker << " " << order.remaining_quantity << " @ $" << order.price;
         return os;
     }
 

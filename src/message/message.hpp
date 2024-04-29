@@ -10,9 +10,10 @@
 #include <boost/serialization/export.hpp>
 
 #include "messagetype.hpp"
+#include "../utilities/csvprintable.hpp"
 
 /** A message that can be sent between network entities. */
-class Message : std::enable_shared_from_this<Message>
+class Message : std::enable_shared_from_this<Message>, public CSVPrintable 
 {
 public:
 
@@ -47,10 +48,28 @@ public:
         timestamp_received = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
     }
 
+    /** Marks the given message as processed and adds timestamp. */
+    void markProcessed()
+    {
+        std::chrono::system_clock::duration now = std::chrono::system_clock::now().time_since_epoch();
+        timestamp_processed = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
+    }
+
+    std::string describeCSVHeaders() const override
+    {
+        return "sender_id,timestamp_sent,timestamp_received,timestamp_processed";
+    }
+
+    std::string toCSV() const override
+    {
+        return std::to_string(sender_id) + ","  + std::to_string(timestamp_sent) + "," + std::to_string(timestamp_received) + "," + std::to_string(timestamp_processed);
+    }
+
     MessageType type;
     int sender_id;
     unsigned long long timestamp_sent;
     unsigned long long timestamp_received;
+    unsigned long long timestamp_processed;
 
 private:
 
@@ -58,11 +77,12 @@ private:
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version)
     {
-
+        ar & boost::serialization::base_object<CSVPrintable>(*this);
         ar & type;
         ar & sender_id;
         ar & timestamp_sent;
         ar & timestamp_received;
+        ar & timestamp_processed;
     }
 
 };

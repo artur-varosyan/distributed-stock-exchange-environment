@@ -14,7 +14,8 @@
 
 class OrderFactory;
 
-class Order: std::enable_shared_from_this<Order> {
+class Order: std::enable_shared_from_this<Order>
+{
 public:
 
     enum class Side: int {
@@ -47,7 +48,7 @@ public:
       type{type}
     {
         std::chrono::system_clock::duration now = std::chrono::system_clock::now().time_since_epoch();
-        timestamp_processed = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
+        timestamp_created = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
     }
 
     Order(int order_id, Type type, TimeInForce time_in_force)
@@ -56,7 +57,7 @@ public:
       time_in_force{time_in_force}
     {
         std::chrono::system_clock::duration now = std::chrono::system_clock::now().time_since_epoch();
-        timestamp_processed = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
+        timestamp_created = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
     }
 
     virtual ~Order() = default;
@@ -89,7 +90,7 @@ public:
     int cumulative_quantity;
     unsigned long long timestamp_sent;
     unsigned long long timestamp_received;
-    unsigned long long timestamp_processed = 0;
+    unsigned long long timestamp_created = 0;
     unsigned long long timestamp_executed = 0;
 
 protected:
@@ -145,7 +146,7 @@ protected:
         ar & cumulative_quantity;
         ar & timestamp_sent;
         ar & timestamp_received;
-        ar & timestamp_processed;
+        ar & timestamp_created;
         ar & timestamp_executed;
     }
 };

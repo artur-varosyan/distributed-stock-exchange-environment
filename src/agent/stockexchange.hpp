@@ -37,6 +37,9 @@ public:
       msg_queue_{},
       random_generator_{std::random_device{}()}
     {
+      // Create message tape to log incoming messages
+      createMessageTape();
+
       // Add all tickers to exchange
       for (auto ticker : config->tickers)
       {
@@ -109,6 +112,12 @@ private:
     /** Logs the given market data snapshot. */
     void addMarketDataSnapshot(MarketDataPtr data);
 
+    /** Creates a new message tape CSV file. */
+    void createMessageTape();
+
+    /** Adds the given message to the message tape. */
+    void addMessageToTape(MessagePtr msg);
+
     /**
      *   MESSAGE SENDERS
     */
@@ -159,6 +168,9 @@ private:
 
     /** Market data feed snapshots for each ticker traded. */
     std::unordered_map<std::string, CSVWriterPtr> market_data_feeds_;
+
+    /** Message tape for each message received. */
+    CSVWriterPtr message_tape_;
 
     /** Subscribers for each ticker traded. */
     std::unordered_map<std::string, std::unordered_map<int, std::string>> subscribers_;
