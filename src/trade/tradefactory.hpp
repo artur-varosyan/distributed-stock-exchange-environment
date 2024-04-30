@@ -22,11 +22,15 @@ public:
         {
             trade->buyer_id = aggressing_order->sender_id;
             trade->seller_id = resting_order->sender_id;
+            trade->buyer_priv_value = aggressing_order->priv_value;
+            trade->seller_priv_value = resting_order->priv_value;
         }
         else
         {
             trade->buyer_id = resting_order->sender_id;
             trade->seller_id = aggressing_order->sender_id;
+            trade->buyer_priv_value = resting_order->priv_value;
+            trade->seller_priv_value = aggressing_order->priv_value;
         }
         trade->aggressing_order_id = aggressing_order->id;
         trade->resting_order_id = resting_order->id;
@@ -47,11 +51,15 @@ public:
         {
             trade->buyer_id = aggressing_order->sender_id;
             trade->seller_id = resting_order->sender_id;
+            trade->buyer_priv_value = aggressing_order->priv_value;
+            trade->seller_priv_value = resting_order->priv_value;
         }
         else
         {
             trade->buyer_id = resting_order->sender_id;
             trade->seller_id = aggressing_order->sender_id;
+            trade->buyer_priv_value = resting_order->priv_value;
+            trade->seller_priv_value = aggressing_order->priv_value;
         }
         trade->aggressing_order_id = aggressing_order->id;
         trade->resting_order_id = resting_order->id;

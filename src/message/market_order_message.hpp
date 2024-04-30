@@ -14,6 +14,7 @@ public:
     std::string ticker;
     Order::Side side;
     int quantity;
+    double priv_value;
 
 private:
 
@@ -26,6 +27,7 @@ private:
         ar & ticker;
         ar & side;
         ar & quantity;
+        ar & priv_value;
     }
 
 };

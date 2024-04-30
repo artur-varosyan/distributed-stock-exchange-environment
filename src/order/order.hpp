@@ -86,6 +86,7 @@ public:
     Order::Side side;
     Order::Status status;
     double avg_price;
+    double priv_value;
     int remaining_quantity;
     int cumulative_quantity;
     unsigned long long timestamp_sent;
@@ -142,6 +143,7 @@ protected:
         ar & status;
         ar & side;
         ar & avg_price;
+        ar & priv_value;
         ar & remaining_quantity;
         ar & cumulative_quantity;
         ar & timestamp_sent;

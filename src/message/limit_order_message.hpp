@@ -17,6 +17,7 @@ public:
     Order::TimeInForce time_in_force;
     int quantity;
     double price;
+    double priv_value;
 
 private:
 
@@ -31,6 +32,7 @@ private:
         ar & time_in_force;
         ar & quantity;
         ar & price;
+        ar & priv_value;
     }
 
 };

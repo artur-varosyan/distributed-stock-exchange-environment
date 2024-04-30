@@ -92,7 +92,7 @@ void TraderAgent::subscribeToMarket(std::string_view exchange, std::string_view 
     Agent::sendMessageTo(exchange, std::dynamic_pointer_cast<Message>(msg));
 }
 
-void TraderAgent::placeLimitOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int quantity, double price, Order::TimeInForce time_in_force, int client_order_id)
+void TraderAgent::placeLimitOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int quantity, double price, double priv_value, Order::TimeInForce time_in_force, int client_order_id)
 {
     LimitOrderMessagePtr msg = std::make_shared<LimitOrderMessage>();
     msg->client_order_id = client_order_id;
@@ -100,17 +100,19 @@ void TraderAgent::placeLimitOrder(std::string_view exchange, Order::Side side, s
     msg->quantity = quantity;
     msg->price = price;
     msg->side = side;
+    msg->priv_value = priv_value;
     msg->time_in_force = time_in_force;
 
     Agent::sendMessageTo(exchange, std::dynamic_pointer_cast<Message>(msg));
 }
 
-void TraderAgent::placeMarketOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int quantity)
+void TraderAgent::placeMarketOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int quantity, double priv_value)
 {
     MarketOrderMessagePtr msg = std::make_shared<MarketOrderMessage>();
     msg->ticker = std::string{ticker};
     msg->quantity = quantity;
     msg->side = side;
+    msg->priv_value = priv_value;
 
     Agent::sendMessageTo(exchange, std::dynamic_pointer_cast<Message>(msg));
 }

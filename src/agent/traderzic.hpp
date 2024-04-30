@@ -31,7 +31,7 @@ public:
         double price = getRandomPrice();
         if (is_trading_) 
         {
-            placeLimitOrder(exchange_, trader_side_, ticker_, 100, price);
+            placeLimitOrder(exchange_, trader_side_, ticker_, 100, price, limit_price_);
             std::cout << ">> " << (trader_side_ == Order::Side::BID ? "BID" : "ASK") << " " << 100 << " @ " << price << "\n";
         }
     }
@@ -48,7 +48,7 @@ public:
         double price = getRandomPrice();
         if (is_trading_) 
         {
-            placeLimitOrder(exchange_, trader_side_, ticker_, quantity, price);
+            placeLimitOrder(exchange_, trader_side_, ticker_, quantity, price, limit_price_);
             std::cout << ">> " << (trader_side_ == Order::Side::BID ? "BID" : "ASK") << " " << quantity << " @ " << price << "\n";
         }
     }

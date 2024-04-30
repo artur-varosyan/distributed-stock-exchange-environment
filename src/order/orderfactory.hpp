@@ -17,6 +17,7 @@ public:
         LimitOrderPtr order = std::make_shared<LimitOrder>(++order_id_);
         order->sender_id = msg->sender_id;
         order->client_order_id = msg->client_order_id;
+        order->priv_value = msg->priv_value;
         order->ticker = msg->ticker;
         order->side = msg->side;
         order->time_in_force = msg->time_in_force;
@@ -35,6 +36,7 @@ public:
         MarketOrderPtr order = std::make_shared<MarketOrder>(++order_id_);
         order->sender_id = msg->sender_id;
         order->client_order_id = msg->client_order_id;
+        order->priv_value = msg->priv_value;
         order->ticker = msg->ticker;
         order->side = msg->side;
         order->status = Order::Status::NEW;

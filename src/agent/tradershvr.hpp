@@ -41,7 +41,7 @@ public:
         if (is_trading_) 
         {
             double price = getShaverPrice(msg);
-            placeLimitOrder(exchange_, trader_side_, ticker_, quantity, price);
+            placeLimitOrder(exchange_, trader_side_, ticker_, quantity, price, limit_price_);
             std::cout << ">> " << (trader_side_ == Order::Side::BID ? "BID" : "ASK") << " " << quantity << " @ " << price << "\n";
         }
     }

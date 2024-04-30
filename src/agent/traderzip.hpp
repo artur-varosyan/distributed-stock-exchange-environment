@@ -262,7 +262,7 @@ private:
     void placeOrder()
     {
         last_price_ = getQuotePrice();
-        placeLimitOrder(exchange_, trader_side_, ticker_, 100, last_price_, Order::TimeInForce::GTC, ++last_client_order_id_);
+        placeLimitOrder(exchange_, trader_side_, ticker_, 100, last_price_, limit_price_, Order::TimeInForce::GTC, ++last_client_order_id_);
         next_trade_timestamp_ = timeNow() + (trade_interval_ms_ * MS_TO_NS);
         std::cout << ">> " << (trader_side_ == Order::Side::BID ? "BID" : "ASK") << " " << 100 << " @ " << last_price_ << "\n";
     }

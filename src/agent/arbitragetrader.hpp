@@ -85,25 +85,29 @@ private:
         if ((best_bid_exchange_ != best_ask_exchange_) && (best_bid_price_ > (1 + alpha_) * best_ask_price_))
         {
             // Execute arbitrage
-            double midpoint = (best_bid_price_ + best_ask_price_) / 2;
-            double size = std::min(best_bid_size_, best_ask_size_);
-            placeArbitrageOrders(best_bid_exchange_, best_ask_exchange_, std::floor(midpoint), std::ceil(midpoint), size);
+            placeArbitrageOrders();
         }
     }
 
-    void placeArbitrageOrders(std::string_view best_bid_exchange, std::string_view best_ask_exchange, double bid_price, double ask_price, int size)
+    void placeArbitrageOrders()
     {
+        double size = std::min(best_bid_size_, best_ask_size_);
+        double midpoint = (best_bid_price_ + best_ask_price_) / 2;
+
+        double bid_price = std::floor(midpoint);
+        double ask_price = std::ceil(midpoint);
+
         std::cout << "[Opportunity] " 
         << "BEST BID: " << best_bid_exchange_ << " @ " << best_bid_price_ << " "
         << "BEST ASK: " << best_ask_exchange_ << " @ " << best_ask_price_ << std::endl;
         
         std::cout << "[Arbitrage] " 
-        << "BID: " << best_ask_exchange << " @ " <<  bid_price 
-        << " ASK: " << best_bid_exchange << " @ " << ask_price << std::endl;
+        << "BID: " << best_ask_exchange_ << " @ " <<  bid_price 
+        << " ASK: " << best_bid_exchange_ << " @ " << ask_price << std::endl;
 
         // Note: Arbitrageur places bid order on the exchange with best ask and vice versa
-        placeLimitOrder(best_ask_exchange, Order::Side::BID, ticker_, size, bid_price);
-        placeLimitOrder(best_bid_exchange, Order::Side::ASK, ticker_, size, ask_price);
+        placeLimitOrder(best_ask_exchange_, Order::Side::BID, ticker_, size, bid_price, best_ask_price_);
+        placeLimitOrder(best_bid_exchange_, Order::Side::ASK, ticker_, size, ask_price,  best_bid_price_);
     }
 
     double best_bid_price_ = std::numeric_limits<double>::min();

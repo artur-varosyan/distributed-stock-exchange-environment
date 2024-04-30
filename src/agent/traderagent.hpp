@@ -31,11 +31,11 @@ public:
     void subscribeToMarket(std::string_view exchange, std::string_view ticker);
 
     /** Places a limit order for the given ticker at the given exchange. */
-    void placeLimitOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int quantity, double price, 
+    void placeLimitOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int quantity, double price, double priv_value,
     Order::TimeInForce time_in_force = Order::TimeInForce::GTC, int client_order_id = 0);
 
     // /** Places a market order for the given ticker at the given exchange. */
-    void placeMarketOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int quantity);
+    void placeMarketOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int quantity, double priv_value);
 
     // /** Cancels the order with the given id at the given exchange. */
     void cancelOrder(std::string_view exchange, Order::Side side, std::string_view ticker, int order_id);
