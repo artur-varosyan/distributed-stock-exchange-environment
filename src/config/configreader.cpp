@@ -81,6 +81,10 @@ AgentConfigPtr ConfigReader::configureAgent(int id, pugi::xml_node& xml_node, st
         {
             return configureTrader(id, xml_node, addr, exchange_addrs, type);
         }
+        case AgentType::TRADER_ZIP:
+        {
+            return configureTrader(id, xml_node, addr, exchange_addrs, type);
+        }
         case AgentType::TRADER_SHVR:
         {
             return configureTrader(id, xml_node, addr, exchange_addrs, type);

@@ -8,6 +8,7 @@
 #include "stockexchange.hpp"
 #include "marketdatawatcher.hpp"
 #include "traderzic.hpp"
+#include "traderzip.hpp"
 #include "tradershvr.hpp"
 #include "arbitragetrader.hpp"
 
@@ -35,6 +36,11 @@ public:
             case AgentType::TRADER_ZIC:
             {
                 std::shared_ptr<Agent> agent (new TraderZIC{network_entity, std::static_pointer_cast<TraderConfig>(config)});
+                return agent;
+            }
+            case AgentType::TRADER_ZIP:
+            {
+                std::shared_ptr<Agent> agent (new TraderZIP{network_entity, std::static_pointer_cast<TraderConfig>(config)});
                 return agent;
             }
             case AgentType::TRADER_SHVR:
@@ -71,6 +77,7 @@ private:
         {std::string{"exchange"}, AgentType::STOCK_EXCHANGE},
         {std::string{"watcher"}, AgentType::MARKET_WATCHER},
         {std::string{"zic"}, AgentType::TRADER_ZIC},
+        {std::string{"zip"}, AgentType::TRADER_ZIP},
         {std::string{"shvr"}, AgentType::TRADER_SHVR},
         {std::string{"arbitrageur"}, AgentType::ARBITRAGE_TRADER}
     };

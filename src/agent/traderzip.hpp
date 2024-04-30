@@ -15,14 +15,24 @@ public:
       exchange_{config->exchange_name},
       ticker_{config->ticker},
       trader_side_{config->side},
-      limit_price_{config->limit}
+      limit_price_{config->limit},
+      random_generator_{std::random_device{}()}
     {
         initialiseConstants();
+
+        // Automatically connect to exchange on initialisation
+        connect(config->exchange_addr, config->exchange_name, [=, this](){
+            subscribeToMarket(config->exchange_name, config->ticker);
+        });
+
+        // Add delayed start
+        addDelayedStart(config->delay);
     }
 
     void onTradingStart() override
     {
         std::cout << "Trading window started.\n";
+        placeOrder();
     }
 
     void onTradingEnd() override
@@ -84,7 +94,7 @@ public:
             if (trader_side_ == Order::Side::BID)
             {
                 double best_ask = msg->data->best_ask;
-                if (price_ < best_ask)
+                if (last_price_ < best_ask)
                 {
                     double target = decreaseTargetPrice(best_ask);
                     updateMargin(target);
@@ -93,7 +103,7 @@ public:
             else
             {
                 double best_bid = msg->data->best_bid;
-                if (price_ > best_bid)
+                if (last_price_ > best_bid)
                 {
                     double target = increaseTargetPrice(best_bid);
                     updateMargin(target);
@@ -107,17 +117,20 @@ public:
 
     void onExecutionReport(std::string_view exchange, ExecutionReportMessagePtr msg) override
     {
+        std::cout << "id=" << msg->order->id << " status=" << msg->order->status << " rem_qty=" << msg->order->remaining_quantity << " trade_nonnull=" << msg->trade << "\n";
+
         // Order added to order book
         if (msg->order->status == Order::Status::NEW)
         {
-            last_order_id_ = msg->order->id;
+            last_accepted_order_id_ = msg->order->id;
         }
         // Order executed successfully
-        else if (msg->order->isFilled())
+        else if (msg->order->status == Order::Status::FILLED)
         {
-            // Place a new order
-            placeLimitOrder(exchange_, trader_side_, ticker_, 100, getQuotePrice());
-            my_trade_deadline_ = timeNow() + (MY_TRADE_WAIT_TIME_IN_MS * MS_TO_NS);
+            if (msg->order->client_order_id == last_client_order_id_)
+            {
+                placeOrder();
+            }
         }
     }
 
@@ -130,49 +143,73 @@ private:
 
     void initialiseConstants()
     {
-        momentum_ = 0.1 * rand();
-        learning_rate_ = 0.1 + (0.4 * rand());
+        momentum_ = getRandom(0.0, 0.1);
+        learning_rate_ = getRandom(0.0, 0.5);
 
         if (trader_side_ == Order::Side::BID)
         {
-            profit_margin_ = -1.0 * (0.05 + (0.3 * rand()));
+            profit_margin_ = getRandom(0.05, 0.35) * -1.0;
         }
         else
         {
-            profit_margin_ = 0.05 + (0.3 * rand());
+            profit_margin_ = getRandom(0.05, 0.35);
         }
-        
-        my_trade_deadline_ = timeNow() + (MY_TRADE_WAIT_TIME_IN_MS * MS_TO_NS);
+
+        last_price_ = getQuotePrice();
+        last_client_order_id_ = 0;
+        last_accepted_order_id_ = std::nullopt;
+        my_trade_deadline_ = timeNow();
         global_trade_deadline_ = timeNow() + (GLOBAL_TRADE_WAIT_TIME_IN_MS * MS_TO_NS);
+
+        std::cout << "mom=" << momentum_ << "\n";
+        std::cout << "lr=" << learning_rate_ << "\n";
+        std::cout << "margin=" << profit_margin_ << "\n";
     }
 
     double getQuotePrice()
     {
-        return round(limit_price_ * (1 + profit_margin_));
+        double price = round(limit_price_ * (1 + profit_margin_));
+        if (trader_side_ == Order::Side::BID)
+        {
+            price = std::min(limit_price_, price);
+        }
+        else
+        {
+            price = std::max(limit_price_, price);
+        }
+        return price;
     }
 
-    double updateMargin(double target_price)
+    void updateMargin(double target_price)
     {
-        double diff = target_price - price_;
+        double diff = target_price - last_price_;
         double change = ((1.0 - momentum_) * (learning_rate_ * diff)) + (momentum_ * prev_change_);
         prev_change_ = change;
-        profit_margin_ = ((price_ + change) / limit_price_) - 1.0;
+        profit_margin_ = ((last_price_ + change) / limit_price_) - 1.0;
     }
 
     double increaseTargetPrice(double price)
     {
-        double abs_perturbation = C_A * rand();
-        double rel_perturbation = (1.0 + (C_R * rand())) * price;
+        double abs_perturbation = C_A * getRandom(0.0, 1.0);
+        double rel_perturbation = (1.0 + (C_R * getRandom(0.0, 1.0))) * price;
         double target = round(abs_perturbation + rel_perturbation);
         return target;
     }
 
     double decreaseTargetPrice(double price)
     {
-        double abs_perturbation = C_A * rand();
-        double rel_perturbation = (1.0 - (C_R * rand())) * price;
+        double abs_perturbation = C_A * getRandom(0.0, 1.0);
+        double rel_perturbation = (1.0 - (C_R * getRandom(0.0, 1.0))) * price;
         double target = round(rel_perturbation - abs_perturbation);
         return target;
+    }
+
+    void placeOrder()
+    {
+        last_price_ = getQuotePrice();
+        placeLimitOrder(exchange_, trader_side_, ticker_, 100, last_price_, Order::TimeInForce::GTC, ++last_client_order_id_);
+        my_trade_deadline_ = timeNow() + (MY_TRADE_WAIT_TIME_IN_MS * MS_TO_NS);
+        std::cout << ">> " << (trader_side_ == Order::Side::BID ? "BID" : "ASK") << " " << 100 << " @ " << last_price_ << "\n";
     }
 
     void placeOrderIfTime()
@@ -180,13 +217,12 @@ private:
         if (timeNow() > my_trade_deadline_)
         {
             // Cancel last order
-            if (last_order_id_.has_value())
+            if (last_accepted_order_id_.has_value())
             {
-                cancelOrder(exchange_, trader_side_, ticker_, last_order_id_.value());
+                cancelOrder(exchange_, trader_side_, ticker_, last_accepted_order_id_.value());
             }
-
-            // Place a new order
-            placeLimitOrder(exchange_, trader_side_, ticker_, 100, getQuotePrice());
+            // Place a new order with a new price
+            placeOrder();
         }
     }
 
@@ -196,15 +232,24 @@ private:
         return std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
     }
 
+    double getRandom(double lower, double upper)
+    {
+        std::uniform_real_distribution<> dist(lower, upper);
+        return dist(random_generator_);
+    }
+
+    
+    std::mt19937 random_generator_;
 
     std::string exchange_;
     std::string ticker_;
     Order::Side trader_side_;
 
-    std::optional<int> last_order_id_;
+    int last_client_order_id_;
+    std::optional<int> last_accepted_order_id_;
     double limit_price_;
     double profit_margin_;
-    double price_;
+    double last_price_;
     double prev_change_;
 
     double learning_rate_;
@@ -216,8 +261,6 @@ private:
     unsigned long long my_trade_deadline_;
     unsigned long long global_trade_deadline_;
 
-    std::mt19937 random_generator_;
-
     constexpr static double C_A = 0.05;
     constexpr static double C_R = 0.05;
 
@@ -225,8 +268,8 @@ private:
     constexpr static double MAX_PRICE = 200.0;
 
     constexpr static unsigned long MS_TO_NS = 1000;
-    constexpr static unsigned long MY_TRADE_WAIT_TIME_IN_MS = 500;
-    constexpr static unsigned long GLOBAL_TRADE_WAIT_TIME_IN_MS = 1000;
+    constexpr static unsigned long MY_TRADE_WAIT_TIME_IN_MS = 5000;
+    constexpr static unsigned long GLOBAL_TRADE_WAIT_TIME_IN_MS = 10000;
 
 };
 
