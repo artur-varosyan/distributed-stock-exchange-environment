@@ -83,7 +83,7 @@ AgentConfigPtr ConfigReader::configureAgent(int id, pugi::xml_node& xml_node, st
         }
         case AgentType::TRADER_ZIP:
         {
-            return configureTrader(id, xml_node, addr, exchange_addrs, type);
+            return configureTraderZIP(id, xml_node, addr, exchange_addrs);
         }
         case AgentType::TRADER_SHVR:
         {
@@ -178,5 +178,32 @@ AgentConfigPtr ConfigReader::configureMarketWatcher(int id, pugi::xml_node& xml_
     config->ticker = std::string{xml_node.attribute("ticker").value()};
 
     return std::static_pointer_cast<AgentConfig>(config);
+}
+
+AgentConfigPtr ConfigReader::configureTraderZIP(int id, pugi::xml_node& xml_node, std::string& addr, std::unordered_map<std::string, std::string>& exchange_addrs)
+{
+    ZIPConfigPtr config = std::make_shared<ZIPConfig>();
+    config->agent_id = id;
+
+    config->type = AgentType::TRADER_ZIP;
+
+    config->addr = addr;
+    config->exchange_name = std::string{xml_node.attribute("exchange").value()};
+    config->exchange_addr = exchange_addrs.at(config->exchange_name);
+    config->limit = std::atoi(xml_node.attribute("limit").value());
+    config->delay = std::atoi(xml_node.attribute("delay").value());
+    config->ticker = std::string{xml_node.attribute("ticker").value()};
+    
+    std::string side {xml_node.attribute("side").value()};
+    if (side == "buy") config->side = Order::Side::BID;
+    else if (side == "sell") config->side = Order::Side::ASK;
+
+    config->min_margin = std::stod(xml_node.attribute("min-margin").value());
+    config->trade_interval = std::stoull(xml_node.attribute("trade-interval").value());
+    config->liquidity_interval = std::stoull(xml_node.attribute("liquidity-interval").value());
+
+
+    return std::static_pointer_cast<AgentConfig>(config);
+
 }
 

@@ -40,7 +40,7 @@ public:
             }
             case AgentType::TRADER_ZIP:
             {
-                std::shared_ptr<Agent> agent (new TraderZIP{network_entity, std::static_pointer_cast<TraderConfig>(config)});
+                std::shared_ptr<Agent> agent (new TraderZIP{network_entity, std::static_pointer_cast<ZIPConfig>(config)});
                 return agent;
             }
             case AgentType::TRADER_SHVR:
