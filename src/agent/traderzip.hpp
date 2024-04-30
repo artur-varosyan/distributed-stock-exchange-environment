@@ -32,6 +32,9 @@ public:
     void onTradingStart() override
     {
         std::cout << "Trading window started.\n";
+        my_trade_deadline_ = timeNow();
+        global_trade_deadline_ = timeNow() + (GLOBAL_TRADE_WAIT_TIME_IN_MS * MS_TO_NS);
+        // undercutCompetition();
         placeOrder();
     }
 
@@ -46,10 +49,10 @@ public:
         // Only decrease margin towards trade price, if have not traded in a while
 
         // If trade has occurred at a different price
-        if (msg->data->last_price_traded != last_trade_price_)
+        if (last_market_data_.has_value() && msg->data->cumulative_volume_traded > last_market_data_.value()->cumulative_volume_traded)
         {
             // Trade price went up
-            if (msg->data->last_price_traded > last_trade_price_)
+            if (msg->data->last_price_traded > last_market_data_.value()->last_price_traded)
             {
                 // Raise margin for sellers
                 if (trader_side_ == Order::Side::ASK)
@@ -82,34 +85,16 @@ public:
             }
 
             // Update last global trade info
-            last_trade_price_ = msg->data->last_price_traded;
             global_trade_deadline_ = timeNow() + (GLOBAL_TRADE_WAIT_TIME_IN_MS * MS_TO_NS);
         }
-        else
+        else if (!last_market_data_.has_value())
         {
-            // If sufficient time has passed
-            if (timeNow() < global_trade_deadline_) return;
-
-            // Undercut competition by adjusting the price towards best competing bid/offer
-            if (trader_side_ == Order::Side::BID)
-            {
-                double best_ask = msg->data->best_ask;
-                if (last_price_ < best_ask)
-                {
-                    double target = decreaseTargetPrice(best_ask);
-                    updateMargin(target);
-                }
-            }
-            else
-            {
-                double best_bid = msg->data->best_bid;
-                if (last_price_ > best_bid)
-                {
-                    double target = increaseTargetPrice(best_bid);
-                    updateMargin(target);
-                }
-            }
+            // Update last global trade info
+            global_trade_deadline_ = timeNow() + (GLOBAL_TRADE_WAIT_TIME_IN_MS * MS_TO_NS);
         }
+
+        // Save this market data snapshot
+        last_market_data_ = msg->data;
 
         // Place a new order if it is the time
         placeOrderIfTime();
@@ -158,12 +143,51 @@ private:
         last_price_ = getQuotePrice();
         last_client_order_id_ = 0;
         last_accepted_order_id_ = std::nullopt;
-        my_trade_deadline_ = timeNow();
-        global_trade_deadline_ = timeNow() + (GLOBAL_TRADE_WAIT_TIME_IN_MS * MS_TO_NS);
+        last_market_data_ = std::nullopt;
 
         std::cout << "mom=" << momentum_ << "\n";
         std::cout << "lr=" << learning_rate_ << "\n";
         std::cout << "margin=" << profit_margin_ << "\n";
+    }
+
+    void undercutCompetition()
+    {
+        undercut_thread_ = new std::thread([&, this](){
+            unsigned long long wait_time;
+            while (true)
+            {
+                // If sufficient time has passed without a trade in the market
+                while (timeNow() < global_trade_deadline_)
+                {
+                    wait_time = global_trade_deadline_ - timeNow();
+                    std::cout << "Undercut thread sleeping for " << (wait_time / 1e9) << " seconds\n";
+                    std::this_thread::sleep_for(std::chrono::nanoseconds(wait_time));
+                    std::cout << "Undercut awake\n";
+                }
+
+                std::cout << "No trades in market, undercutting competition\n";
+
+                // Undercut competition by adjusting the price towards best competing bid/offer
+                if (trader_side_ == Order::Side::BID)
+                {
+                    double best_ask = last_market_data_.value()->best_ask;
+                    double target = increaseTargetPrice(best_ask);
+                    std::cout << "Target price of " << target << "\n";
+                    updateMargin(target);
+                }
+                else
+                {
+                    double best_bid = last_market_data_.value()->best_bid;
+                    double target = decreaseTargetPrice(best_bid);
+                    std::cout << "Target price of " << target << "\n";
+                    updateMargin(target);
+                }
+
+                placeOrder();
+                wait_time = (timeNow() + (MY_TRADE_WAIT_TIME_IN_MS * MS_TO_NS)) - timeNow();
+                std::this_thread::sleep_for(std::chrono::nanoseconds(wait_time));
+            }
+        });
     }
 
     double getQuotePrice()
@@ -255,11 +279,15 @@ private:
     double learning_rate_;
     double momentum_;
 
-    unsigned long long last_trade_time_;
+    std::optional<MarketDataPtr> last_market_data_;
     double last_trade_price_;
 
     unsigned long long my_trade_deadline_;
     unsigned long long global_trade_deadline_;
+
+    // bool trading_window_open = false;
+    std::mutex mutex_;
+    std::thread* undercut_thread_ = nullptr;
 
     constexpr static double C_A = 0.05;
     constexpr static double C_R = 0.05;
@@ -267,9 +295,9 @@ private:
     constexpr static double MIN_PRICE = 1.0;
     constexpr static double MAX_PRICE = 200.0;
 
-    constexpr static unsigned long MS_TO_NS = 1000;
-    constexpr static unsigned long MY_TRADE_WAIT_TIME_IN_MS = 5000;
-    constexpr static unsigned long GLOBAL_TRADE_WAIT_TIME_IN_MS = 10000;
+    constexpr static unsigned long MS_TO_NS = 1000000;
+    constexpr static unsigned long MY_TRADE_WAIT_TIME_IN_MS = 100;
+    constexpr static unsigned long GLOBAL_TRADE_WAIT_TIME_IN_MS = 500;
 
 };
 
