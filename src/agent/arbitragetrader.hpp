@@ -106,8 +106,8 @@ private:
         << " ASK: " << best_bid_exchange_ << " @ " << ask_price << std::endl;
 
         // Note: Arbitrageur places bid order on the exchange with best ask and vice versa
-        placeLimitOrder(best_ask_exchange_, Order::Side::BID, ticker_, size, bid_price, best_ask_price_);
-        placeLimitOrder(best_bid_exchange_, Order::Side::ASK, ticker_, size, ask_price,  best_bid_price_);
+        placeLimitOrder(best_ask_exchange_, Order::Side::BID, ticker_, size, bid_price, ask_price);
+        placeLimitOrder(best_bid_exchange_, Order::Side::ASK, ticker_, size, ask_price, bid_price);
     }
 
     double best_bid_price_ = std::numeric_limits<double>::min();
