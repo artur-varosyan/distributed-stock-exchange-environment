@@ -34,6 +34,9 @@ public:
     /** Starts listening for incoming messages and broadcasts. */
     virtual void start();
 
+    /** Terminates the agent gracefully. Derived classes with custom memory allocation should implement this. */
+    virtual void terminate();
+
     /** Returns agent ID. */
     int getAgentId();
 

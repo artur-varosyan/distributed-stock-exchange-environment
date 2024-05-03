@@ -34,6 +34,14 @@ public:
         addDelayedStart(config->delay);
     }
 
+    /** Gracefully terminates the exchange, freeing all memory. */
+    void terminate() override
+    {
+        undercut_thread_->join();
+        delete(undercut_thread_);
+        TraderAgent::terminate();
+    }
+
     void onTradingStart() override
     {
         std::cout << "Trading window started.\n";

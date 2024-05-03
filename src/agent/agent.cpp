@@ -9,6 +9,11 @@ void Agent::start()
 
 }
 
+void Agent::terminate()
+{
+
+}
+
 void Agent::connect(ipv4_address address, std::string agent_name, std::function<void()> const& callback)
 {
     // std::cout << "Connecting to " << agent_name << "\n";

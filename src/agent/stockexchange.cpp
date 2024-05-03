@@ -13,6 +13,15 @@ void StockExchange::start()
     Agent::start();
 };
 
+void StockExchange::terminate()
+{
+    // Only safe if called after matching engine and trading window threads terminate
+    matching_engine_thread_->join();
+    trading_window_thread_->join();
+    delete(matching_engine_thread_);
+    delete(trading_window_thread_);
+}
+
 void StockExchange::runMatchingEngine()
 {
     // Wait until trading window opens
@@ -62,6 +71,7 @@ void StockExchange::runMatchingEngine()
 
     trading_window_lock.unlock();
     std::cout << "Stopped running matching engine" << "\n";
+    // trading_window_cv_.notify_all();
 };
 
 void StockExchange::onLimitOrder(LimitOrderMessagePtr msg)

@@ -53,6 +53,9 @@ public:
     /** Starts the exchange. */
     void start() override;
 
+    /** Gracefully terminates the exchange, freeing all memory. */
+    void terminate() override;
+
     /** Adds the given asset as tradeable and initialises an empty order book. */
     void addTradeableAsset(std::string_view ticker);
 

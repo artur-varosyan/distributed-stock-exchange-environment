@@ -3,6 +3,13 @@
 
 #include "traderagent.hpp"
 
+void TraderAgent::terminate() 
+{
+    // Only safe after delay is finished
+    delay_thread_->join();
+    delete(delay_thread_);
+}
+
 std::optional<MessagePtr> TraderAgent::handleMessageFrom(std::string_view sender, MessagePtr message)
 {
     // If trading window (for this trader) not yet open ignore message

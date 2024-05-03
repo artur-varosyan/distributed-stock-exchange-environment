@@ -219,6 +219,11 @@ std::string NetworkEntity::addr()
 
 void NetworkEntity::setAgent(std::shared_ptr<Agent> agent)
 {
+    if (agent_.has_value())
+    {
+        agent_.value()->terminate();
+    }
+    
     agent_ = agent;
     agent->start();
 }
