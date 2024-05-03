@@ -119,6 +119,7 @@ void OrderBook::popBestBid()
     if (!bids_.empty())
     {
         bids_volume_ -= bids_.top()->remaining_quantity;
+        std::cout << bids_volume_ << "\n";
         bids_sizes_[bids_.top()->price] -= bids_.top()->remaining_quantity;
         bids_.pop();
         --order_count_;
@@ -130,6 +131,7 @@ void OrderBook::popBestAsk()
     if (!asks_.empty())
     {
         asks_volume_ -= asks_.top()->remaining_quantity;
+        std::cout << asks_volume_ << "\n";
         asks_sizes_[asks_.top()->price] -= asks_.top()->remaining_quantity;
         asks_.pop();
         --order_count_;

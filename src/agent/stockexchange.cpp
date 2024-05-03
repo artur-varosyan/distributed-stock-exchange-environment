@@ -15,11 +15,17 @@ void StockExchange::start()
 
 void StockExchange::terminate()
 {
-    // Only safe if called after matching engine and trading window threads terminate
-    matching_engine_thread_->join();
-    trading_window_thread_->join();
-    delete(matching_engine_thread_);
-    delete(trading_window_thread_);
+    if (matching_engine_thread_ != nullptr)
+    {
+        matching_engine_thread_->join();
+        delete(matching_engine_thread_);
+    }
+
+    if (trading_window_thread_ != nullptr)
+    {
+        trading_window_thread_->join();
+        delete(trading_window_thread_);
+    }
 }
 
 void StockExchange::runMatchingEngine()
@@ -32,42 +38,45 @@ void StockExchange::runMatchingEngine()
     while (trading_window_open_)
     {
         trading_window_lock.unlock();
+        // std::cout << "Matching engine unlocked" << "\n";
         
         // Wait until new message is present
         MessagePtr msg = msg_queue_.pop();
+        if (msg != nullptr)
+        {
+            // Pattern match the message type
+            switch (msg->type) {
+                case MessageType::MARKET_ORDER:
+                {
+                    onMarketOrder(std::dynamic_pointer_cast<MarketOrderMessage>(msg));
+                    break;
+                }
+                case MessageType::LIMIT_ORDER:
+                {
+                    onLimitOrder(std::dynamic_pointer_cast<LimitOrderMessage>(msg));
+                    break;
+                }
+                case MessageType::CANCEL_ORDER:
+                {
+                    onCancelOrder(std::dynamic_pointer_cast<CancelOrderMessage>(msg));
+                    break;
+                }
+                default:
+                {
+                    std::cout << "Exchange received unknown message type" << "\n";
+                }
+            }
 
-        // Pattern match the message type
-        switch (msg->type) {
-            case MessageType::MARKET_ORDER:
-            {
-                onMarketOrder(std::dynamic_pointer_cast<MarketOrderMessage>(msg));
-                break;
-            }
-            case MessageType::LIMIT_ORDER:
-            {
-                onLimitOrder(std::dynamic_pointer_cast<LimitOrderMessage>(msg));
-                break;
-            }
-            case MessageType::CANCEL_ORDER:
-            {
-                onCancelOrder(std::dynamic_pointer_cast<CancelOrderMessage>(msg));
-                break;
-            }
-            default:
-            {
-                std::cout << "Exchange received unknown message type" << "\n";
-            }
+            msg->markProcessed();
+            addMessageToTape(msg);
         }
-
-        msg->markProcessed();
-        addMessageToTape(msg);
         
+        // std::cout << "Matching engine attempting to lock" << "\n";
         trading_window_lock.lock();
+        // std::cout << "Matching engine locked" << "\n";
     }
-    
-    // Clear the message queue
-    std::cout << "Matching Engine stopping. Queue size discarded: " << msg_queue_.size() << "\n";
-    msg_queue_.close();
+
+    std::cout << "Matching Engine stopping." << "\n";
 
     trading_window_lock.unlock();
     std::cout << "Stopped running matching engine" << "\n";
@@ -489,6 +498,7 @@ void StockExchange::endTradingSession()
     // Signal end of trading window to the matching engine
     std::unique_lock<std::mutex> trading_window_lock(trading_window_mutex_);
     trading_window_open_ = false;
+    msg_queue_.close();
     trading_window_lock.unlock();
     trading_window_cv_.notify_all();
 

@@ -17,6 +17,7 @@ public:
       ticker_{config->ticker},
       trader_side_{config->side},
       limit_price_{config->limit},
+      cancelling_{config->cancelling},
       min_margin_{config->min_margin},
       trade_interval_ms_{config->trade_interval},
       liquidity_interval_ms_{config->liquidity_interval},
@@ -34,11 +35,14 @@ public:
         addDelayedStart(config->delay);
     }
 
-    /** Gracefully terminates the exchange, freeing all memory. */
+    /** Gracefully terminates the trader, freeing all memory. */
     void terminate() override
     {
-        undercut_thread_->join();
-        delete(undercut_thread_);
+        if (undercut_thread_ != nullptr)
+        {
+            undercut_thread_->join();
+            delete(undercut_thread_);
+        }
         TraderAgent::terminate();
     }
 
@@ -279,15 +283,15 @@ private:
     {
         if (timeNow() > next_trade_timestamp_)
         {
-            /** TODO: Decide if orders should be cancelled. */
-            // if (last_accepted_order_id_.has_value())
-            // {
-            //     double price = getQuotePrice();
-            //     if (last_price_ != price)
-            //     {
-            //         cancelOrder(exchange_, trader_side_, ticker_, last_accepted_order_id_.value());
-            //     }
-            // }
+            if (cancelling_ && last_accepted_order_id_.has_value())
+            {
+                double price = getQuotePrice();
+                if (last_price_ != price)
+                {
+                    cancelOrder(exchange_, trader_side_, ticker_, last_accepted_order_id_.value());
+                }
+            }
+
             // Place a new order with a new price
             placeOrder();
         }
@@ -312,6 +316,7 @@ private:
     double momentum_;
     double limit_price_;
     double min_margin_;
+    bool cancelling_;
 
     unsigned long trade_interval_ms_ = 100;
     unsigned long liquidity_interval_ms_ = 100;
@@ -324,8 +329,8 @@ private:
     std::optional<int> last_accepted_order_id_;
     std::optional<MarketDataPtr> last_market_data_;
 
-    unsigned long long next_trade_timestamp_;
-    unsigned long long next_undercut_timestamp_;
+    unsigned long next_trade_timestamp_;
+    unsigned long next_undercut_timestamp_;
 
     std::mt19937 random_generator_;
 

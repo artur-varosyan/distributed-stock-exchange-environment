@@ -16,6 +16,8 @@ public:
     Order::Side side;
     double limit;
     unsigned int delay;
+    unsigned int trade_interval;
+    bool cancelling;
 
 private:
     
@@ -30,6 +32,8 @@ private:
         ar & side;
         ar & limit;
         ar & delay;
+        ar & trade_interval;
+        ar & cancelling;
     }
 
 };

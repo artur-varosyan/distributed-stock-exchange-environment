@@ -10,8 +10,7 @@ public:
     ZIPConfig() = default;
 
     double min_margin;
-    unsigned long long trade_interval;
-    unsigned long long liquidity_interval;
+    unsigned int liquidity_interval;
 
 private:
     
@@ -21,7 +20,6 @@ private:
     {
         ar & boost::serialization::base_object<TraderConfig>(*this);
         ar & min_margin;
-        ar & trade_interval;
         ar & liquidity_interval;
     }
 

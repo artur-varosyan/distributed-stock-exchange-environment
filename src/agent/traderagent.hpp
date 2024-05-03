@@ -28,7 +28,7 @@ public:
     }
 
     /** Gracefully terminates the trader, freeing all memory. */
-    void terminate() override;
+    virtual void terminate() override;
 
     /** Subscribes to updates for the stock with the given ticker at the given exchange. */
     void subscribeToMarket(std::string_view exchange, std::string_view ticker);

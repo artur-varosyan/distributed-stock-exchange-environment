@@ -6,8 +6,11 @@
 void TraderAgent::terminate() 
 {
     // Only safe after delay is finished
-    delay_thread_->join();
-    delete(delay_thread_);
+    if (delay_thread_ != nullptr) 
+    {
+        delay_thread_->join();
+        delete(delay_thread_);
+    }
 }
 
 std::optional<MessagePtr> TraderAgent::handleMessageFrom(std::string_view sender, MessagePtr message)

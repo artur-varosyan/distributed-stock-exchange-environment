@@ -35,7 +35,10 @@ public:
     {
       // Wait until new message added to the queue
       std::unique_lock<std::mutex> lock(lock_); 
-      cv_.wait(lock, [this]{ return !queue_.empty(); });
+      cv_.wait(lock, [this]{ return !queue_.empty() || closed_; });
+
+      // Return null ptr if waiting on closed
+      if (closed_) return nullptr;
 
       // Return the value at the front of the queue
       T value = queue_.front();
@@ -56,6 +59,7 @@ public:
       closed_ = true;
       while (!queue_.empty()) queue_.pop();
       lock.unlock();
+      cv_.notify_all();
     }
 
 private:
