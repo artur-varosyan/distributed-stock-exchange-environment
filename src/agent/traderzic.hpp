@@ -1,6 +1,8 @@
 #ifndef TRADER_ZIC_HPP
 #define TRADER_ZIC_HPP
 
+#include <random>
+
 #include "traderagent.hpp"
 
 /** Prototype ZIC trader implementation. */
@@ -13,7 +15,8 @@ public:
       exchange_{config->exchange_name},
       ticker_{config->ticker},
       trader_side_{config->side},
-      limit_price_{config->limit}
+      limit_price_{config->limit},
+      random_generator_{std::random_device{}()}
     {
         // Automatically connect to exchange on initialisation
         connect(config->exchange_addr, config->exchange_name, [=, this](){
@@ -70,11 +73,13 @@ private:
     {
         if (trader_side_ == Order::Side::BID)
         {
-            return MIN_PRICE + (rand() % (int)(limit_price_ - MIN_PRICE + 1));
+            std::uniform_int_distribution<> dist(MIN_PRICE, limit_price_);
+            return dist(random_generator_);
         }
         else
         {
-            return limit_price_ + (rand() % (int)(MAX_PRICE - limit_price_ + 1));
+            std::uniform_int_distribution<> dist(limit_price_, MAX_PRICE);
+            return dist(random_generator_);
         }
     }
 
@@ -82,6 +87,8 @@ private:
     std::string ticker_;
     Order::Side trader_side_;
     double limit_price_;
+
+    std::mt19937 random_generator_;
 
     bool is_trading_ = false;
 

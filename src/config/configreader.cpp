@@ -12,6 +12,11 @@ SimulationConfigPtr ConfigReader::readConfig(std::string& filepath)
 
     pugi::xml_node simulation = doc.child("simulation");
 
+    // Parse through the general configuration
+    pugi::xml_node general = simulation.child("general");
+    int time = general.child("time").text().as_int();
+    int repetitions = general.child("repetitions").text().as_int();
+
     // Parse through the available instances
     std::vector<std::string> exchange_addrs;
     std::vector<std::string> trader_addrs;
@@ -66,7 +71,7 @@ SimulationConfigPtr ConfigReader::readConfig(std::string& filepath)
         ++agent_id;
     }
 
-    SimulationConfigPtr simulation_config = std::make_shared<SimulationConfig>(exchange_configs, trader_configs);
+    SimulationConfigPtr simulation_config = std::make_shared<SimulationConfig>(repetitions, time, exchange_configs, trader_configs);
     return simulation_config;
 }
 

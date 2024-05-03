@@ -41,3 +41,14 @@ bool TCPConnection::open()
 {
     return socket_.is_open();
 }
+
+void TCPConnection::close()
+{
+    // Close the socket and connection if not closed already
+    if (socket_.is_open())
+    {
+        boost::system::error_code ec;
+        socket_.shutdown(tcp::socket::shutdown_both, ec);
+        socket_.close(ec);
+    }
+}

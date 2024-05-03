@@ -73,6 +73,9 @@ public:
     /** Sets the agent running inside this NetworkEntity. */
     void setAgent(std::shared_ptr<Agent> agent);
 
+    /** Closes all connections cleanly. */
+    void closeConnections();
+
 private:
 
     /** Returns the agent running inside this NetworkEntity. */

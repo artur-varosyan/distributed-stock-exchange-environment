@@ -24,6 +24,9 @@ public:
     /** Reads a message from the connected client. */
     asio::awaitable<std::string> read(std::string& read_buffer);
 
+    /** Closes the connection. */
+    void close();
+
     /** Indicates whether the connection is open. */
     bool open();
 

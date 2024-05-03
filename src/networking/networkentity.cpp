@@ -136,7 +136,7 @@ std::pair<std::string, unsigned int> NetworkEntity::splitAddress(std::string_vie
 
 void NetworkEntity::addConnection(std::string_view address, unsigned int port, TCPConnectionPtr connection)
 {
-    // std::cout << "New connection from " << address << ":" << port << "\n";
+    std::cout << "New connection with " << address << ":" << port << "\n";
     connections_.left.insert({concatAddress(address, port), connection});
 }
 
@@ -222,6 +222,7 @@ void NetworkEntity::setAgent(std::shared_ptr<Agent> agent)
     if (agent_.has_value())
     {
         agent_.value()->terminate();
+        closeConnections();
     }
     
     agent_ = agent;
@@ -249,4 +250,15 @@ void NetworkEntity::configureEntity(std::string_view sender_address, ConfigMessa
     // Send configuration acknowledgement back to orchestrator
     // ConfigAckMessagePtr ack_msg = std::make_shared<ConfigAckMessage>();
     // sendMessage(sender_address, std::static_pointer_cast<Message>(ack_msg), true);
+}
+
+void NetworkEntity::closeConnections()
+{
+    for (auto connection : connections_.left)
+    {
+        std::cout << "Closing connection with " << connection.first << "\n";
+        connection.second->close();
+    }
+
+    connections_.clear();
 }

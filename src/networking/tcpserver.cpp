@@ -34,9 +34,9 @@ asio::awaitable<void> TCPServer::messageListener(TCPConnectionPtr connection)
     }
     catch (std::exception& e)
     {
-        std::cout << "TCP message listener failed" << "\n";
-        std::cout << "Connection dropped from " << address << ":" << port << "\n";
-        std::cout << "Reason:\n" << e.what() << "\n";
+        // std::cout << "TCP message listener failed" << "\n";
+        std::cout << "Connection with " << address << ":" << port << " dropped.\n";
+        // std::cout << "Reason:\n" << e.what() << "\n";
 
         removeConnection(address, port);
     }
@@ -67,9 +67,9 @@ asio::awaitable<void> TCPServer::messageWriter(TCPConnectionPtr connection)
     }
     catch (std::exception& e)
     {
-        std::cout << "TCP message writer failed" << "\n";
-        std::cout << "Connection dropped from " << address << ":" << port << "\n";
-        std::cout << "Reason:\n" << e.what() << "\n";
+        // std::cout << "TCP message writer failed" << "\n";
+        std::cout << "Connection with " << address << ":" << port << " dropped.\n";
+        // std::cout << "Reason:\n" << e.what() << "\n";
 
         removeConnection(address, port);
     }

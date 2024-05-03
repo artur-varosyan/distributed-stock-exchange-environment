@@ -21,21 +21,32 @@ public:
     void configureSimulation(SimulationConfigPtr simulation)
     {
         configuration_thread_ = new std::thread([&](){
+            std::cout << "Simulation repetitions: " << simulation->repetitions() 
+            << " time: " << simulation->time() << " seconds." << std::endl;
 
-            // Initialise exchanges
-            for (auto exchange_config : simulation->exchanges())
+            for (int i = 0; i < simulation->repetitions(); i++)
             {
-                configureNode(exchange_config);
-            }
+                // Initialise exchanges
+                for (auto exchange_config : simulation->exchanges())
+                {
+                    configureNode(exchange_config);
+                }
 
-            // Allow exchanges to initialise first
-            std::this_thread::sleep_for(std::chrono::seconds(10));
+                // Allow exchanges to initialise first
+                std::this_thread::sleep_for(std::chrono::seconds(10));
 
-            // Initialise traders
-            for (auto trader_config : simulation->traders())
-            {
-                configureNode(trader_config);
+                // Initialise traders
+                for (auto trader_config : simulation->traders())
+                {
+                    configureNode(trader_config);
+                }
+
+                // Wait for this trial to finish before starting the next one
+                std::cout << "Simulation " << i << " configured." << std::endl;
+                std::cout << "Waiting " << simulation->time() << " seconds for simulation trial to end..." << std::endl;
+                std::this_thread::sleep_for(std::chrono::seconds(simulation->time()));
             }
+            std::cout << "Finished all " << simulation->repetitions() << " simulation trials." << std::endl;
         });
     }
 
