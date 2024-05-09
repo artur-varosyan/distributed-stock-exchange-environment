@@ -145,7 +145,7 @@ private:
     std::string ticker_;
     Order::Side trader_side_;
     double limit_price_;
-    unsigned int trade_interval_ms_ = 100;
+    unsigned int trade_interval_ms_;
     bool cancelling_;
 
     std::optional<int> last_accepted_order_id_ = std::nullopt;

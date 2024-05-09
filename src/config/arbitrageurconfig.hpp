@@ -17,6 +17,8 @@ public:
     std::string ticker;
     unsigned int delay;
     double alpha;
+    unsigned int trade_interval;
+    bool cancelling;
 
 private:
     
@@ -32,6 +34,8 @@ private:
         ar & ticker;
         ar & delay;
         ar & alpha;
+        ar & trade_interval;
+        ar & cancelling;
     }
 
 };

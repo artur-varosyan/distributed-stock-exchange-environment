@@ -38,10 +38,10 @@ public:
     /** Gracefully terminates the trader, freeing all memory. */
     void terminate() override
     {
-        if (undercut_thread_ != nullptr)
+        if (trading_thread_ != nullptr)
         {
-            undercut_thread_->join();
-            delete(undercut_thread_);
+            trading_thread_->join();
+            delete(trading_thread_);
         }
         TraderAgent::terminate();
     }
@@ -49,11 +49,10 @@ public:
     void onTradingStart() override
     {
         std::cout << "Trading window started.\n";
-        next_trade_timestamp_ = timeNow();
         next_undercut_timestamp_ = timeNow() + (liquidity_interval_ms_ * MS_TO_NS);
+        next_lower_margin_timestamp_ = timeNow() + (trade_interval_ms_ * MS_TO_NS);
         is_trading_ = true;
-        undercutCompetition();
-        placeOrder();
+        activelyTrade();
     }
 
     void onTradingEnd() override
@@ -66,60 +65,7 @@ public:
 
     void onMarketData(std::string_view exchange, MarketDataMessagePtr msg) override
     {
-        // If trade has occurred always increase margin towards trade price
-        // Only decrease margin, if previous order has not executed within the trade interval
-
-        // If trade has occurred
-        if (last_market_data_.has_value() && msg->data->cumulative_volume_traded > last_market_data_.value()->cumulative_volume_traded)
-        {
-            // And trade price went up
-            if (msg->data->last_price_traded > last_market_data_.value()->last_price_traded)
-            {
-                // Raise margin for sellers
-                if (trader_side_ == Order::Side::ASK && last_price_ <= msg->data->last_price_traded)
-                {
-                    double target = increaseTargetPrice(msg->data->last_price_traded);
-                    updateMargin(target);
-                }
-            }
-            // And trade price went down
-            else if (msg->data->last_price_traded < last_market_data_.value()->last_price_traded)
-            {
-                // Raise margin for buyers
-                if (trader_side_ == Order::Side::BID && last_price_ >= msg->data->last_price_traded)
-                {
-                    double target = decreaseTargetPrice(msg->data->last_price_traded);
-                    updateMargin(target);
-                }
-            }
-
-            // Lower margin for buyers (conditional)
-            if (trader_side_ == Order::Side::BID && timeNow() > next_trade_timestamp_)
-            {
-                double target = increaseTargetPrice(msg->data->last_price_traded);
-                updateMargin(target);
-            }
-            // Lower margin for sellers (conditional)
-            else if (trader_side_ == Order::Side::ASK && timeNow() > next_trade_timestamp_)
-            {
-                double target = decreaseTargetPrice(msg->data->last_price_traded);
-                updateMargin(target);
-            }
-
-            // Update last global trade info
-            next_undercut_timestamp_ = timeNow() + (liquidity_interval_ms_ * MS_TO_NS);
-        }
-        else if (!last_market_data_.has_value())
-        {
-            // Update last global trade info
-            next_undercut_timestamp_ = timeNow() + (liquidity_interval_ms_ * MS_TO_NS);
-        }
-
-        // Save this market data snapshot
-        last_market_data_ = msg->data;
-
-        // Place a new order if it is the time
-        placeOrderIfTime();
+        reactToMarket(msg);
     }
 
     void onExecutionReport(std::string_view exchange, ExecutionReportMessagePtr msg) override
@@ -129,14 +75,10 @@ public:
         {
             last_accepted_order_id_ = msg->order->id;
         }
-        // Order executed successfully
         else if (msg->order->status == Order::Status::FILLED)
         {
-            std::cout << "<< Order filled @ " << last_price_ << "\n";
-            if (msg->order->client_order_id == last_client_order_id_)
-            {
-                placeOrder();
-            }
+            last_accepted_order_id_ = std::nullopt;
+            next_lower_margin_timestamp_ = timeNow() + (trade_interval_ms_ * MS_TO_NS);
         }
     }
 
@@ -172,53 +114,130 @@ private:
         std::cout << "margin=" << profit_margin_ << "\n";
     }
 
-    void undercutCompetition()
+    void activelyTrade()
     {
-        undercut_thread_ = new std::thread([&, this](){
-
-            unsigned long long wait_time;
+        trading_thread_ = new std::thread([&, this](){
 
             std::unique_lock<std::mutex> lock(mutex_);
             while (is_trading_)
             {
                 lock.unlock();
-                
-                // If sufficient time has passed without a trade in the market
-                while (timeNow() < next_undercut_timestamp_)
+
+                // Undercut competition if market not liquid
+                if (timeNow() >= next_undercut_timestamp_)
                 {
-                    wait_time = next_undercut_timestamp_ - timeNow();
-                    // std::cout << "Undercut thread sleeping for " << (wait_time / 1e9) << " seconds\n";
-                    std::this_thread::sleep_for(std::chrono::nanoseconds(wait_time));
-                    // std::cout << "Undercut awake\n";
+                    undercutCompetition();
                 }
 
-                // Undercut competition by adjusting the price towards best competing bid/offer
-                if (trader_side_ == Order::Side::BID)
-                {
-                    if (last_market_data_.value()->best_ask_size > 0)
-                    {
-                        double best_ask = last_market_data_.value()->best_ask;
-                        double target = increaseTargetPrice(best_ask);
-                        updateMargin(target);
-                    }
-                }
-                else
-                {
-                    if (last_market_data_.value()->best_bid_size > 0)
-                    {
-                        double best_bid = last_market_data_.value()->best_bid;
-                        double target = decreaseTargetPrice(best_bid);
-                        updateMargin(target);
-                    }
-                }
-
+                // Place order
                 placeOrder();
-                wait_time = (timeNow() + (trade_interval_ms_ * MS_TO_NS)) - timeNow();
-                std::this_thread::sleep_for(std::chrono::nanoseconds(wait_time));
+
+                sleep();
+
                 lock.lock();
             }
             lock.unlock();
+
+            std::cout << "Finished actively trading.\n";
         });
+    }
+
+    void reactToMarket(MarketDataMessagePtr msg)
+    {
+        // If trade has occurred always increase margin towards trade price
+        // Only decrease margin, if previous order has not executed within the trade interval
+
+        // If trade has occurred
+        if (last_market_data_.has_value() && msg->data->cumulative_volume_traded > last_market_data_.value()->cumulative_volume_traded)
+        {
+            // And trade price went up
+            if (msg->data->last_price_traded > last_market_data_.value()->last_price_traded)
+            {
+                // Raise margin for sellers
+                if (trader_side_ == Order::Side::ASK && last_price_ <= msg->data->last_price_traded)
+                {
+                    double target = increaseTargetPrice(msg->data->last_price_traded);
+                    updateMargin(target);
+                }
+            }
+            // And trade price went down
+            else if (msg->data->last_price_traded < last_market_data_.value()->last_price_traded)
+            {
+                // Raise margin for buyers
+                if (trader_side_ == Order::Side::BID && last_price_ >= msg->data->last_price_traded)
+                {
+                    double target = decreaseTargetPrice(msg->data->last_price_traded);
+                    updateMargin(target);
+                }
+            }
+
+            // Lower margin for buyers (conditional)
+            if (trader_side_ == Order::Side::BID && timeNow() > next_lower_margin_timestamp_)
+            {
+                double target = increaseTargetPrice(msg->data->last_price_traded);
+                updateMargin(target);
+                next_lower_margin_timestamp_ = timeNow() + (trade_interval_ms_ * MS_TO_NS);
+            }
+            // Lower margin for sellers (conditional)
+            else if (trader_side_ == Order::Side::ASK && timeNow() > next_lower_margin_timestamp_)
+            {
+                double target = decreaseTargetPrice(msg->data->last_price_traded);
+                updateMargin(target);
+                next_lower_margin_timestamp_ = timeNow() + (trade_interval_ms_ * MS_TO_NS);
+            }
+
+            // Update last global trade info
+            next_undercut_timestamp_ = timeNow() + (liquidity_interval_ms_ * MS_TO_NS);
+        }
+        else if (!last_market_data_.has_value())
+        {
+            // Update last global trade info
+            next_undercut_timestamp_ = timeNow() + (liquidity_interval_ms_ * MS_TO_NS);
+        }
+
+        // Save this market data snapshot
+        last_market_data_ = msg->data;
+
+    }
+
+    void sleep()
+    {
+        // Generate a random jitter
+        std::uniform_real_distribution<> dist(-REL_JITTER, REL_JITTER);
+        unsigned long jitter = dist(random_generator_);
+        unsigned long sleep_time_ms = std::round(trade_interval_ms_ * (1.0+jitter));
+
+        // Sleep for specified duration
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time_ms));
+    }
+
+    void undercutCompetition()
+    {
+        // Undercut competition by adjusting the price towards best competing bid/offer
+        if (trader_side_ == Order::Side::BID)
+        {
+            if (last_market_data_.value()->best_ask_size > 0)
+            {
+                double best_ask = last_market_data_.value()->best_ask;
+                double target = increaseTargetPrice(best_ask);
+                updateMargin(target);
+
+                next_undercut_timestamp_ = timeNow() + (liquidity_interval_ms_ * MS_TO_NS);
+                next_lower_margin_timestamp_ = timeNow() + (trade_interval_ms_ * MS_TO_NS);
+            }
+        }
+        else
+        {
+            if (last_market_data_.value()->best_bid_size > 0)
+            {
+                double best_bid = last_market_data_.value()->best_bid;
+                double target = decreaseTargetPrice(best_bid);
+                updateMargin(target);
+
+                next_undercut_timestamp_ = timeNow() + (liquidity_interval_ms_ * MS_TO_NS);
+                next_lower_margin_timestamp_ = timeNow() + (trade_interval_ms_ * MS_TO_NS);
+            }
+        }
     }
 
     double getQuotePrice()
@@ -273,29 +292,19 @@ private:
 
     void placeOrder()
     {
+        // Cancel previous order
+        if (cancelling_ && last_accepted_order_id_.has_value())
+        {
+            cancelOrder(exchange_, trader_side_, ticker_, last_accepted_order_id_.value());
+            last_accepted_order_id_ = std::nullopt;
+        }
+
+        // Place new order with a new price
         last_price_ = getQuotePrice();
         placeLimitOrder(exchange_, trader_side_, ticker_, 100, last_price_, limit_price_, Order::TimeInForce::GTC, ++last_client_order_id_);
-        next_trade_timestamp_ = timeNow() + (trade_interval_ms_ * MS_TO_NS);
         std::cout << ">> " << (trader_side_ == Order::Side::BID ? "BID" : "ASK") << " " << 100 << " @ " << last_price_ << "\n";
     }
 
-    void placeOrderIfTime()
-    {
-        if (timeNow() > next_trade_timestamp_)
-        {
-            if (cancelling_ && last_accepted_order_id_.has_value())
-            {
-                double price = getQuotePrice();
-                if (last_price_ != price)
-                {
-                    cancelOrder(exchange_, trader_side_, ticker_, last_accepted_order_id_.value());
-                }
-            }
-
-            // Place a new order with a new price
-            placeOrder();
-        }
-    }
 
     unsigned long long timeNow()
     {
@@ -329,17 +338,18 @@ private:
     std::optional<int> last_accepted_order_id_;
     std::optional<MarketDataPtr> last_market_data_;
 
-    unsigned long next_trade_timestamp_;
+    unsigned long next_lower_margin_timestamp_;
     unsigned long next_undercut_timestamp_;
 
     std::mt19937 random_generator_;
 
     std::mutex mutex_;
-    std::thread* undercut_thread_;
+    std::thread* trading_thread_ = nullptr;
     bool is_trading_ = false;
 
     constexpr static double C_A = 0.05;
     constexpr static double C_R = 0.05;
+    constexpr static double REL_JITTER = 0.25;
 
     constexpr static unsigned long MS_TO_NS = 1000000;
 };

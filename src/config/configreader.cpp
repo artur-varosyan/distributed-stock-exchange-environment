@@ -170,6 +170,10 @@ AgentConfigPtr ConfigReader::configureArbitrageur(int id, pugi::xml_node& xml_no
     config->ticker = std::string{xml_node.attribute("ticker").value()};
     config->alpha = std::stod(xml_node.attribute("alpha").value());
     config->delay = std::atoi(xml_node.attribute("delay").value());
+    config->trade_interval = std::stoul(xml_node.attribute("trade-interval").value());
+
+    std::string cancelling {xml_node.attribute("cancel").value()};
+    config->cancelling = cancelling == "true" ? true : false;
 
     return std::static_pointer_cast<AgentConfig>(config);
 }
@@ -211,7 +215,9 @@ AgentConfigPtr ConfigReader::configureTraderZIP(int id, pugi::xml_node& xml_node
     else if (side == "sell") config->side = Order::Side::ASK;
 
     config->min_margin = std::stod(xml_node.attribute("min-margin").value());
+    std::cout << "trade: " << xml_node.attribute("trade-interval").value() << "\n";
     config->trade_interval = std::stoul(xml_node.attribute("trade-interval").value());
+    std::cout << "liquidity: " << xml_node.attribute("liquidity-interval").value() << "\n";
     config->liquidity_interval = std::stoul(xml_node.attribute("liquidity-interval").value());
 
 
